@@ -10,10 +10,14 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Search, Edit, Loader2 } from "lucide-react";
+import { Plus, Search, Edit, Loader2, Trash2 } from "lucide-react";
 import { formatCurrency } from "@/lib/format";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/_app/products")({
   component: ProductsPage,
@@ -25,6 +29,7 @@ type Product = {
   manufacturer: string | null; sale_price: number; cost_price: number; min_stock: number;
   ideal_stock: number; tarja: Tarja | null; requires_prescription: boolean; active: boolean;
   category_id: string | null; unit: string | null;
+  pack_size: number; sub_unit_label: string | null; sub_unit_price: number | null;
 };
 
 function ProductsPage() {
@@ -33,6 +38,7 @@ function ProductsPage() {
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Product | null>(null);
+  const [deleting, setDeleting] = useState<Product | null>(null);
 
   const { data: products = [], isLoading } = useQuery({
     queryKey: ["products", search],
@@ -72,9 +78,29 @@ function ProductsPage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("products").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Produto excluído");
+      qc.invalidateQueries({ queryKey: ["products"] });
+      setDeleting(null);
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
+    const pack = Number(fd.get("pack_size") || 1);
+    const subLabel = (String(fd.get("sub_unit_label") || "").trim()) || null;
+    const subPriceRaw = fd.get("sub_unit_price");
+    const sale = Number(fd.get("sale_price") || 0);
+    const subPrice = subPriceRaw && String(subPriceRaw).length > 0
+      ? Number(subPriceRaw)
+      : (pack > 1 && subLabel ? Number((sale / pack).toFixed(2)) : null);
     saveMutation.mutate({
       name: String(fd.get("name")),
       active_ingredient: String(fd.get("active_ingredient") || "") || null,
@@ -85,9 +111,12 @@ function ProductsPage() {
       tarja: (fd.get("tarja") as Product["tarja"]) || "livre",
       requires_prescription: fd.get("requires_prescription") === "on",
       cost_price: Number(fd.get("cost_price") || 0),
-      sale_price: Number(fd.get("sale_price") || 0),
+      sale_price: sale,
       min_stock: Number(fd.get("min_stock") || 5),
       ideal_stock: Number(fd.get("ideal_stock") || 20),
+      pack_size: Math.max(1, pack),
+      sub_unit_label: subLabel,
+      sub_unit_price: subPrice,
       active: true,
     });
   };
@@ -171,6 +200,24 @@ function ProductsPage() {
                   <Label>Estoque ideal</Label>
                   <Input name="ideal_stock" type="number" defaultValue={editing?.ideal_stock ?? 20} />
                 </div>
+                <div className="col-span-2 border rounded-md p-3 space-y-2 bg-muted/30">
+                  <p className="text-sm font-medium">Fracionamento (caixinha → carteiras)</p>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="space-y-2">
+                      <Label className="text-xs">Carteiras por caixinha</Label>
+                      <Input name="pack_size" type="number" min="1" defaultValue={editing?.pack_size ?? 1} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-xs">Rótulo da sub-unidade</Label>
+                      <Input name="sub_unit_label" placeholder="ex.: carteira" defaultValue={editing?.sub_unit_label ?? ""} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-xs">Preço por sub-unidade</Label>
+                      <Input name="sub_unit_price" type="number" step="0.01" placeholder="auto" defaultValue={editing?.sub_unit_price ?? ""} />
+                    </div>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground">Deixe sub-unidade em branco para vender apenas em caixinha.</p>
+                </div>
                 <div className="col-span-2 flex items-center gap-3">
                   <Switch name="requires_prescription" defaultChecked={editing?.requires_prescription} />
                   <Label>Exige receita médica</Label>
@@ -219,9 +266,14 @@ function ProductsPage() {
                   <TableCell className="text-right">{p.min_stock}</TableCell>
                   <TableCell>
                     {auth.isStaff && (
-                      <Button size="sm" variant="ghost" onClick={() => openEdit(p)}>
-                        <Edit className="h-4 w-4" />
-                      </Button>
+                      <div className="flex justify-end gap-1">
+                        <Button size="sm" variant="ghost" onClick={() => openEdit(p)}>
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button size="sm" variant="ghost" className="text-destructive" onClick={() => setDeleting(p)}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     )}
                   </TableCell>
                 </TableRow>
@@ -230,6 +282,27 @@ function ProductsPage() {
           </Table>
         </CardContent>
       </Card>
+
+      <AlertDialog open={!!deleting} onOpenChange={(o) => !o && setDeleting(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir produto?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação removerá <b>{deleting?.name}</b> e todos os lotes/alertas vinculados. Não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deleting && deleteMutation.mutate(deleting.id)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteMutation.isPending && <Loader2 className="h-4 w-4 animate-spin" />} Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
+

@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
-import { Plus, Loader2, Edit } from "lucide-react";
+import { Plus, Loader2, Edit, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/customers")({
@@ -43,6 +43,15 @@ function CustomersPage() {
       }
     },
     onSuccess: () => { toast.success("Salvo"); qc.invalidateQueries({ queryKey: ["customers"] }); setOpen(false); setEditing(null); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const del = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("customers").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => { toast.success("Cliente excluído"); qc.invalidateQueries({ queryKey: ["customers"] }); },
     onError: (e: Error) => toast.error(e.message),
   });
 
@@ -96,7 +105,10 @@ function CustomersPage() {
                 <TableCell className="text-muted-foreground">{c.tax_id ?? "—"}</TableCell>
                 <TableCell>{c.phone ?? "—"}</TableCell>
                 <TableCell>{c.email ?? "—"}</TableCell>
-                <TableCell><Button size="sm" variant="ghost" onClick={() => { setEditing(c); setOpen(true); }}><Edit className="h-4 w-4" /></Button></TableCell>
+                <TableCell className="text-right">
+                  <Button size="sm" variant="ghost" onClick={() => { setEditing(c); setOpen(true); }}><Edit className="h-4 w-4" /></Button>
+                  <Button size="sm" variant="ghost" className="text-destructive" onClick={() => { if (confirm(`Excluir ${c.full_name}?`)) del.mutate(c.id); }}><Trash2 className="h-4 w-4" /></Button>
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
