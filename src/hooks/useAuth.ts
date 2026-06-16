@@ -73,8 +73,10 @@ export function useAuth() {
     };
   }, []);
 
-  const isAdmin = state.roles.includes("admin");
-  const isStaff = isAdmin || state.roles.includes("pharmacist");
+  // Modo exploração: sem usuário logado, libera CRUD para demonstração
+  const exploring = !state.loading && !state.user;
+  const isAdmin = state.roles.includes("admin") || exploring;
+  const isStaff = isAdmin || state.roles.includes("pharmacist") || exploring;
   const highestRole: AppRole | null = isAdmin
     ? "admin"
     : state.roles.includes("pharmacist")
