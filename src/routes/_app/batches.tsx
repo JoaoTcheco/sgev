@@ -118,14 +118,19 @@ function BatchesPage() {
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
                   <Label>Produto *</Label>
-                  <Select name="product_id" required>
+                  <Select name="product_id" required value={productId} onValueChange={(v) => { setProductId(v); setPacks(1); }}>
                     <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                     <SelectContent>
-                      {products.map((p: { id: string; name: string }) => (
+                      {products.map((p) => (
                         <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
+                  {selectedProduct && packSize > 1 && subLabel && (
+                    <p className="text-xs text-muted-foreground">
+                      Cada caixinha contém <b>{packSize} {subLabel}s</b>.
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label>Fornecedor</Label>
@@ -148,11 +153,16 @@ function BatchesPage() {
                     <Input name="expiry_date" type="date" required />
                   </div>
                   <div className="space-y-2">
-                    <Label>Quantidade *</Label>
-                    <Input name="quantity" type="number" min="1" required />
+                    <Label>{packSize > 1 ? "Caixinhas recebidas *" : "Quantidade *"}</Label>
+                    <Input name="packs" type="number" min="1" required value={packs} onChange={(e) => setPacks(Number(e.target.value) || 0)} />
+                    {packSize > 1 && subLabel && packs > 0 && (
+                      <p className="text-[11px] text-muted-foreground">
+                        = <b>{totalSubUnits} {subLabel}s</b> em estoque
+                      </p>
+                    )}
                   </div>
                   <div className="space-y-2">
-                    <Label>Custo unitário</Label>
+                    <Label>Custo por {packSize > 1 && subLabel ? subLabel : "unidade"}</Label>
                     <Input name="cost_price" type="number" step="0.01" defaultValue={0} />
                   </div>
                 </div>
