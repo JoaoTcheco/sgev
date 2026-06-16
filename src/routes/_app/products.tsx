@@ -78,9 +78,29 @@ function ProductsPage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("products").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Produto excluído");
+      qc.invalidateQueries({ queryKey: ["products"] });
+      setDeleting(null);
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
+    const pack = Number(fd.get("pack_size") || 1);
+    const subLabel = (String(fd.get("sub_unit_label") || "").trim()) || null;
+    const subPriceRaw = fd.get("sub_unit_price");
+    const sale = Number(fd.get("sale_price") || 0);
+    const subPrice = subPriceRaw && String(subPriceRaw).length > 0
+      ? Number(subPriceRaw)
+      : (pack > 1 && subLabel ? Number((sale / pack).toFixed(2)) : null);
     saveMutation.mutate({
       name: String(fd.get("name")),
       active_ingredient: String(fd.get("active_ingredient") || "") || null,
@@ -91,9 +111,12 @@ function ProductsPage() {
       tarja: (fd.get("tarja") as Product["tarja"]) || "livre",
       requires_prescription: fd.get("requires_prescription") === "on",
       cost_price: Number(fd.get("cost_price") || 0),
-      sale_price: Number(fd.get("sale_price") || 0),
+      sale_price: sale,
       min_stock: Number(fd.get("min_stock") || 5),
       ideal_stock: Number(fd.get("ideal_stock") || 20),
+      pack_size: Math.max(1, pack),
+      sub_unit_label: subLabel,
+      sub_unit_price: subPrice,
       active: true,
     });
   };
