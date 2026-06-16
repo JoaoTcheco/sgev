@@ -49,7 +49,20 @@ function PDVPage() {
   const [discount, setDiscount] = useState(0);
   const [customerId, setCustomerId] = useState<string>("");
   const [payment, setPayment] = useState<"cash" | "debit" | "credit" | "pix" | "other">("cash");
+  const [cashReceived, setCashReceived] = useState<number>(0);
   const [receiptSaleId, setReceiptSaleId] = useState<string | null>(null);
+  const searchRef = useRef<HTMLInputElement>(null);
+
+  // Atalho global: "/" foca a busca
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "/" && document.activeElement?.tagName !== "INPUT" && document.activeElement?.tagName !== "TEXTAREA") {
+        e.preventDefault(); searchRef.current?.focus();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
   const { data: products = [] } = useQuery({
     queryKey: ["pdv-products", search],
