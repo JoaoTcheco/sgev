@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Minus, Trash2, ShoppingCart, Search, Loader2, Check } from "lucide-react";
+import { Plus, Minus, Trash2, ShoppingCart, Search, Loader2, Check, Package, Layers } from "lucide-react";
 import { formatCurrency } from "@/lib/format";
 import { toast } from "sonner";
 import { ReceiptDialog } from "@/components/ReceiptDialog";
@@ -16,8 +16,31 @@ export const Route = createFileRoute("/_app/pdv")({
   component: PDVPage,
 });
 
-type Product = { id: string; name: string; sale_price: number; barcode: string | null; requires_prescription: boolean };
-type CartItem = { product: Product; quantity: number };
+type UnitKind = "pack" | "sub";
+
+type Product = {
+  id: string;
+  name: string;
+  sale_price: number;
+  barcode: string | null;
+  requires_prescription: boolean;
+  unit: string | null;
+  pack_size: number;
+  sub_unit_label: string | null;
+  sub_unit_price: number | null;
+};
+
+type CartItem = {
+  product: Product;
+  quantity: number;
+  unit_kind: UnitKind;
+  unit_label: string;
+  unit_price: number;
+};
+
+function cartKey(productId: string, kind: UnitKind) {
+  return `${productId}::${kind}`;
+}
 
 function PDVPage() {
   const qc = useQueryClient();
@@ -31,10 +54,15 @@ function PDVPage() {
   const { data: products = [] } = useQuery({
     queryKey: ["pdv-products", search],
     queryFn: async () => {
-      let q = supabase.from("products").select("id, name, sale_price, barcode, requires_prescription").eq("active", true).order("name").limit(50);
+      let q = supabase
+        .from("products")
+        .select("id, name, sale_price, barcode, requires_prescription, unit, pack_size, sub_unit_label, sub_unit_price")
+        .eq("active", true)
+        .order("name")
+        .limit(50);
       if (search) q = q.or(`name.ilike.%${search}%,barcode.ilike.%${search}%,active_ingredient.ilike.%${search}%`);
       const { data } = await q;
-      return (data ?? []) as Product[];
+      return (data ?? []) as unknown as Product[];
     },
   });
 
@@ -46,20 +74,30 @@ function PDVPage() {
     },
   });
 
-  const subtotal = useMemo(() => cart.reduce((s, i) => s + i.product.sale_price * i.quantity, 0), [cart]);
+  const subtotal = useMemo(() => cart.reduce((s, i) => s + i.unit_price * i.quantity, 0), [cart]);
   const total = Math.max(0, subtotal - discount);
 
-  const addToCart = (p: Product) => {
+  const addToCart = (p: Product, kind: UnitKind) => {
+    const isSub = kind === "sub";
+    const unit_label = isSub ? (p.sub_unit_label ?? "unidade") : (p.unit ?? "cx");
+    const unit_price = isSub ? Number(p.sub_unit_price ?? (p.sale_price / Math.max(1, p.pack_size))) : Number(p.sale_price);
+    const key = cartKey(p.id, kind);
     setCart((c) => {
-      const idx = c.findIndex((i) => i.product.id === p.id);
-      if (idx >= 0) { const next = [...c]; next[idx] = { ...next[idx], quantity: next[idx].quantity + 1 }; return next; }
-      return [...c, { product: p, quantity: 1 }];
+      const idx = c.findIndex((i) => cartKey(i.product.id, i.unit_kind) === key);
+      if (idx >= 0) {
+        const next = [...c];
+        next[idx] = { ...next[idx], quantity: next[idx].quantity + 1 };
+        return next;
+      }
+      return [...c, { product: p, quantity: 1, unit_kind: kind, unit_label, unit_price }];
     });
   };
-  const updateQty = (id: string, delta: number) => {
-    setCart((c) => c.map((i) => i.product.id === id ? { ...i, quantity: Math.max(1, i.quantity + delta) } : i));
+  const updateQty = (key: string, delta: number) => {
+    setCart((c) => c.map((i) => cartKey(i.product.id, i.unit_kind) === key
+      ? { ...i, quantity: Math.max(1, i.quantity + delta) }
+      : i));
   };
-  const removeItem = (id: string) => setCart((c) => c.filter((i) => i.product.id !== id));
+  const removeItem = (key: string) => setCart((c) => c.filter((i) => cartKey(i.product.id, i.unit_kind) !== key));
 
   const finalize = useMutation({
     mutationFn: async () => {
@@ -68,7 +106,12 @@ function PDVPage() {
         p_customer_id: customerId || (null as unknown as string),
         p_payment_method: payment,
         p_discount: discount,
-        p_items: cart.map((i) => ({ product_id: i.product.id, quantity: i.quantity, unit_price: i.product.sale_price })) as never,
+        p_items: cart.map((i) => ({
+          product_id: i.product.id,
+          quantity: i.quantity,
+          unit_price: i.unit_price,
+          unit_kind: i.unit_kind,
+        })) as never,
       });
       if (error) throw error;
       return data as string;
@@ -88,7 +131,7 @@ function PDVPage() {
     <div className="space-y-4">
       <div>
         <h1 className="text-3xl font-bold flex items-center gap-2"><ShoppingCart className="h-7 w-7" /> PDV — Nova venda</h1>
-        <p className="text-muted-foreground">Adicione produtos ao carrinho e finalize</p>
+        <p className="text-muted-foreground">Adicione produtos ao carrinho e finalize. Produtos fracionáveis permitem vender por <b>caixinha</b> ou por <b>carteira</b>.</p>
       </div>
 
       <div className="grid lg:grid-cols-3 gap-4">
@@ -98,14 +141,29 @@ function PDVPage() {
               <Search className="h-4 w-4 absolute left-3 top-3 text-muted-foreground" />
               <Input autoFocus placeholder="Buscar ou ler código de barras..." className="pl-9" value={search} onChange={(e) => setSearch(e.target.value)} />
             </div>
-            <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-[400px] overflow-y-auto">
-              {products.map((p) => (
-                <button key={p.id} onClick={() => addToCart(p)} className="text-left p-3 rounded-md border hover:border-primary hover:bg-primary/5 transition-colors">
-                  <p className="text-sm font-medium line-clamp-2">{p.name}</p>
-                  <p className="text-xs text-muted-foreground mt-1">{p.barcode ?? "—"}</p>
-                  <p className="text-sm font-bold text-primary mt-1">{formatCurrency(p.sale_price)}</p>
-                </button>
-              ))}
+            <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[460px] overflow-y-auto">
+              {products.map((p) => {
+                const fractionable = p.pack_size > 1 && !!p.sub_unit_label;
+                const subPrice = Number(p.sub_unit_price ?? (p.sale_price / Math.max(1, p.pack_size)));
+                return (
+                  <div key={p.id} className="p-3 rounded-md border hover:border-primary/60 transition-colors">
+                    <p className="text-sm font-medium line-clamp-2">{p.name}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{p.barcode ?? "—"}</p>
+                    <div className="mt-2 grid grid-cols-1 gap-1.5">
+                      <Button size="sm" variant="default" className="w-full justify-between h-9" onClick={() => addToCart(p, "pack")}>
+                        <span className="flex items-center gap-2"><Package className="h-3.5 w-3.5" /> {fractionable ? `Caixinha (${p.pack_size} ${p.sub_unit_label}s)` : (p.unit ?? "Unidade")}</span>
+                        <span className="font-bold">{formatCurrency(p.sale_price)}</span>
+                      </Button>
+                      {fractionable && (
+                        <Button size="sm" variant="secondary" className="w-full justify-between h-9" onClick={() => addToCart(p, "sub")}>
+                          <span className="flex items-center gap-2"><Layers className="h-3.5 w-3.5" /> 1 {p.sub_unit_label}</span>
+                          <span className="font-bold">{formatCurrency(subPrice)}</span>
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </CardContent></Card>
         </div>
@@ -115,20 +173,29 @@ function PDVPage() {
           <CardContent className="space-y-4">
             <div className="space-y-2 max-h-[300px] overflow-y-auto">
               {cart.length === 0 && <p className="text-sm text-muted-foreground text-center py-8">Vazio</p>}
-              {cart.map((i) => (
-                <div key={i.product.id} className="flex items-center gap-2 p-2 rounded bg-muted/40">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{i.product.name}</p>
-                    <p className="text-xs text-muted-foreground">{formatCurrency(i.product.sale_price)} × {i.quantity}</p>
+              {cart.map((i) => {
+                const key = cartKey(i.product.id, i.unit_kind);
+                return (
+                  <div key={key} className="flex items-center gap-2 p-2 rounded bg-muted/40">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{i.product.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        <span className="inline-flex items-center gap-1">
+                          {i.unit_kind === "pack" ? <Package className="h-3 w-3" /> : <Layers className="h-3 w-3" />}
+                          {i.unit_label}
+                        </span>
+                        {" · "}{formatCurrency(i.unit_price)} × {i.quantity}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => updateQty(key, -1)}><Minus className="h-3 w-3" /></Button>
+                      <span className="text-sm w-6 text-center">{i.quantity}</span>
+                      <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => updateQty(key, 1)}><Plus className="h-3 w-3" /></Button>
+                      <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive" onClick={() => removeItem(key)}><Trash2 className="h-3 w-3" /></Button>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => updateQty(i.product.id, -1)}><Minus className="h-3 w-3" /></Button>
-                    <span className="text-sm w-6 text-center">{i.quantity}</span>
-                    <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => updateQty(i.product.id, 1)}><Plus className="h-3 w-3" /></Button>
-                    <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive" onClick={() => removeItem(i.product.id)}><Trash2 className="h-3 w-3" /></Button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             <div className="space-y-2 pt-2 border-t">
