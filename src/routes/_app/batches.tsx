@@ -209,12 +209,13 @@ function BatchesPage() {
                 <TableHead className="text-right">Qtd</TableHead>
                 <TableHead>Validade</TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {isLoading && <TableRow><TableCell colSpan={6} className="text-center py-8"><Loader2 className="h-5 w-5 animate-spin inline" /></TableCell></TableRow>}
-              {!isLoading && batches.length === 0 && <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Nenhum lote cadastrado</TableCell></TableRow>}
-              {batches.map((b: { id: string; batch_number: string; expiry_date: string; quantity: number; products: { name: string } | null; suppliers: { legal_name: string } | null }) => {
+              {isLoading && <TableRow><TableCell colSpan={7} className="text-center py-8"><Loader2 className="h-5 w-5 animate-spin inline" /></TableCell></TableRow>}
+              {!isLoading && batches.length === 0 && <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">Nenhum lote cadastrado</TableCell></TableRow>}
+              {batches.map((b: { id: string; batch_number: string; expiry_date: string; quantity: number; cost_price: number; products: { name: string } | null; suppliers: { legal_name: string } | null }) => {
                 const days = daysUntil(b.expiry_date);
                 const status = days < 0 ? { l: "Vencido", c: "bg-destructive text-destructive-foreground" }
                   : days <= 30 ? { l: `${days}d`, c: "bg-destructive text-destructive-foreground" }
@@ -229,6 +230,17 @@ function BatchesPage() {
                     <TableCell className="text-right font-medium">{b.quantity}</TableCell>
                     <TableCell>{formatDate(b.expiry_date)}</TableCell>
                     <TableCell><span className={`text-xs px-2 py-0.5 rounded-full ${status.c}`}>{status.l}</span></TableCell>
+                    <TableCell className="text-right">
+                      {auth.isStaff && (
+                        <>
+                          <Button size="sm" variant="ghost" onClick={() => setEditBatch(b)}><Edit className="h-4 w-4" /></Button>
+                          <Button size="sm" variant="ghost" className="text-destructive"
+                            onClick={() => { if (confirm(`Excluir lote ${b.batch_number}?`)) deleteBatch.mutate(b.id); }}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </>
+                      )}
+                    </TableCell>
                   </TableRow>
                 );
               })}
@@ -236,6 +248,41 @@ function BatchesPage() {
           </Table>
         </CardContent>
       </Card>
+
+      <Dialog open={!!editBatch} onOpenChange={(o) => !o && setEditBatch(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Editar lote {editBatch?.products?.name ? `— ${editBatch.products.name}` : ""}</DialogTitle></DialogHeader>
+          {editBatch && (
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                const fd = new FormData(e.currentTarget);
+                updateBatch.mutate({
+                  id: editBatch.id,
+                  batch_number: String(fd.get("batch_number")),
+                  expiry_date: String(fd.get("expiry_date")),
+                  quantity: Number(fd.get("quantity") || 0),
+                  cost_price: Number(fd.get("cost_price") || 0),
+                });
+              }}
+              className="space-y-3"
+            >
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2"><Label>Nº do lote</Label><Input name="batch_number" defaultValue={editBatch.batch_number} required /></div>
+                <div className="space-y-2"><Label>Validade</Label><Input name="expiry_date" type="date" defaultValue={editBatch.expiry_date} required /></div>
+                <div className="space-y-2"><Label>Quantidade em estoque</Label><Input name="quantity" type="number" min="0" defaultValue={editBatch.quantity} /></div>
+                <div className="space-y-2"><Label>Custo unitário</Label><Input name="cost_price" type="number" step="0.01" defaultValue={editBatch.cost_price} /></div>
+              </div>
+              <DialogFooter>
+                <Button type="submit" disabled={updateBatch.isPending}>
+                  {updateBatch.isPending && <Loader2 className="h-4 w-4 animate-spin" />} Salvar
+                </Button>
+              </DialogFooter>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
+
