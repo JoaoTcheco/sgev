@@ -71,10 +71,11 @@ function PDVPage() {
         p_items: cart.map((i) => ({ product_id: i.product.id, quantity: i.quantity, unit_price: i.product.sale_price })) as never,
       });
       if (error) throw error;
-      return data;
+      return data as string;
     },
-    onSuccess: () => {
+    onSuccess: (saleId) => {
       toast.success("Venda concluída!");
+      setReceiptSaleId(saleId);
       setCart([]); setDiscount(0); setCustomerId(""); setPayment("cash");
       qc.invalidateQueries({ queryKey: ["dashboard"] });
       qc.invalidateQueries({ queryKey: ["batches"] });
