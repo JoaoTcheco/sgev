@@ -22,7 +22,7 @@ interface SaleRow {
   payment_method: string;
   notes: string | null;
   customers: { full_name: string; phone: string | null; email: string | null } | null;
-  sale_items: { id: string; product_name: string; quantity: number; unit_price: number; total: number }[];
+  sale_items: { id: string; product_name: string; quantity: number; unit_price: number; total: number; unit_label: string | null; unit_kind: string | null }[];
 }
 
 const STORE = { name: "FarmaGest", address: "Av. Saúde, 1000 — Centro", phone: "(11) 4000-0000" };
@@ -34,7 +34,8 @@ function buildReceiptText(s: SaleRow): string {
   if (s.customers?.full_name) lines.push(`Cliente: ${s.customers.full_name}`);
   lines.push("--------------------------------");
   s.sale_items.forEach((i) => {
-    lines.push(`${i.quantity}× ${i.product_name}`);
+    const unit = i.unit_label ? ` (${i.unit_label})` : "";
+    lines.push(`${i.quantity}× ${i.product_name}${unit}`);
     lines.push(`   ${formatCurrency(i.unit_price)}  =  ${formatCurrency(i.total)}`);
   });
   lines.push("--------------------------------");
@@ -51,7 +52,7 @@ function buildReceiptHTML(s: SaleRow): string {
   const rows = s.sale_items.map((i) => `
     <tr>
       <td>${i.quantity}×</td>
-      <td>${i.product_name}</td>
+      <td>${i.product_name}${i.unit_label ? ` <small style="color:#666">(${i.unit_label})</small>` : ""}</td>
       <td style="text-align:right">${formatCurrency(i.unit_price)}</td>
       <td style="text-align:right">${formatCurrency(i.total)}</td>
     </tr>`).join("");
@@ -101,7 +102,7 @@ export function ReceiptDialog({ saleId, open, onOpenChange }: Props) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("sales")
-        .select("id, sale_number, created_at, subtotal, discount, total, payment_method, notes, customers(full_name, phone, email), sale_items(id, product_name, quantity, unit_price, total)")
+        .select("id, sale_number, created_at, subtotal, discount, total, payment_method, notes, customers(full_name, phone, email), sale_items(id, product_name, quantity, unit_price, total, unit_label, unit_kind)")
         .eq("id", saleId!)
         .single();
       if (error) throw error;

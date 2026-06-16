@@ -38,10 +38,22 @@ function BatchesPage() {
   const { data: products = [] } = useQuery({
     queryKey: ["products-min"],
     queryFn: async () => {
-      const { data } = await supabase.from("products").select("id, name").eq("active", true).order("name");
-      return data ?? [];
+      const { data } = await supabase
+        .from("products")
+        .select("id, name, pack_size, sub_unit_label, unit")
+        .eq("active", true)
+        .order("name");
+      return (data ?? []) as Array<{ id: string; name: string; pack_size: number; sub_unit_label: string | null; unit: string | null }>;
     },
   });
+
+  const [productId, setProductId] = useState<string>("");
+  const [packs, setPacks] = useState<number>(1);
+  const selectedProduct = products.find((p) => p.id === productId);
+  const packSize = selectedProduct?.pack_size ?? 1;
+  const subLabel = selectedProduct?.sub_unit_label ?? null;
+  const totalSubUnits = packs * Math.max(1, packSize);
+
 
   const { data: suppliers = [] } = useQuery({
     queryKey: ["suppliers-min"],
@@ -75,15 +87,21 @@ function BatchesPage() {
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
+    const pid = String(fd.get("product_id"));
+    const prod = products.find((p) => p.id === pid);
+    const ps = prod?.pack_size ?? 1;
+    const packsQty = Number(fd.get("packs") || 0);
+    const subQty = ps > 1 ? packsQty * ps : packsQty;
     addMutation.mutate({
-      product_id: String(fd.get("product_id")),
+      product_id: pid,
       supplier_id: (fd.get("supplier_id") as string) || null,
       batch_number: String(fd.get("batch_number")),
       expiry_date: String(fd.get("expiry_date")),
-      quantity: Number(fd.get("quantity")),
+      quantity: subQty,
       cost_price: Number(fd.get("cost_price") || 0),
     });
   };
+
 
   return (
     <div className="space-y-6">
@@ -100,14 +118,19 @@ function BatchesPage() {
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
                   <Label>Produto *</Label>
-                  <Select name="product_id" required>
+                  <Select name="product_id" required value={productId} onValueChange={(v) => { setProductId(v); setPacks(1); }}>
                     <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                     <SelectContent>
-                      {products.map((p: { id: string; name: string }) => (
+                      {products.map((p) => (
                         <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
+                  {selectedProduct && packSize > 1 && subLabel && (
+                    <p className="text-xs text-muted-foreground">
+                      Cada caixinha contém <b>{packSize} {subLabel}s</b>.
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label>Fornecedor</Label>
@@ -130,11 +153,16 @@ function BatchesPage() {
                     <Input name="expiry_date" type="date" required />
                   </div>
                   <div className="space-y-2">
-                    <Label>Quantidade *</Label>
-                    <Input name="quantity" type="number" min="1" required />
+                    <Label>{packSize > 1 ? "Caixinhas recebidas *" : "Quantidade *"}</Label>
+                    <Input name="packs" type="number" min="1" required value={packs} onChange={(e) => setPacks(Number(e.target.value) || 0)} />
+                    {packSize > 1 && subLabel && packs > 0 && (
+                      <p className="text-[11px] text-muted-foreground">
+                        = <b>{totalSubUnits} {subLabel}s</b> em estoque
+                      </p>
+                    )}
                   </div>
                   <div className="space-y-2">
-                    <Label>Custo unitário</Label>
+                    <Label>Custo por {packSize > 1 && subLabel ? subLabel : "unidade"}</Label>
                     <Input name="cost_price" type="number" step="0.01" defaultValue={0} />
                   </div>
                 </div>
