@@ -38,10 +38,22 @@ function BatchesPage() {
   const { data: products = [] } = useQuery({
     queryKey: ["products-min"],
     queryFn: async () => {
-      const { data } = await supabase.from("products").select("id, name").eq("active", true).order("name");
-      return data ?? [];
+      const { data } = await supabase
+        .from("products")
+        .select("id, name, pack_size, sub_unit_label, unit")
+        .eq("active", true)
+        .order("name");
+      return (data ?? []) as Array<{ id: string; name: string; pack_size: number; sub_unit_label: string | null; unit: string | null }>;
     },
   });
+
+  const [productId, setProductId] = useState<string>("");
+  const [packs, setPacks] = useState<number>(1);
+  const selectedProduct = products.find((p) => p.id === productId);
+  const packSize = selectedProduct?.pack_size ?? 1;
+  const subLabel = selectedProduct?.sub_unit_label ?? null;
+  const totalSubUnits = packs * Math.max(1, packSize);
+
 
   const { data: suppliers = [] } = useQuery({
     queryKey: ["suppliers-min"],
