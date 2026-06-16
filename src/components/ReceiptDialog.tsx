@@ -6,6 +6,7 @@ import { Loader2, Printer, FileDown, Mail, MessageCircle, Copy } from "lucide-re
 import { supabase } from "@/integrations/supabase/client";
 import { formatCurrency, formatDateTime } from "@/lib/format";
 import { toast } from "sonner";
+import jsPDF from "jspdf";
 
 const PAYMENT_LABEL: Record<string, string> = {
   cash: "Dinheiro", debit: "Débito", credit: "Crédito", pix: "PIX", other: "Outro",
@@ -126,6 +127,56 @@ export function ReceiptDialog({ saleId, open, onOpenChange }: Props) {
     w.document.close();
   };
 
+  const handleDownloadPDF = () => {
+    if (!sale) return;
+    // 80mm thermal receipt format
+    const doc = new jsPDF({ unit: "mm", format: [80, 200] });
+    const W = 80;
+    let y = 8;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(13);
+    doc.text(STORE.name, W / 2, y, { align: "center" }); y += 5;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    doc.text(STORE.address, W / 2, y, { align: "center" }); y += 3.5;
+    doc.text(STORE.phone, W / 2, y, { align: "center" }); y += 5;
+    doc.setLineDashPattern([0.5, 0.5], 0);
+    doc.line(4, y, W - 4, y); y += 4;
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "bold");
+    doc.text(`Venda #${sale.sale_number}`, 4, y); y += 4;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    doc.text(formatDateTime(sale.created_at), 4, y); y += 3.5;
+    if (sale.customers?.full_name) { doc.text(`Cliente: ${sale.customers.full_name}`, 4, y); y += 3.5; }
+    doc.text(`Pagamento: ${PAYMENT_LABEL[sale.payment_method] ?? sale.payment_method}`, 4, y); y += 4;
+    doc.line(4, y, W - 4, y); y += 4;
+    doc.setFontSize(8);
+    sale.sale_items.forEach((i) => {
+      const name = doc.splitTextToSize(`${i.quantity}x ${i.product_name}`, W - 8);
+      doc.text(name, 4, y); y += name.length * 3.2;
+      doc.text(`${formatCurrency(i.unit_price)}`, 4, y);
+      doc.text(`${formatCurrency(i.total)}`, W - 4, y, { align: "right" });
+      y += 4;
+    });
+    doc.line(4, y, W - 4, y); y += 4;
+    doc.text("Subtotal", 4, y);
+    doc.text(formatCurrency(sale.subtotal), W - 4, y, { align: "right" }); y += 4;
+    if (sale.discount > 0) {
+      doc.text("Desconto", 4, y);
+      doc.text(`-${formatCurrency(sale.discount)}`, W - 4, y, { align: "right" }); y += 4;
+    }
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.text("TOTAL", 4, y);
+    doc.text(formatCurrency(sale.total), W - 4, y, { align: "right" }); y += 6;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    doc.text("Obrigado pela preferencia!", W / 2, y, { align: "center" });
+    doc.save(`recibo-${sale.sale_number}.pdf`);
+    toast.success("PDF baixado!");
+  };
+
   const handleWhatsApp = () => {
     if (!sale) return;
     const text = encodeURIComponent(buildReceiptText(sale));
@@ -167,8 +218,8 @@ export function ReceiptDialog({ saleId, open, onOpenChange }: Props) {
               <Button onClick={handlePrint} variant="default">
                 <Printer className="h-4 w-4" /> Imprimir
               </Button>
-              <Button onClick={handlePrint} variant="secondary" title="A janela de impressão permite salvar como PDF">
-                <FileDown className="h-4 w-4" /> Salvar PDF
+              <Button onClick={handleDownloadPDF} variant="secondary">
+                <FileDown className="h-4 w-4" /> Baixar PDF
               </Button>
               <Button onClick={handleWhatsApp} variant="outline">
                 <MessageCircle className="h-4 w-4" /> WhatsApp
