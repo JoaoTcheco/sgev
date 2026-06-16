@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus, Minus, Trash2, ShoppingCart, Search, Loader2, Check } from "lucide-react";
 import { formatCurrency } from "@/lib/format";
 import { toast } from "sonner";
+import { ReceiptDialog } from "@/components/ReceiptDialog";
 
 export const Route = createFileRoute("/_app/pdv")({
   component: PDVPage,
@@ -25,6 +26,7 @@ function PDVPage() {
   const [discount, setDiscount] = useState(0);
   const [customerId, setCustomerId] = useState<string>("");
   const [payment, setPayment] = useState<"cash" | "debit" | "credit" | "pix" | "other">("cash");
+  const [receiptSaleId, setReceiptSaleId] = useState<string | null>(null);
 
   const { data: products = [] } = useQuery({
     queryKey: ["pdv-products", search],
@@ -69,10 +71,11 @@ function PDVPage() {
         p_items: cart.map((i) => ({ product_id: i.product.id, quantity: i.quantity, unit_price: i.product.sale_price })) as never,
       });
       if (error) throw error;
-      return data;
+      return data as string;
     },
-    onSuccess: () => {
+    onSuccess: (saleId) => {
       toast.success("Venda concluída!");
+      setReceiptSaleId(saleId);
       setCart([]); setDiscount(0); setCustomerId(""); setPayment("cash");
       qc.invalidateQueries({ queryKey: ["dashboard"] });
       qc.invalidateQueries({ queryKey: ["batches"] });
@@ -171,6 +174,12 @@ function PDVPage() {
           </CardContent>
         </Card>
       </div>
+
+      <ReceiptDialog
+        saleId={receiptSaleId}
+        open={!!receiptSaleId}
+        onOpenChange={(o) => { if (!o) setReceiptSaleId(null); }}
+      />
     </div>
   );
 }
