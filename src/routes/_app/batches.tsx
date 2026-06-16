@@ -84,6 +84,26 @@ function BatchesPage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const updateBatch = useMutation({
+    mutationFn: async (v: { id: string; quantity: number; expiry_date: string; batch_number: string; cost_price: number }) => {
+      const { error } = await supabase.from("batches").update({
+        quantity: v.quantity, expiry_date: v.expiry_date, batch_number: v.batch_number, cost_price: v.cost_price,
+      }).eq("id", v.id);
+      if (error) throw error;
+    },
+    onSuccess: () => { toast.success("Lote atualizado"); qc.invalidateQueries({ queryKey: ["batches"] }); setEditBatch(null); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const deleteBatch = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("batches").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => { toast.success("Lote excluído"); qc.invalidateQueries({ queryKey: ["batches"] }); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
