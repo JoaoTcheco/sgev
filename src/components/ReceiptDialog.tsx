@@ -52,7 +52,7 @@ function buildReceiptHTML(s: SaleRow): string {
   const rows = s.sale_items.map((i) => `
     <tr>
       <td>${i.quantity}×</td>
-      <td>${i.product_name}</td>
+      <td>${i.product_name}${i.unit_label ? ` <small style="color:#666">(${i.unit_label})</small>` : ""}</td>
       <td style="text-align:right">${formatCurrency(i.unit_price)}</td>
       <td style="text-align:right">${formatCurrency(i.total)}</td>
     </tr>`).join("");
