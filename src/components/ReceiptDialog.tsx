@@ -102,7 +102,7 @@ export function ReceiptDialog({ saleId, open, onOpenChange }: Props) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("sales")
-        .select("id, sale_number, created_at, subtotal, discount, total, payment_method, notes, customers(full_name, phone, email), sale_items(id, product_name, quantity, unit_price, total)")
+        .select("id, sale_number, created_at, subtotal, discount, total, payment_method, notes, customers(full_name, phone, email), sale_items(id, product_name, quantity, unit_price, total, unit_label, unit_kind)")
         .eq("id", saleId!)
         .single();
       if (error) throw error;
