@@ -34,7 +34,8 @@ function buildReceiptText(s: SaleRow): string {
   if (s.customers?.full_name) lines.push(`Cliente: ${s.customers.full_name}`);
   lines.push("--------------------------------");
   s.sale_items.forEach((i) => {
-    lines.push(`${i.quantity}× ${i.product_name}`);
+    const unit = i.unit_label ? ` (${i.unit_label})` : "";
+    lines.push(`${i.quantity}× ${i.product_name}${unit}`);
     lines.push(`   ${formatCurrency(i.unit_price)}  =  ${formatCurrency(i.total)}`);
   });
   lines.push("--------------------------------");
