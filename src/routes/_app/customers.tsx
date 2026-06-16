@@ -105,7 +105,10 @@ function CustomersPage() {
                 <TableCell className="text-muted-foreground">{c.tax_id ?? "—"}</TableCell>
                 <TableCell>{c.phone ?? "—"}</TableCell>
                 <TableCell>{c.email ?? "—"}</TableCell>
-                <TableCell><Button size="sm" variant="ghost" onClick={() => { setEditing(c); setOpen(true); }}><Edit className="h-4 w-4" /></Button></TableCell>
+                <TableCell className="text-right">
+                  <Button size="sm" variant="ghost" onClick={() => { setEditing(c); setOpen(true); }}><Edit className="h-4 w-4" /></Button>
+                  <Button size="sm" variant="ghost" className="text-destructive" onClick={() => { if (confirm(`Excluir ${c.full_name}?`)) del.mutate(c.id); }}><Trash2 className="h-4 w-4" /></Button>
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
