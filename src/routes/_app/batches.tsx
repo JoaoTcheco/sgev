@@ -55,7 +55,7 @@ function BatchesPage() {
     mutationFn: async (vars: { product_id: string; supplier_id: string | null; batch_number: string; expiry_date: string; quantity: number; cost_price: number }) => {
       const { error } = await supabase.rpc("add_batch_entry", {
         p_product_id: vars.product_id,
-        p_supplier_id: vars.supplier_id,
+        p_supplier_id: vars.supplier_id as string,
         p_batch_number: vars.batch_number,
         p_expiry_date: vars.expiry_date,
         p_quantity: vars.quantity,
