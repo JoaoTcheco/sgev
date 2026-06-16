@@ -51,6 +51,15 @@ function AppLayout() {
     return true;
   });
 
+  const { data: alertCount = 0 } = useQuery({
+    queryKey: ["sidebar-alert-count"],
+    queryFn: async () => {
+      const { count } = await supabase.from("alerts").select("id", { count: "exact", head: true }).eq("resolved", false);
+      return count ?? 0;
+    },
+    refetchInterval: 60_000,
+  });
+
   return (
     <div className="min-h-screen flex bg-background">
       <aside className="w-64 bg-sidebar text-sidebar-foreground flex flex-col border-r border-sidebar-border">
@@ -60,6 +69,7 @@ function AppLayout() {
         <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
           {visibleNav.map((item) => {
             const active = path === item.to || path.startsWith(item.to + "/");
+            const badge = item.to === "/alerts" && alertCount > 0 ? alertCount : null;
             return (
               <Link
                 key={item.to}
@@ -72,7 +82,12 @@ function AppLayout() {
                 )}
               >
                 <item.icon className="h-4 w-4" />
-                {item.label}
+                <span className="flex-1">{item.label}</span>
+                {badge && (
+                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-destructive text-destructive-foreground min-w-[18px] text-center">
+                    {badge}
+                  </span>
+                )}
               </Link>
             );
           })}
