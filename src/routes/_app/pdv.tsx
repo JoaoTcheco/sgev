@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus, Minus, Trash2, ShoppingCart, Search, Loader2, Check } from "lucide-react";
 import { formatCurrency } from "@/lib/format";
 import { toast } from "sonner";
+import { ReceiptDialog } from "@/components/ReceiptDialog";
 
 export const Route = createFileRoute("/_app/pdv")({
   component: PDVPage,
