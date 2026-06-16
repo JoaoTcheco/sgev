@@ -17,6 +17,7 @@ import { Route as AppProductsRouteImport } from './routes/_app/products'
 import { Route as AppDashboardRouteImport } from './routes/_app/dashboard'
 import { Route as AppCustomersRouteImport } from './routes/_app/customers'
 import { Route as AppBatchesRouteImport } from './routes/_app/batches'
+import { Route as AppAlertsRouteImport } from './routes/_app/alerts'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -57,10 +58,16 @@ const AppBatchesRoute = AppBatchesRouteImport.update({
   path: '/batches',
   getParentRoute: () => AppRoute,
 } as any)
+const AppAlertsRoute = AppAlertsRouteImport.update({
+  id: '/alerts',
+  path: '/alerts',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/alerts': typeof AppAlertsRoute
   '/batches': typeof AppBatchesRoute
   '/customers': typeof AppCustomersRoute
   '/dashboard': typeof AppDashboardRoute
@@ -70,6 +77,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/alerts': typeof AppAlertsRoute
   '/batches': typeof AppBatchesRoute
   '/customers': typeof AppCustomersRoute
   '/dashboard': typeof AppDashboardRoute
@@ -81,6 +89,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_app': typeof AppRouteWithChildren
   '/auth': typeof AuthRoute
+  '/_app/alerts': typeof AppAlertsRoute
   '/_app/batches': typeof AppBatchesRoute
   '/_app/customers': typeof AppCustomersRoute
   '/_app/dashboard': typeof AppDashboardRoute
@@ -92,6 +101,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/alerts'
     | '/batches'
     | '/customers'
     | '/dashboard'
@@ -101,6 +111,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/alerts'
     | '/batches'
     | '/customers'
     | '/dashboard'
@@ -111,6 +122,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_app'
     | '/auth'
+    | '/_app/alerts'
     | '/_app/batches'
     | '/_app/customers'
     | '/_app/dashboard'
@@ -182,10 +194,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppBatchesRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/alerts': {
+      id: '/_app/alerts'
+      path: '/alerts'
+      fullPath: '/alerts'
+      preLoaderRoute: typeof AppAlertsRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
 interface AppRouteChildren {
+  AppAlertsRoute: typeof AppAlertsRoute
   AppBatchesRoute: typeof AppBatchesRoute
   AppCustomersRoute: typeof AppCustomersRoute
   AppDashboardRoute: typeof AppDashboardRoute
@@ -194,6 +214,7 @@ interface AppRouteChildren {
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppAlertsRoute: AppAlertsRoute,
   AppBatchesRoute: AppBatchesRoute,
   AppCustomersRoute: AppCustomersRoute,
   AppDashboardRoute: AppDashboardRoute,
