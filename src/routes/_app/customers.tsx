@@ -46,6 +46,15 @@ function CustomersPage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const del = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("customers").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => { toast.success("Cliente excluído"); qc.invalidateQueries({ queryKey: ["customers"] }); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
