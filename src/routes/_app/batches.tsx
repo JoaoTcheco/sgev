@@ -22,6 +22,7 @@ function BatchesPage() {
   const auth = useAuth();
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
+  const [editBatch, setEditBatch] = useState<null | { id: string; batch_number: string; expiry_date: string; quantity: number; cost_price: number; products?: { name: string } | null }>(null);
 
   const { data: batches = [], isLoading } = useQuery({
     queryKey: ["batches"],
