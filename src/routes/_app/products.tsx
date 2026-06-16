@@ -266,9 +266,14 @@ function ProductsPage() {
                   <TableCell className="text-right">{p.min_stock}</TableCell>
                   <TableCell>
                     {auth.isStaff && (
-                      <Button size="sm" variant="ghost" onClick={() => openEdit(p)}>
-                        <Edit className="h-4 w-4" />
-                      </Button>
+                      <div className="flex justify-end gap-1">
+                        <Button size="sm" variant="ghost" onClick={() => openEdit(p)}>
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button size="sm" variant="ghost" className="text-destructive" onClick={() => setDeleting(p)}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     )}
                   </TableCell>
                 </TableRow>
