@@ -55,11 +55,12 @@ function ProductsPage() {
 
   const saveMutation = useMutation({
     mutationFn: async (payload: Partial<Product>) => {
+      const p = payload as never;
       if (editing) {
-        const { error } = await supabase.from("products").update(payload).eq("id", editing.id);
+        const { error } = await supabase.from("products").update(p).eq("id", editing.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("products").insert(payload as never);
+        const { error } = await supabase.from("products").insert(p);
         if (error) throw error;
       }
     },
