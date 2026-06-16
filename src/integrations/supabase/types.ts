@@ -219,8 +219,11 @@ export type Database = {
           manufacturer: string | null
           min_stock: number
           name: string
+          pack_size: number
           requires_prescription: boolean
           sale_price: number
+          sub_unit_label: string | null
+          sub_unit_price: number | null
           tarja: Database["public"]["Enums"]["medicine_tarja"] | null
           unit: string | null
           updated_at: string
@@ -237,8 +240,11 @@ export type Database = {
           manufacturer?: string | null
           min_stock?: number
           name: string
+          pack_size?: number
           requires_prescription?: boolean
           sale_price?: number
+          sub_unit_label?: string | null
+          sub_unit_price?: number | null
           tarja?: Database["public"]["Enums"]["medicine_tarja"] | null
           unit?: string | null
           updated_at?: string
@@ -255,8 +261,11 @@ export type Database = {
           manufacturer?: string | null
           min_stock?: number
           name?: string
+          pack_size?: number
           requires_prescription?: boolean
           sale_price?: number
+          sub_unit_label?: string | null
+          sub_unit_price?: number | null
           tarja?: Database["public"]["Enums"]["medicine_tarja"] | null
           unit?: string | null
           updated_at?: string
@@ -311,6 +320,8 @@ export type Database = {
           quantity: number
           sale_id: string
           total: number
+          unit_kind: string
+          unit_label: string | null
           unit_price: number
         }
         Insert: {
@@ -322,6 +333,8 @@ export type Database = {
           quantity: number
           sale_id: string
           total: number
+          unit_kind?: string
+          unit_label?: string | null
           unit_price: number
         }
         Update: {
@@ -333,6 +346,8 @@ export type Database = {
           quantity?: number
           sale_id?: string
           total?: number
+          unit_kind?: string
+          unit_label?: string | null
           unit_price?: number
         }
         Relationships: [
