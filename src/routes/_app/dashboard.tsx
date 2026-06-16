@@ -3,12 +3,16 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/format";
-import { Package, ShoppingCart, AlertTriangle, TrendingUp, Bell, Layers } from "lucide-react";
+import { Package, ShoppingCart, AlertTriangle, TrendingUp, Bell, Layers, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis, PieChart, Pie, Cell, Legend } from "recharts";
 
 export const Route = createFileRoute("/_app/dashboard")({
   component: Dashboard,
 });
+
+const PAY_LABEL: Record<string, string> = { cash: "Dinheiro", debit: "Débito", credit: "Crédito", pix: "PIX", other: "Outro" };
+const PIE_COLORS = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--chart-4)", "var(--chart-5)"];
 
 function Dashboard() {
   const { data } = useQuery({
@@ -16,18 +20,38 @@ function Dashboard() {
     queryFn: async () => {
       const today = new Date(); today.setHours(0, 0, 0, 0);
       const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+      const since14 = new Date(Date.now() - 14 * 86400000);
 
-      const [todaySales, monthSales, productCount, lowStock, alerts, expiringBatches] = await Promise.all([
+      const [todaySales, monthSales, productCount, lowStock, alerts, expiringBatches, recentSales] = await Promise.all([
         supabase.from("sales").select("total, id").eq("status", "completed").gte("created_at", today.toISOString()),
         supabase.from("sales").select("total, id").eq("status", "completed").gte("created_at", monthStart.toISOString()),
         supabase.from("products").select("id", { count: "exact", head: true }).eq("active", true),
         supabase.from("alerts").select("id", { count: "exact", head: true }).eq("type", "low_stock").eq("resolved", false),
         supabase.from("alerts").select("*").eq("resolved", false).order("severity", { ascending: false }).limit(8),
         supabase.from("batches").select("*, products(name)").gt("quantity", 0).lte("expiry_date", new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10)).order("expiry_date").limit(5),
+        supabase.from("sales").select("total, payment_method, created_at").eq("status", "completed").gte("created_at", since14.toISOString()),
       ]);
 
       const todayTotal = (todaySales.data ?? []).reduce((s: number, r: { total: number | string }) => s + Number(r.total), 0);
       const monthTotal = (monthSales.data ?? []).reduce((s: number, r: { total: number | string }) => s + Number(r.total), 0);
+
+      // Series últimos 14 dias
+      const series: { day: string; total: number }[] = [];
+      for (let i = 13; i >= 0; i--) {
+        const d = new Date(); d.setDate(d.getDate() - i); d.setHours(0, 0, 0, 0);
+        const next = new Date(d); next.setDate(next.getDate() + 1);
+        const total = (recentSales.data ?? []).filter((s: { created_at: string }) => {
+          const t = new Date(s.created_at); return t >= d && t < next;
+        }).reduce((sum: number, s: { total: number | string }) => sum + Number(s.total), 0);
+        series.push({ day: d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }), total: Math.round(total * 100) / 100 });
+      }
+
+      // Pagamentos
+      const payMap = new Map<string, number>();
+      (recentSales.data ?? []).forEach((s: { payment_method: string; total: number | string }) => {
+        payMap.set(s.payment_method, (payMap.get(s.payment_method) ?? 0) + Number(s.total));
+      });
+      const payments = Array.from(payMap.entries()).map(([k, v]) => ({ name: PAY_LABEL[k] ?? k, value: Math.round(v * 100) / 100 }));
 
       return {
         todayCount: todaySales.data?.length ?? 0,
@@ -38,6 +62,8 @@ function Dashboard() {
         lowStockCount: lowStock.count ?? 0,
         alerts: alerts.data ?? [],
         expiring: expiringBatches.data ?? [],
+        series,
+        payments,
       };
     },
   });
@@ -61,12 +87,12 @@ function Dashboard() {
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((s) => (
-          <Card key={s.label}>
+          <Card key={s.label} className="overflow-hidden">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">{s.label}</p>
-                  <p className="text-3xl font-bold mt-1">{s.value}</p>
+                  <p className="text-3xl font-bold mt-1 tracking-tight">{s.value}</p>
                   <p className="text-xs text-muted-foreground mt-1">{s.sub}</p>
                 </div>
                 <div className={`h-12 w-12 rounded-xl flex items-center justify-center ${s.color}`}>
@@ -76,6 +102,56 @@ function Dashboard() {
             </CardContent>
           </Card>
         ))}
+      </div>
+
+      <div className="grid lg:grid-cols-3 gap-4">
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2"><TrendingUp className="h-5 w-5 text-primary" /> Vendas — últimos 14 dias</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={data?.series ?? []}>
+                  <defs>
+                    <linearGradient id="salesGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="var(--primary)" stopOpacity={0.4} />
+                      <stop offset="100%" stopColor="var(--primary)" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+                  <XAxis dataKey="day" tick={{ fontSize: 11 }} />
+                  <YAxis tick={{ fontSize: 11 }} />
+                  <Tooltip formatter={(v: number) => formatCurrency(v)} contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 8 }} />
+                  <Area type="monotone" dataKey="total" stroke="var(--primary)" strokeWidth={2} fill="url(#salesGrad)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2"><Wallet className="h-5 w-5 text-success" /> Formas de pagamento</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {(data?.payments ?? []).length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-12">Sem vendas no período.</p>
+            ) : (
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={data?.payments ?? []} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={45} outerRadius={75} paddingAngle={2}>
+                      {(data?.payments ?? []).map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
+                    </Pie>
+                    <Tooltip formatter={(v: number) => formatCurrency(v)} contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 8 }} />
+                    <Legend wrapperStyle={{ fontSize: 11 }} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
 
       <div className="grid lg:grid-cols-2 gap-4">
