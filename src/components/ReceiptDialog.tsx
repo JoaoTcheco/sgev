@@ -218,8 +218,8 @@ export function ReceiptDialog({ saleId, open, onOpenChange }: Props) {
               <Button onClick={handlePrint} variant="default">
                 <Printer className="h-4 w-4" /> Imprimir
               </Button>
-              <Button onClick={handlePrint} variant="secondary" title="A janela de impressão permite salvar como PDF">
-                <FileDown className="h-4 w-4" /> Salvar PDF
+              <Button onClick={handleDownloadPDF} variant="secondary">
+                <FileDown className="h-4 w-4" /> Baixar PDF
               </Button>
               <Button onClick={handleWhatsApp} variant="outline">
                 <MessageCircle className="h-4 w-4" /> WhatsApp
