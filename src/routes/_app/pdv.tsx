@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -49,7 +49,20 @@ function PDVPage() {
   const [discount, setDiscount] = useState(0);
   const [customerId, setCustomerId] = useState<string>("");
   const [payment, setPayment] = useState<"cash" | "debit" | "credit" | "pix" | "other">("cash");
+  const [cashReceived, setCashReceived] = useState<number>(0);
   const [receiptSaleId, setReceiptSaleId] = useState<string | null>(null);
+  const searchRef = useRef<HTMLInputElement>(null);
+
+  // Atalho global: "/" foca a busca
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "/" && document.activeElement?.tagName !== "INPUT" && document.activeElement?.tagName !== "TEXTAREA") {
+        e.preventDefault(); searchRef.current?.focus();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
   const { data: products = [] } = useQuery({
     queryKey: ["pdv-products", search],
@@ -119,7 +132,7 @@ function PDVPage() {
     onSuccess: (saleId) => {
       toast.success("Venda concluída!");
       setReceiptSaleId(saleId);
-      setCart([]); setDiscount(0); setCustomerId(""); setPayment("cash");
+      setCart([]); setDiscount(0); setCustomerId(""); setPayment("cash"); setCashReceived(0);
       qc.invalidateQueries({ queryKey: ["dashboard"] });
       qc.invalidateQueries({ queryKey: ["batches"] });
       qc.invalidateQueries({ queryKey: ["sales-history"] });
@@ -139,7 +152,21 @@ function PDVPage() {
           <Card><CardContent className="pt-6">
             <div className="relative">
               <Search className="h-4 w-4 absolute left-3 top-3 text-muted-foreground" />
-              <Input autoFocus placeholder="Buscar ou ler código de barras..." className="pl-9" value={search} onChange={(e) => setSearch(e.target.value)} />
+              <Input
+                ref={searchRef}
+                autoFocus
+                placeholder='Buscar ou ler código de barras...  (atalho: " / ")'
+                className="pl-9"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && products.length > 0) {
+                    e.preventDefault();
+                    addToCart(products[0], "pack");
+                    setSearch("");
+                  }
+                }}
+              />
             </div>
             <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[460px] overflow-y-auto">
               {products.map((p) => {
@@ -228,6 +255,19 @@ function PDVPage() {
                 <Input type="number" step="0.01" min="0" value={discount} onChange={(e) => setDiscount(Number(e.target.value) || 0)} />
               </div>
             </div>
+
+            {payment === "cash" && (
+              <div className="space-y-1">
+                <Label className="text-xs">Valor recebido (R$)</Label>
+                <Input type="number" step="0.01" min="0" value={cashReceived || ""} onChange={(e) => setCashReceived(Number(e.target.value) || 0)} placeholder="0,00" />
+                <div className="flex justify-between text-xs pt-1">
+                  <span className="text-muted-foreground">Troco</span>
+                  <span className={cashReceived >= total && total > 0 ? "font-semibold text-success" : "text-muted-foreground"}>
+                    {formatCurrency(Math.max(0, cashReceived - total))}
+                  </span>
+                </div>
+              </div>
+            )}
 
             <div className="space-y-1 pt-2 border-t text-sm">
               <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span>{formatCurrency(subtotal)}</span></div>
