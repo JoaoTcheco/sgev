@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AppSuppliersRouteImport } from './routes/_app/suppliers'
 import { Route as AppProductsRouteImport } from './routes/_app/products'
 import { Route as AppDashboardRouteImport } from './routes/_app/dashboard'
 import { Route as AppBatchesRouteImport } from './routes/_app/batches'
@@ -29,6 +30,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AppSuppliersRoute = AppSuppliersRouteImport.update({
+  id: '/suppliers',
+  path: '/suppliers',
+  getParentRoute: () => AppRoute,
 } as any)
 const AppProductsRoute = AppProductsRouteImport.update({
   id: '/products',
@@ -52,6 +58,7 @@ export interface FileRoutesByFullPath {
   '/batches': typeof AppBatchesRoute
   '/dashboard': typeof AppDashboardRoute
   '/products': typeof AppProductsRoute
+  '/suppliers': typeof AppSuppliersRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -59,6 +66,7 @@ export interface FileRoutesByTo {
   '/batches': typeof AppBatchesRoute
   '/dashboard': typeof AppDashboardRoute
   '/products': typeof AppProductsRoute
+  '/suppliers': typeof AppSuppliersRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -68,12 +76,19 @@ export interface FileRoutesById {
   '/_app/batches': typeof AppBatchesRoute
   '/_app/dashboard': typeof AppDashboardRoute
   '/_app/products': typeof AppProductsRoute
+  '/_app/suppliers': typeof AppSuppliersRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/batches' | '/dashboard' | '/products'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/batches'
+    | '/dashboard'
+    | '/products'
+    | '/suppliers'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/batches' | '/dashboard' | '/products'
+  to: '/' | '/auth' | '/batches' | '/dashboard' | '/products' | '/suppliers'
   id:
     | '__root__'
     | '/'
@@ -82,6 +97,7 @@ export interface FileRouteTypes {
     | '/_app/batches'
     | '/_app/dashboard'
     | '/_app/products'
+    | '/_app/suppliers'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -113,6 +129,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_app/suppliers': {
+      id: '/_app/suppliers'
+      path: '/suppliers'
+      fullPath: '/suppliers'
+      preLoaderRoute: typeof AppSuppliersRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/products': {
       id: '/_app/products'
       path: '/products'
@@ -141,12 +164,14 @@ interface AppRouteChildren {
   AppBatchesRoute: typeof AppBatchesRoute
   AppDashboardRoute: typeof AppDashboardRoute
   AppProductsRoute: typeof AppProductsRoute
+  AppSuppliersRoute: typeof AppSuppliersRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
   AppBatchesRoute: AppBatchesRoute,
   AppDashboardRoute: AppDashboardRoute,
   AppProductsRoute: AppProductsRoute,
+  AppSuppliersRoute: AppSuppliersRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
