@@ -200,6 +200,24 @@ function ProductsPage() {
                   <Label>Estoque ideal</Label>
                   <Input name="ideal_stock" type="number" defaultValue={editing?.ideal_stock ?? 20} />
                 </div>
+                <div className="col-span-2 border rounded-md p-3 space-y-2 bg-muted/30">
+                  <p className="text-sm font-medium">Fracionamento (caixinha → carteiras)</p>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="space-y-2">
+                      <Label className="text-xs">Carteiras por caixinha</Label>
+                      <Input name="pack_size" type="number" min="1" defaultValue={editing?.pack_size ?? 1} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-xs">Rótulo da sub-unidade</Label>
+                      <Input name="sub_unit_label" placeholder="ex.: carteira" defaultValue={editing?.sub_unit_label ?? ""} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-xs">Preço por sub-unidade</Label>
+                      <Input name="sub_unit_price" type="number" step="0.01" placeholder="auto" defaultValue={editing?.sub_unit_price ?? ""} />
+                    </div>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground">Deixe sub-unidade em branco para vender apenas em caixinha.</p>
+                </div>
                 <div className="col-span-2 flex items-center gap-3">
                   <Switch name="requires_prescription" defaultChecked={editing?.requires_prescription} />
                   <Label>Exige receita médica</Label>
