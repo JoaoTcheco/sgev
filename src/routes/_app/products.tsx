@@ -10,10 +10,14 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Search, Edit, Loader2 } from "lucide-react";
+import { Plus, Search, Edit, Loader2, Trash2 } from "lucide-react";
 import { formatCurrency } from "@/lib/format";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/_app/products")({
   component: ProductsPage,
@@ -25,6 +29,7 @@ type Product = {
   manufacturer: string | null; sale_price: number; cost_price: number; min_stock: number;
   ideal_stock: number; tarja: Tarja | null; requires_prescription: boolean; active: boolean;
   category_id: string | null; unit: string | null;
+  pack_size: number; sub_unit_label: string | null; sub_unit_price: number | null;
 };
 
 function ProductsPage() {
