@@ -1,10 +1,12 @@
 import { createFileRoute, Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import {
   LayoutDashboard, Package, Layers, Truck, Users, ShoppingCart,
   Receipt, Bell, BarChart3, UserCog, LogOut, Pill, Loader2, LogIn,
 } from "lucide-react";
 import { useAuth, roleLabel } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_app")({
