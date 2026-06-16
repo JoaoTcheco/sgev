@@ -132,7 +132,7 @@ function PDVPage() {
     onSuccess: (saleId) => {
       toast.success("Venda concluída!");
       setReceiptSaleId(saleId);
-      setCart([]); setDiscount(0); setCustomerId(""); setPayment("cash");
+      setCart([]); setDiscount(0); setCustomerId(""); setPayment("cash"); setCashReceived(0);
       qc.invalidateQueries({ queryKey: ["dashboard"] });
       qc.invalidateQueries({ queryKey: ["batches"] });
       qc.invalidateQueries({ queryKey: ["sales-history"] });
