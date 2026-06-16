@@ -174,6 +174,12 @@ function PDVPage() {
           </CardContent>
         </Card>
       </div>
+
+      <ReceiptDialog
+        saleId={receiptSaleId}
+        open={!!receiptSaleId}
+        onOpenChange={(o) => { if (!o) setReceiptSaleId(null); }}
+      />
     </div>
   );
 }
