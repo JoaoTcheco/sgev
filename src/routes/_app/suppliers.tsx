@@ -106,7 +106,10 @@ function SuppliersPage() {
                 <TableCell className="text-muted-foreground">{s.tax_id ?? "—"}</TableCell>
                 <TableCell>{s.contact_name ?? "—"}</TableCell>
                 <TableCell>{s.phone ?? "—"}</TableCell>
-                <TableCell><Button size="sm" variant="ghost" onClick={() => { setEditing(s); setOpen(true); }}><Edit className="h-4 w-4" /></Button></TableCell>
+                <TableCell className="text-right">
+                  <Button size="sm" variant="ghost" onClick={() => { setEditing(s); setOpen(true); }}><Edit className="h-4 w-4" /></Button>
+                  <Button size="sm" variant="ghost" className="text-destructive" onClick={() => { if (confirm(`Excluir ${s.legal_name}?`)) del.mutate(s.id); }}><Trash2 className="h-4 w-4" /></Button>
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
