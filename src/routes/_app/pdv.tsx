@@ -26,6 +26,7 @@ function PDVPage() {
   const [discount, setDiscount] = useState(0);
   const [customerId, setCustomerId] = useState<string>("");
   const [payment, setPayment] = useState<"cash" | "debit" | "credit" | "pix" | "other">("cash");
+  const [receiptSaleId, setReceiptSaleId] = useState<string | null>(null);
 
   const { data: products = [] } = useQuery({
     queryKey: ["pdv-products", search],
