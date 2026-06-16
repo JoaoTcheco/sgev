@@ -256,6 +256,19 @@ function PDVPage() {
               </div>
             </div>
 
+            {payment === "cash" && (
+              <div className="space-y-1">
+                <Label className="text-xs">Valor recebido (R$)</Label>
+                <Input type="number" step="0.01" min="0" value={cashReceived || ""} onChange={(e) => setCashReceived(Number(e.target.value) || 0)} placeholder="0,00" />
+                <div className="flex justify-between text-xs pt-1">
+                  <span className="text-muted-foreground">Troco</span>
+                  <span className={cashReceived >= total && total > 0 ? "font-semibold text-success" : "text-muted-foreground"}>
+                    {formatCurrency(Math.max(0, cashReceived - total))}
+                  </span>
+                </div>
+              </div>
+            )}
+
             <div className="space-y-1 pt-2 border-t text-sm">
               <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span>{formatCurrency(subtotal)}</span></div>
               <div className="flex justify-between"><span className="text-muted-foreground">Desconto</span><span>− {formatCurrency(discount)}</span></div>
