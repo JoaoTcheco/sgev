@@ -152,7 +152,21 @@ function PDVPage() {
           <Card><CardContent className="pt-6">
             <div className="relative">
               <Search className="h-4 w-4 absolute left-3 top-3 text-muted-foreground" />
-              <Input autoFocus placeholder="Buscar ou ler código de barras..." className="pl-9" value={search} onChange={(e) => setSearch(e.target.value)} />
+              <Input
+                ref={searchRef}
+                autoFocus
+                placeholder='Buscar ou ler código de barras...  (atalho: " / ")'
+                className="pl-9"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && products.length > 0) {
+                    e.preventDefault();
+                    addToCart(products[0], "pack");
+                    setSearch("");
+                  }
+                }}
+              />
             </div>
             <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[460px] overflow-y-auto">
               {products.map((p) => {
