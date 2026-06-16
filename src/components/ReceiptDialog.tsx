@@ -6,6 +6,7 @@ import { Loader2, Printer, FileDown, Mail, MessageCircle, Copy } from "lucide-re
 import { supabase } from "@/integrations/supabase/client";
 import { formatCurrency, formatDateTime } from "@/lib/format";
 import { toast } from "sonner";
+import jsPDF from "jspdf";
 
 const PAYMENT_LABEL: Record<string, string> = {
   cash: "Dinheiro", debit: "Débito", credit: "Crédito", pix: "PIX", other: "Outro",
