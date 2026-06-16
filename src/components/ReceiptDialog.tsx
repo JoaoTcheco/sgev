@@ -22,7 +22,7 @@ interface SaleRow {
   payment_method: string;
   notes: string | null;
   customers: { full_name: string; phone: string | null; email: string | null } | null;
-  sale_items: { id: string; product_name: string; quantity: number; unit_price: number; total: number }[];
+  sale_items: { id: string; product_name: string; quantity: number; unit_price: number; total: number; unit_label: string | null; unit_kind: string | null }[];
 }
 
 const STORE = { name: "FarmaGest", address: "Av. Saúde, 1000 — Centro", phone: "(11) 4000-0000" };
