@@ -1,8 +1,7 @@
 import { createFileRoute, Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
-import { useEffect } from "react";
 import {
   LayoutDashboard, Package, Layers, Truck, Users, ShoppingCart,
-  Receipt, Bell, BarChart3, UserCog, LogOut, Pill, Loader2,
+  Receipt, Bell, BarChart3, UserCog, LogOut, Pill, Loader2, LogIn,
 } from "lucide-react";
 import { useAuth, roleLabel } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -31,11 +30,12 @@ function AppLayout() {
   const auth = useAuth();
   const path = useRouterState({ select: (s) => s.location.pathname });
 
-  useEffect(() => {
-    if (!auth.loading && !auth.user) navigate({ to: "/auth" });
-  }, [auth.loading, auth.user, navigate]);
+  // Modo exploração: sem login obrigatório — toda a navegação fica acessível
+  const exploring = !auth.user;
+  const isAdmin = auth.isAdmin || exploring;
+  const isStaff = auth.isStaff || exploring;
 
-  if (auth.loading || !auth.user) {
+  if (auth.loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -44,8 +44,8 @@ function AppLayout() {
   }
 
   const visibleNav = NAV.filter((item) => {
-    if ("admin" in item && item.admin) return auth.isAdmin;
-    if ("staff" in item && item.staff) return auth.isStaff;
+    if ("admin" in item && item.admin) return isAdmin;
+    if ("staff" in item && item.staff) return isStaff;
     return true;
   });
 
@@ -77,18 +77,30 @@ function AppLayout() {
         </nav>
         <div className="p-3 border-t border-sidebar-border space-y-2">
           <div className="px-3 py-2">
-            <p className="text-sm font-medium truncate">{auth.profile?.full_name ?? auth.user.email}</p>
+            <p className="text-sm font-medium truncate">
+              {auth.profile?.full_name ?? auth.user?.email ?? "Visitante (modo exploração)"}
+            </p>
             <p className="text-xs text-sidebar-foreground/60">
-              {auth.highestRole ? roleLabel[auth.highestRole] : "Sem papel"}
+              {auth.highestRole ? roleLabel[auth.highestRole] : exploring ? "Sem login" : "Sem papel"}
             </p>
           </div>
-          <Button
-            variant="ghost"
-            className="w-full justify-start text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-            onClick={async () => { await auth.signOut(); navigate({ to: "/auth" }); }}
-          >
-            <LogOut className="h-4 w-4" /> Sair
-          </Button>
+          {exploring ? (
+            <Button
+              variant="ghost"
+              className="w-full justify-start text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+              onClick={() => navigate({ to: "/auth" })}
+            >
+              <LogIn className="h-4 w-4" /> Entrar
+            </Button>
+          ) : (
+            <Button
+              variant="ghost"
+              className="w-full justify-start text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+              onClick={async () => { await auth.signOut(); navigate({ to: "/auth" }); }}
+            >
+              <LogOut className="h-4 w-4" /> Sair
+            </Button>
+          )}
         </div>
       </aside>
       <main className="flex-1 overflow-y-auto">
