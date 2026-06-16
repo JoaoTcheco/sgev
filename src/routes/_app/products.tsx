@@ -19,10 +19,11 @@ export const Route = createFileRoute("/_app/products")({
   component: ProductsPage,
 });
 
+type Tarja = "livre" | "amarela" | "vermelha" | "preta";
 type Product = {
   id: string; name: string; active_ingredient: string | null; barcode: string | null;
   manufacturer: string | null; sale_price: number; cost_price: number; min_stock: number;
-  ideal_stock: number; tarja: string | null; requires_prescription: boolean; active: boolean;
+  ideal_stock: number; tarja: Tarja | null; requires_prescription: boolean; active: boolean;
   category_id: string | null; unit: string | null;
 };
 
