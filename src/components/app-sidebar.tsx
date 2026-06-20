@@ -15,7 +15,7 @@ import {
   Settings,
   Receipt,
   Banknote,
-  ShieldCheck,
+  
 } from "lucide-react";
 import {
   Sidebar,
