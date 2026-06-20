@@ -145,11 +145,13 @@ function VendasPage() {
         })),
       });
       if (error) throw error;
-      return data as string;
+      const saleId = data as string;
+      const { data: sale } = await supabase.from("sales").select("receipt_number").eq("id", saleId).maybeSingle();
+      return { saleId, receipt_number: (sale?.receipt_number as string | null) ?? null };
     },
-    onSuccess: (saleId) => {
-      toast.success("Venda finalizada");
-      setLastSale({ id: saleId, at: new Date() });
+    onSuccess: ({ saleId, receipt_number }) => {
+      toast.success("Venda finalizada", { description: receipt_number ? `Recibo ${receipt_number}` : undefined });
+      setLastSale({ id: saleId, receipt_number, at: new Date() });
       queryClient.invalidateQueries({ queryKey: ["pdv-products"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard"] });
     },
