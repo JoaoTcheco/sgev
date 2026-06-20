@@ -135,7 +135,7 @@ function VendasPage() {
     mutationFn: async () => {
       if (cart.length === 0) throw new Error("Carrinho vazio");
       const { data, error } = await supabase.rpc("process_sale", {
-        p_customer_id: null,
+        p_customer_id: null as unknown as string,
         p_payment_method: payment,
         p_discount: discount,
         p_items: cart.map((i) => ({
