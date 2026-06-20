@@ -38,15 +38,15 @@ const OPERATIONAL: Item[] = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard, roles: ["admin", "pharmacist", "cashier"] },
   { title: "Vendas", url: "/vendas", icon: ShoppingCart, roles: ["admin", "pharmacist", "cashier"] },
   { title: "Validar Recibo", url: "/recibo", icon: Receipt, roles: ["admin", "pharmacist", "cashier"] },
-  { title: "Estoque", url: "/estoque", icon: Package, roles: ["admin", "pharmacist", "cashier"] },
   { title: "Alertas", url: "/alertas", icon: AlertTriangle, roles: ["admin", "pharmacist", "cashier"] },
-  { title: "Estatísticas", url: "/estatisticas", icon: BarChart3, roles: ["admin", "pharmacist", "cashier"] },
+  { title: "Estoque", url: "/estoque", icon: Package, roles: ["admin", "pharmacist"] },
+  { title: "Estatísticas", url: "/estatisticas", icon: BarChart3, roles: ["admin", "pharmacist"] },
 ];
 
 const MANAGEMENT: Item[] = [
   { title: "Contas", url: "/contas", icon: Wallet, roles: ["admin", "pharmacist"] },
   { title: "Fornecedores", url: "/fornecedores", icon: Truck, roles: ["admin", "pharmacist"] },
-  { title: "Relatórios", url: "/relatorios", icon: FileText, roles: ["admin", "pharmacist"] },
+  { title: "Relatórios", url: "/relatorios", icon: FileText, roles: ["admin"] },
 ];
 
 const ADMIN: Item[] = [
@@ -54,6 +54,7 @@ const ADMIN: Item[] = [
   { title: "Histórico & Logs", url: "/historico", icon: History, roles: ["admin"] },
   { title: "Configurações", url: "/configuracoes", icon: Settings, roles: ["admin"] },
 ];
+
 
 export function AppSidebar() {
   const { user } = useAuthUser();
