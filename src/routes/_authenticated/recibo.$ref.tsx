@@ -99,7 +99,7 @@ function ReciboPage() {
               <div className="grid grid-cols-2 gap-3">
                 <Field label="Número">{data.receipt_number ?? "—"}</Field>
                 <Field label="Data">{formatDateTime(new Date(data.created_at))}</Field>
-                <Field label="Operador">{(data as any).profiles?.full_name ?? (data as any).profiles?.email ?? "—"}</Field>
+                <Field label="Operador">{(data as any).operator?.full_name ?? (data as any).operator?.email ?? "—"}</Field>
                 <Field label="Pagamento">{PAYMENT_LABEL[data.payment_method] ?? data.payment_method}</Field>
                 <Field label="Subtotal">{Number(data.subtotal).toFixed(2)} MT</Field>
                 <Field label="Desconto">{Number(data.discount).toFixed(2)} MT</Field>
@@ -158,7 +158,7 @@ function ReciboPage() {
                     change={null}
                     saleId={data.id}
                     receiptNumber={data.receipt_number}
-                    operatorName={(data as any).profiles?.full_name ?? (data as any).profiles?.email ?? null}
+                    operatorName={(data as any).operator?.full_name ?? (data as any).operator?.email ?? null}
                     at={new Date(data.created_at)}
                   />
                 )}
