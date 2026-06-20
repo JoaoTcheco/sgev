@@ -21,8 +21,7 @@ export async function adminResetPassword(args: { user_id: string; password: stri
   return unwrap(await local.resetPassword({ userId: args.user_id, password: args.password }));
 }
 export async function adminUpdateUser(args: { user_id: string; full_name?: string; email?: string }) {
-  // Update profile directly via shim
-  const patch: Record<string, unknown> = {};
+  const patch: { full_name?: string; email?: string } = {};
   if (args.full_name !== undefined) patch.full_name = args.full_name;
   if (args.email !== undefined) patch.email = args.email;
   if (Object.keys(patch).length === 0) return { ok: true };
