@@ -8,6 +8,7 @@ export function Barcode({
   fontSize = 12,
   displayValue = true,
   format = "CODE128",
+  className,
 }: {
   value: string;
   height?: number;
@@ -15,6 +16,7 @@ export function Barcode({
   fontSize?: number;
   displayValue?: boolean;
   format?: string;
+  className?: string;
 }) {
   const ref = useRef<SVGSVGElement | null>(null);
   useEffect(() => {
@@ -30,9 +32,22 @@ export function Barcode({
         background: "#ffffff",
         lineColor: "#000000",
       });
+      // Make SVG responsive: never overflow its container.
+      const svg = ref.current;
+      svg.removeAttribute("width");
+      svg.removeAttribute("height");
+      svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
+      svg.style.width = "100%";
+      svg.style.height = "auto";
+      svg.style.maxHeight = `${height}px`;
+      svg.style.display = "block";
     } catch {
       /* ignore invalid value */
     }
   }, [value, height, width, fontSize, displayValue, format]);
-  return <svg ref={ref} />;
+  return (
+    <div className={className} style={{ width: "100%", lineHeight: 0 }}>
+      <svg ref={ref} />
+    </div>
+  );
 }

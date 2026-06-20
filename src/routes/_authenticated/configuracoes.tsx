@@ -216,8 +216,10 @@ export function ReceiptBody(props: {
 }) {
   const { s, items, subtotal, discount, total, paymentLabel, received, change, saleId, receiptNumber, operatorName, at } = props;
   const ref = receiptNumber || `REC-${saleId.slice(0, 8).toUpperCase()}`;
-  const barcodeHeight = s.receipt_width === "a4" ? 80 : s.receipt_width === "58mm" ? 55 : 65;
-  const barcodeWidth = s.receipt_width === "58mm" ? 1.6 : s.receipt_width === "a4" ? 2.4 : 2;
+  // Bar width tuned so the symbol fits within the paper while staying scannable.
+  // Receipt numbers are ~15 chars (CODE128 ≈ 200 modules).
+  const barcodeHeight = s.receipt_width === "a4" ? 70 : s.receipt_width === "58mm" ? 45 : 55;
+  const barcodeWidth = s.receipt_width === "58mm" ? 0.9 : s.receipt_width === "80mm" ? 1.2 : 2;
   return (
     <div className={`${receiptWidthClass(s.receipt_width)} bg-white p-3 font-mono leading-snug text-black shadow-sm`}>
       {s.logo_url && (
@@ -284,9 +286,9 @@ export function ReceiptBody(props: {
       {change != null && <Row label="Troco" value={formatMZN(change)} bold />}
 
       <Dashed />
-      <div className="barcode-block flex flex-col items-center gap-1 bg-white px-2 py-1">
-        <Barcode value={ref} height={barcodeHeight} width={barcodeWidth} fontSize={0} displayValue={false} />
-        <div className="text-center text-[11px] font-mono font-bold tracking-widest">{ref}</div>
+      <div className="barcode-block w-full bg-white px-1 py-1">
+        <Barcode value={ref} height={barcodeHeight} width={barcodeWidth} displayValue={false} />
+        <div className="mt-0.5 text-center text-[11px] font-mono font-bold tracking-widest">{ref}</div>
         <div className="text-center text-[9px] opacity-70">Leia o código de barras para validar este recibo</div>
       </div>
       <Dashed />
