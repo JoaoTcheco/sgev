@@ -23,6 +23,7 @@ import { Route as AuthenticatedDashboardRouteImport } from './routes/_authentica
 import { Route as AuthenticatedContasRouteImport } from './routes/_authenticated/contas'
 import { Route as AuthenticatedConfiguracoesRouteImport } from './routes/_authenticated/configuracoes'
 import { Route as AuthenticatedAlertasRouteImport } from './routes/_authenticated/alertas'
+import { Route as AuthenticatedReciboIndexRouteImport } from './routes/_authenticated/recibo.index'
 import { Route as AuthenticatedReciboRefRouteImport } from './routes/_authenticated/recibo.$ref'
 
 const AuthRoute = AuthRouteImport.update({
@@ -98,6 +99,12 @@ const AuthenticatedAlertasRoute = AuthenticatedAlertasRouteImport.update({
   path: '/alertas',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedReciboIndexRoute =
+  AuthenticatedReciboIndexRouteImport.update({
+    id: '/recibo/',
+    path: '/recibo/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedReciboRefRoute = AuthenticatedReciboRefRouteImport.update({
   id: '/recibo/$ref',
   path: '/recibo/$ref',
@@ -119,6 +126,7 @@ export interface FileRoutesByFullPath {
   '/utilizadores': typeof AuthenticatedUtilizadoresRoute
   '/vendas': typeof AuthenticatedVendasRoute
   '/recibo/$ref': typeof AuthenticatedReciboRefRoute
+  '/recibo/': typeof AuthenticatedReciboIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -135,6 +143,7 @@ export interface FileRoutesByTo {
   '/utilizadores': typeof AuthenticatedUtilizadoresRoute
   '/vendas': typeof AuthenticatedVendasRoute
   '/recibo/$ref': typeof AuthenticatedReciboRefRoute
+  '/recibo': typeof AuthenticatedReciboIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -153,6 +162,7 @@ export interface FileRoutesById {
   '/_authenticated/utilizadores': typeof AuthenticatedUtilizadoresRoute
   '/_authenticated/vendas': typeof AuthenticatedVendasRoute
   '/_authenticated/recibo/$ref': typeof AuthenticatedReciboRefRoute
+  '/_authenticated/recibo/': typeof AuthenticatedReciboIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -171,6 +181,7 @@ export interface FileRouteTypes {
     | '/utilizadores'
     | '/vendas'
     | '/recibo/$ref'
+    | '/recibo/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -187,6 +198,7 @@ export interface FileRouteTypes {
     | '/utilizadores'
     | '/vendas'
     | '/recibo/$ref'
+    | '/recibo'
   id:
     | '__root__'
     | '/'
@@ -204,6 +216,7 @@ export interface FileRouteTypes {
     | '/_authenticated/utilizadores'
     | '/_authenticated/vendas'
     | '/_authenticated/recibo/$ref'
+    | '/_authenticated/recibo/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -312,6 +325,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAlertasRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/recibo/': {
+      id: '/_authenticated/recibo/'
+      path: '/recibo'
+      fullPath: '/recibo/'
+      preLoaderRoute: typeof AuthenticatedReciboIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/recibo/$ref': {
       id: '/_authenticated/recibo/$ref'
       path: '/recibo/$ref'
@@ -335,6 +355,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedUtilizadoresRoute: typeof AuthenticatedUtilizadoresRoute
   AuthenticatedVendasRoute: typeof AuthenticatedVendasRoute
   AuthenticatedReciboRefRoute: typeof AuthenticatedReciboRefRoute
+  AuthenticatedReciboIndexRoute: typeof AuthenticatedReciboIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -350,6 +371,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedUtilizadoresRoute: AuthenticatedUtilizadoresRoute,
   AuthenticatedVendasRoute: AuthenticatedVendasRoute,
   AuthenticatedReciboRefRoute: AuthenticatedReciboRefRoute,
+  AuthenticatedReciboIndexRoute: AuthenticatedReciboIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

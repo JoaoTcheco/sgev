@@ -13,6 +13,7 @@ import {
   LogOut,
   Pill,
   Settings,
+  Receipt,
 } from "lucide-react";
 import {
   Sidebar,
