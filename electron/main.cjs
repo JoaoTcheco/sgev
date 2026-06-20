@@ -30,7 +30,7 @@ function createWindow() {
   });
 
   win.removeMenu();
-  const indexHtml = path.join(__dirname, "..", "dist", "index.html");
+  const indexHtml = path.join(__dirname, "..", "dist", "electron", "index.html");
   win.loadFile(indexHtml);
   win.once("ready-to-show", () => win.show());
 }
