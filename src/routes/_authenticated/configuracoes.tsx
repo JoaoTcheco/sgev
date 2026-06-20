@@ -284,8 +284,9 @@ export function ReceiptBody(props: {
       {change != null && <Row label="Troco" value={formatMZN(change)} bold />}
 
       <Dashed />
-      <div className="flex flex-col items-center gap-1">
-        <Barcode value={ref} height={barcodeHeight} width={barcodeWidth} fontSize={10} />
+      <div className="barcode-block flex flex-col items-center gap-1 bg-white px-2 py-1">
+        <Barcode value={ref} height={barcodeHeight} width={barcodeWidth} fontSize={0} displayValue={false} />
+        <div className="text-center text-[11px] font-mono font-bold tracking-widest">{ref}</div>
         <div className="text-center text-[9px] opacity-70">Leia o código de barras para validar este recibo</div>
       </div>
       <Dashed />
