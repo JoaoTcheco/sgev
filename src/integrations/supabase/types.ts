@@ -206,6 +206,63 @@ export type Database = {
         }
         Relationships: []
       }
+      pharmacy_settings: {
+        Row: {
+          address: string | null
+          city: string | null
+          created_at: string
+          email: string | null
+          id: boolean
+          logo_url: string | null
+          name: string
+          nuit: string | null
+          phone: string | null
+          receipt_footer: string | null
+          receipt_header: string | null
+          receipt_width: string
+          show_pharmacist: boolean
+          slogan: string | null
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          address?: string | null
+          city?: string | null
+          created_at?: string
+          email?: string | null
+          id?: boolean
+          logo_url?: string | null
+          name?: string
+          nuit?: string | null
+          phone?: string | null
+          receipt_footer?: string | null
+          receipt_header?: string | null
+          receipt_width?: string
+          show_pharmacist?: boolean
+          slogan?: string | null
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          address?: string | null
+          city?: string | null
+          created_at?: string
+          email?: string | null
+          id?: boolean
+          logo_url?: string | null
+          name?: string
+          nuit?: string | null
+          phone?: string | null
+          receipt_footer?: string | null
+          receipt_header?: string | null
+          receipt_width?: string
+          show_pharmacist?: boolean
+          slogan?: string | null
+          updated_at?: string
+          website?: string | null
+        }
+        Relationships: []
+      }
       products: {
         Row: {
           active: boolean
