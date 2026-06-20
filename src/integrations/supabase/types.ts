@@ -251,51 +251,6 @@ export type Database = {
         }
         Relationships: []
       }
-      deletion_requests: {
-        Row: {
-          created_at: string
-          entity: string
-          entity_id: string
-          entity_label: string | null
-          id: string
-          reason: string
-          requested_by: string
-          review_reason: string | null
-          reviewed_at: string | null
-          reviewed_by: string | null
-          status: Database["public"]["Enums"]["deletion_status"]
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          entity: string
-          entity_id: string
-          entity_label?: string | null
-          id?: string
-          reason: string
-          requested_by: string
-          review_reason?: string | null
-          reviewed_at?: string | null
-          reviewed_by?: string | null
-          status?: Database["public"]["Enums"]["deletion_status"]
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          entity?: string
-          entity_id?: string
-          entity_label?: string | null
-          id?: string
-          reason?: string
-          requested_by?: string
-          review_reason?: string | null
-          reviewed_at?: string | null
-          reviewed_by?: string | null
-          status?: Database["public"]["Enums"]["deletion_status"]
-          updated_at?: string
-        }
-        Relationships: []
-      }
       pharmacy_settings: {
         Row: {
           address: string | null
@@ -746,21 +701,12 @@ export type Database = {
         Returns: string
       }
       refresh_alerts: { Args: never; Returns: undefined }
-      request_deletion: {
-        Args: { p_entity: string; p_entity_id: string; p_reason: string }
-        Returns: string
-      }
-      review_deletion: {
-        Args: { p_approve: boolean; p_id: string; p_reason: string }
-        Returns: undefined
-      }
     }
     Enums: {
       alert_severity: "info" | "warning" | "critical"
       alert_type: "low_stock" | "near_expiry" | "expired"
       app_role: "admin" | "pharmacist" | "cashier"
       cash_session_status: "open" | "closed"
-      deletion_status: "pending" | "approved" | "rejected"
       medicine_tarja: "livre" | "amarela" | "vermelha" | "preta"
       movement_type: "in" | "out" | "adjust" | "loss" | "return"
       payment_method: "cash" | "debit" | "credit" | "pix" | "other"
@@ -896,7 +842,6 @@ export const Constants = {
       alert_type: ["low_stock", "near_expiry", "expired"],
       app_role: ["admin", "pharmacist", "cashier"],
       cash_session_status: ["open", "closed"],
-      deletion_status: ["pending", "approved", "rejected"],
       medicine_tarja: ["livre", "amarela", "vermelha", "preta"],
       movement_type: ["in", "out", "adjust", "loss", "return"],
       payment_method: ["cash", "debit", "credit", "pix", "other"],
