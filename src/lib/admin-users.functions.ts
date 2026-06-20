@@ -25,9 +25,10 @@ async function audit(
     entity: "user",
     entity_id: entityId,
     action,
-    details,
+    details: details as any,
   });
 }
+
 
 const createUserInput = z.object({
   email: z.string().email(),
@@ -111,7 +112,9 @@ export const adminUpdateUser = createServerFn({ method: "POST" })
       if (error) throw new Error(error.message);
     }
 
-    const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
+    const patch: { updated_at: string; full_name?: string; email?: string } = {
+      updated_at: new Date().toISOString(),
+    };
     if (data.full_name) patch.full_name = data.full_name;
     if (data.email) patch.email = data.email;
     const { error: pErr } = await supabaseAdmin
@@ -119,6 +122,7 @@ export const adminUpdateUser = createServerFn({ method: "POST" })
       .update(patch)
       .eq("id", data.user_id);
     if (pErr) throw new Error(pErr.message);
+
 
     await audit(context.userId, data.user_id, "update", {
       full_name: data.full_name,
