@@ -16,6 +16,10 @@ import { formatMZN, formatDateTime } from "@/lib/format";
 import { usePharmacySettings } from "@/hooks/use-settings";
 import { useAuthUser, useProfile } from "@/hooks/use-auth";
 import { ReceiptBody } from "@/routes/_authenticated/configuracoes";
+import { useOpenCashSession } from "@/hooks/use-cash-session";
+import { Link } from "@tanstack/react-router";
+import { AlertTriangle } from "lucide-react";
+
 
 export const Route = createFileRoute("/_authenticated/vendas")({
   head: () => ({ meta: [{ title: "Vendas — PharmaSys" }] }),
