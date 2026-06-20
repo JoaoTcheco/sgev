@@ -15,10 +15,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { formatMZN, formatDate } from "@/lib/format";
 import { useAuthUser, useUserRoles, highestRole } from "@/hooks/use-auth";
 
+import { RoleGate } from "@/components/role-gate";
+
 export const Route = createFileRoute("/_authenticated/estoque")({
   head: () => ({ meta: [{ title: "Estoque — PharmaSys" }] }),
-  component: EstoquePage,
+  component: () => <RoleGate allow={["admin", "pharmacist"]}><EstoquePage /></RoleGate>,
 });
+
 
 function EstoquePage() {
   const queryClient = useQueryClient();

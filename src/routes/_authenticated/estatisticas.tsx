@@ -8,10 +8,13 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Bar, BarChart, CartesianGrid, Cell, Line, LineChart, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis, Legend } from "recharts";
 import { formatMZN } from "@/lib/format";
 
+import { RoleGate } from "@/components/role-gate";
+
 export const Route = createFileRoute("/_authenticated/estatisticas")({
   head: () => ({ meta: [{ title: "Estatísticas — PharmaSys" }] }),
-  component: EstatisticasPage,
+  component: () => <RoleGate allow={["admin", "pharmacist"]}><EstatisticasPage /></RoleGate>,
 });
+
 
 type Range = "7" | "30" | "90";
 

@@ -12,10 +12,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 
+import { RoleGate } from "@/components/role-gate";
+
 export const Route = createFileRoute("/_authenticated/fornecedores")({
   head: () => ({ meta: [{ title: "Fornecedores — PharmaSys" }] }),
-  component: FornecedoresPage,
+  component: () => <RoleGate allow={["admin", "pharmacist"]}><FornecedoresPage /></RoleGate>,
 });
+
 
 type Supplier = { id: string; legal_name: string; tax_id: string | null; contact_name: string | null; email: string | null; phone: string | null; address: string | null; active: boolean };
 
