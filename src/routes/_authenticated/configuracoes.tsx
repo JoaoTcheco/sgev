@@ -15,6 +15,7 @@ import { Separator } from "@/components/ui/separator";
 import { useAuthUser, useUserRoles, highestRole } from "@/hooks/use-auth";
 import { usePharmacySettings, receiptWidthClass, type PharmacySettings, type ReceiptWidth } from "@/hooks/use-settings";
 import { formatMZN, formatDateTime } from "@/lib/format";
+import { QrCode } from "@/components/qr-code";
 
 export const Route = createFileRoute("/_authenticated/configuracoes")({
   head: () => ({ meta: [{ title: "Configurações — PharmaSys" }] }),
@@ -209,10 +210,16 @@ export function ReceiptBody(props: {
   received: number | null;
   change: number | null;
   saleId: string;
+  receiptNumber?: string | null;
   operatorName?: string | null;
   at: Date;
 }) {
-  const { s, items, subtotal, discount, total, paymentLabel, received, change, saleId, operatorName, at } = props;
+  const { s, items, subtotal, discount, total, paymentLabel, received, change, saleId, receiptNumber, operatorName, at } = props;
+  const ref = receiptNumber || `REC-${saleId.slice(0, 8).toUpperCase()}`;
+  const qrValue = typeof window !== "undefined"
+    ? `${window.location.origin}/recibo/${encodeURIComponent(ref)}`
+    : `/recibo/${ref}`;
+  const qrSize = s.receipt_width === "a4" ? 140 : s.receipt_width === "58mm" ? 80 : 100;
   return (
     <div className={`${receiptWidthClass(s.receipt_width)} bg-white p-3 font-mono leading-snug text-black shadow-sm`}>
       {s.logo_url && (
@@ -237,7 +244,7 @@ export function ReceiptBody(props: {
       <Dashed />
       <div className="text-center font-bold">RECIBO DE VENDA</div>
       <div className="flex justify-between text-[10px]">
-        <span>Ref: {saleId.slice(0, 8).toUpperCase()}</span>
+        <span>Nº {ref}</span>
         <span>{formatDateTime(at)}</span>
       </div>
       {s.show_pharmacist && operatorName && (
@@ -278,6 +285,11 @@ export function ReceiptBody(props: {
       {received != null && <Row label="Entregue" value={formatMZN(received)} />}
       {change != null && <Row label="Troco" value={formatMZN(change)} bold />}
 
+      <Dashed />
+      <div className="flex flex-col items-center gap-1">
+        <QrCode value={qrValue} size={qrSize} />
+        <div className="text-center text-[9px] opacity-70">Leia o código para validar este recibo</div>
+      </div>
       <Dashed />
       {s.receipt_footer && <div className="text-center text-[10px] whitespace-pre-line">{s.receipt_footer}</div>}
       <div className="mt-1 text-center text-[9px] opacity-70">Documento não fiscal · {s.name}</div>

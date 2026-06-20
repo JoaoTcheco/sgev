@@ -13,6 +13,7 @@ import {
   LogOut,
   Pill,
   Settings,
+  Receipt,
 } from "lucide-react";
 import {
   Sidebar,
@@ -36,6 +37,7 @@ type Item = { title: string; url: string; icon: React.ComponentType<{ className?
 const OPERATIONAL: Item[] = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard, roles: ["admin", "pharmacist", "cashier"] },
   { title: "Vendas", url: "/vendas", icon: ShoppingCart, roles: ["admin", "pharmacist", "cashier"] },
+  { title: "Validar Recibo", url: "/recibo", icon: Receipt, roles: ["admin", "pharmacist", "cashier"] },
   { title: "Estoque", url: "/estoque", icon: Package, roles: ["admin", "pharmacist", "cashier"] },
   { title: "Alertas", url: "/alertas", icon: AlertTriangle, roles: ["admin", "pharmacist", "cashier"] },
   { title: "Estatísticas", url: "/estatisticas", icon: BarChart3, roles: ["admin", "pharmacist", "cashier"] },

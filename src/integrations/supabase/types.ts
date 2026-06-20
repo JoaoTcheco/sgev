@@ -439,6 +439,7 @@ export type Database = {
           id: string
           notes: string | null
           payment_method: Database["public"]["Enums"]["payment_method"]
+          receipt_number: string | null
           sale_number: number
           status: Database["public"]["Enums"]["sale_status"]
           subtotal: number
@@ -452,6 +453,7 @@ export type Database = {
           id?: string
           notes?: string | null
           payment_method?: Database["public"]["Enums"]["payment_method"]
+          receipt_number?: string | null
           sale_number?: number
           status?: Database["public"]["Enums"]["sale_status"]
           subtotal?: number
@@ -465,6 +467,7 @@ export type Database = {
           id?: string
           notes?: string | null
           payment_method?: Database["public"]["Enums"]["payment_method"]
+          receipt_number?: string | null
           sale_number?: number
           status?: Database["public"]["Enums"]["sale_status"]
           subtotal?: number

@@ -62,7 +62,7 @@ function VendasPage() {
   const [paymentKind, setPaymentKind] = useState<PaymentKind>("cash");
   const [wallet, setWallet] = useState<DigitalWallet>("mpesa");
   const [received, setReceived] = useState<number>(0);
-  const [lastSale, setLastSale] = useState<{ id: string; at: Date } | null>(null);
+  const [lastSale, setLastSale] = useState<{ id: string; receipt_number: string | null; at: Date } | null>(null);
 
   const { data: products = [], isLoading } = useQuery({
     queryKey: ["pdv-products", search],
@@ -145,11 +145,13 @@ function VendasPage() {
         })),
       });
       if (error) throw error;
-      return data as string;
+      const saleId = data as string;
+      const { data: sale } = await supabase.from("sales").select("receipt_number").eq("id", saleId).maybeSingle();
+      return { saleId, receipt_number: (sale?.receipt_number as string | null) ?? null };
     },
-    onSuccess: (saleId) => {
-      toast.success("Venda finalizada");
-      setLastSale({ id: saleId, at: new Date() });
+    onSuccess: ({ saleId, receipt_number }) => {
+      toast.success("Venda finalizada", { description: receipt_number ? `Recibo ${receipt_number}` : undefined });
+      setLastSale({ id: saleId, receipt_number, at: new Date() });
       queryClient.invalidateQueries({ queryKey: ["pdv-products"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard"] });
     },
@@ -371,6 +373,7 @@ function VendasPage() {
                 received={paymentKind === "cash" ? received : null}
                 change={paymentKind === "cash" ? change : null}
                 saleId={lastSale.id}
+                receiptNumber={lastSale.receipt_number}
                 operatorName={profile?.full_name ?? user?.email ?? null}
                 at={lastSale.at}
               />
