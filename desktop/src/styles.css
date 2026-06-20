@@ -1,0 +1,266 @@
+:root {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color-scheme: light;
+  --bg: #f5f7fa;
+  --card: #ffffff;
+  --border: #e2e8f0;
+  --text: #0f172a;
+  --muted: #64748b;
+  --primary: #0ea5e9;
+  --primary-dark: #0284c7;
+  --danger: #dc2626;
+  --success: #16a34a;
+  --warning: #d97706;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-weight: 500;
+  background: var(--primary);
+  color: white;
+  transition: background 0.15s;
+}
+button:hover:not(:disabled) {
+  background: var(--primary-dark);
+}
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+button.ghost {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+button.ghost:hover:not(:disabled) {
+  background: var(--bg);
+}
+button.danger {
+  background: var(--danger);
+}
+button.danger:hover:not(:disabled) {
+  background: #b91c1c;
+}
+
+input,
+select,
+textarea {
+  font-family: inherit;
+  font-size: 14px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: white;
+  width: 100%;
+}
+input:focus,
+select:focus,
+textarea:focus {
+  outline: 2px solid var(--primary);
+  outline-offset: -1px;
+}
+
+label {
+  display: block;
+  font-size: 13px;
+  color: var(--muted);
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.app {
+  display: flex;
+  min-height: 100vh;
+}
+.sidebar {
+  width: 240px;
+  background: var(--card);
+  border-right: 1px solid var(--border);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.sidebar .brand {
+  font-weight: 700;
+  font-size: 18px;
+  padding: 12px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 12px;
+}
+.sidebar a {
+  display: block;
+  padding: 10px 12px;
+  border-radius: 8px;
+  text-decoration: none;
+  color: var(--text);
+  font-size: 14px;
+}
+.sidebar a:hover {
+  background: var(--bg);
+}
+.sidebar a.active {
+  background: var(--primary);
+  color: white;
+}
+.sidebar .user {
+  margin-top: auto;
+  padding: 12px;
+  font-size: 13px;
+  color: var(--muted);
+  border-top: 1px solid var(--border);
+}
+
+.main {
+  flex: 1;
+  padding: 32px;
+  overflow: auto;
+}
+h1 {
+  margin: 0 0 8px;
+  font-size: 24px;
+}
+.subtitle {
+  color: var(--muted);
+  margin: 0 0 24px;
+  font-size: 14px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+th,
+td {
+  text-align: left;
+  padding: 12px;
+  border-bottom: 1px solid var(--border);
+}
+th {
+  background: var(--bg);
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+  background: var(--bg);
+  color: var(--text);
+}
+.badge.admin {
+  background: #fef3c7;
+  color: #92400e;
+}
+.badge.pharmacist {
+  background: #dbeafe;
+  color: #1e40af;
+}
+.badge.cashier {
+  background: #dcfce7;
+  color: #166534;
+}
+.badge.inactive {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.spacer {
+  flex: 1;
+}
+
+.modal-bg {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+.modal {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  width: 480px;
+  max-width: 90vw;
+}
+
+.auth-shell {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #0ea5e9, #0284c7);
+  padding: 16px;
+}
+.auth-card {
+  background: white;
+  border-radius: 16px;
+  padding: 32px;
+  width: 420px;
+  max-width: 100%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+}
+.auth-card h1 {
+  margin-bottom: 4px;
+}
+
+.error {
+  background: #fee2e2;
+  color: #991b1b;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+}
+.success {
+  background: #dcfce7;
+  color: #166534;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+}
+.notice {
+  background: #fef3c7;
+  color: #92400e;
+  padding: 12px 14px;
+  border-radius: 8px;
+  font-size: 14px;
+  margin-bottom: 16px;
+}
