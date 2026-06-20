@@ -286,6 +286,11 @@ export function ReceiptBody(props: {
       {change != null && <Row label="Troco" value={formatMZN(change)} bold />}
 
       <Dashed />
+      <div className="flex flex-col items-center gap-1">
+        <QrCode value={qrValue} size={qrSize} />
+        <div className="text-center text-[9px] opacity-70">Leia o código para validar este recibo</div>
+      </div>
+      <Dashed />
       {s.receipt_footer && <div className="text-center text-[10px] whitespace-pre-line">{s.receipt_footer}</div>}
       <div className="mt-1 text-center text-[9px] opacity-70">Documento não fiscal · {s.name}</div>
     </div>
