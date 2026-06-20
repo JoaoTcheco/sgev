@@ -216,8 +216,8 @@ export function ReceiptBody(props: {
 }) {
   const { s, items, subtotal, discount, total, paymentLabel, received, change, saleId, receiptNumber, operatorName, at } = props;
   const ref = receiptNumber || `REC-${saleId.slice(0, 8).toUpperCase()}`;
-  const barcodeHeight = s.receipt_width === "a4" ? 70 : s.receipt_width === "58mm" ? 40 : 50;
-  const barcodeWidth = s.receipt_width === "58mm" ? 1.2 : s.receipt_width === "a4" ? 2 : 1.6;
+  const barcodeHeight = s.receipt_width === "a4" ? 80 : s.receipt_width === "58mm" ? 55 : 65;
+  const barcodeWidth = s.receipt_width === "58mm" ? 1.6 : s.receipt_width === "a4" ? 2.4 : 2;
   return (
     <div className={`${receiptWidthClass(s.receipt_width)} bg-white p-3 font-mono leading-snug text-black shadow-sm`}>
       {s.logo_url && (
