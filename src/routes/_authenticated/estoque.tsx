@@ -511,7 +511,7 @@ function BarcodeDialog({
   onAssign: (code: string) => void;
 }) {
   const [code, setCode] = useState(product?.barcode ?? "");
-  useMemo(() => { setCode(product?.barcode ?? ""); }, [product?.id, product?.barcode]);
+  useEffect(() => { setCode(product?.barcode ?? ""); }, [product?.id, product?.barcode]);
 
   function print() {
     if (!product || !product.barcode) { toast.error("Atribua um código primeiro"); return; }
