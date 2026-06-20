@@ -294,8 +294,7 @@ function EditUserDialog({ user, updateFn, onClose, onSaved }: {
 }) {
   const [fullName, setFullName] = useState(user?.full_name ?? "");
   const [email, setEmail] = useState(user?.email ?? "");
-  // Reset when user changes
-  useState(() => { setFullName(user?.full_name ?? ""); setEmail(user?.email ?? ""); });
+
 
   const mut = useMutation({
     mutationFn: () => updateFn({
