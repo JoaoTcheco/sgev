@@ -174,7 +174,7 @@ function UtilizadoresPage() {
   );
 }
 
-function CreateUserDialog({ onClose, createFn, onCreated }: { onClose: () => void; createFn: typeof adminCreateUser; onCreated: () => void }) {
+function CreateUserDialog({ onClose, createFn, onCreated }: { onClose: () => void; createFn: ReturnType<typeof useServerFn<typeof adminCreateUser>>; onCreated: () => void }) {
   const [form, setForm] = useState({ email: "", password: "", full_name: "", role: "cashier" as AppRole });
   const mut = useMutation({
     mutationFn: () => createFn({ data: form }),
@@ -208,7 +208,7 @@ function CreateUserDialog({ onClose, createFn, onCreated }: { onClose: () => voi
   );
 }
 
-function ResetPasswordDialog({ user, resetFn, onClose }: { user: UserRow | null; resetFn: typeof adminResetPassword; onClose: () => void }) {
+function ResetPasswordDialog({ user, resetFn, onClose }: { user: UserRow | null; resetFn: ReturnType<typeof useServerFn<typeof adminResetPassword>>; onClose: () => void }) {
   const [password, setPassword] = useState("");
   const mut = useMutation({
     mutationFn: () => resetFn({ data: { user_id: user!.id, password } }),
