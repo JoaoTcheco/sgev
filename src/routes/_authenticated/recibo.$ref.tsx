@@ -58,6 +58,27 @@ function ReciboPage() {
     },
   });
 
+  useBarcodeScanner((code) => {
+    if (code === ref) return;
+    toast.success(`Código lido: ${code}`);
+    navigate({ to: "/recibo/$ref", params: { ref: code } });
+  }, { minLength: 6 });
+
+  // Automatic integrity validation: items must sum to subtotal, total = subtotal − discount.
+  const integrity = useMemo(() => {
+    if (!data) return null;
+    const items = (data.sale_items ?? []) as Array<{ total: number | string }>;
+    const itemsSum = items.reduce((s, i) => s + Number(i.total), 0);
+    const subtotal = Number(data.subtotal);
+    const discount = Number(data.discount);
+    const total = Number(data.total);
+    const eps = 0.01;
+    const subtotalOk = Math.abs(itemsSum - subtotal) < eps;
+    const totalOk = Math.abs(subtotal - discount - total) < eps;
+    const statusOk = data.status === "completed";
+    return { ok: subtotalOk && totalOk && statusOk, subtotalOk, totalOk, statusOk, itemsSum };
+  }, [data]);
+
   function lookup(e: React.FormEvent) {
     e.preventDefault();
     if (!search.trim()) return;
