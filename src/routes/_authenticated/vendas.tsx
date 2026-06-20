@@ -13,6 +13,9 @@ import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { formatMZN, formatDateTime } from "@/lib/format";
+import { usePharmacySettings } from "@/hooks/use-settings";
+import { useAuthUser, useProfile } from "@/hooks/use-auth";
+import { ReceiptBody } from "@/routes/_authenticated/configuracoes";
 
 export const Route = createFileRoute("/_authenticated/vendas")({
   head: () => ({ meta: [{ title: "Vendas — PharmaSys" }] }),
@@ -49,6 +52,9 @@ const WALLET_TO_ENUM: Record<DigitalWallet, "debit" | "pix" | "other"> = {
 
 function VendasPage() {
   const queryClient = useQueryClient();
+  const { data: settings } = usePharmacySettings();
+  const { user } = useAuthUser();
+  const { data: profile } = useProfile(user?.id);
   const [search, setSearch] = useState("");
   const [cart, setCart] = useState<CartItem[]>([]);
   const [discount, setDiscount] = useState(0);
@@ -322,26 +328,21 @@ function VendasPage() {
           {step === "receipt" && (
             <div className="space-y-3 rounded-lg border bg-muted/30 p-3">
               <div className="flex items-center gap-2 text-sm font-semibold"><Receipt className="h-4 w-4" /> Pré-visualização do recibo</div>
-              <div className="space-y-1 rounded-md bg-background p-3 text-xs">
-                <p className="text-center font-semibold">PharmaSys</p>
-                <p className="text-center text-muted-foreground">{formatDateTime(new Date())}</p>
-                <Separator className="my-2" />
-                {cart.map((it) => (
-                  <div key={`${it.product_id}-${it.unit_kind}`} className="flex justify-between">
-                    <span className="truncate">{it.quantity}× {it.name} ({it.unit_label})</span>
-                    <span>{formatMZN(it.quantity * it.unit_price)}</span>
-                  </div>
-                ))}
-                <Separator className="my-2" />
-                <div className="flex justify-between"><span>Subtotal</span><span>{formatMZN(subtotal)}</span></div>
-                {discount > 0 && <div className="flex justify-between"><span>Desconto</span><span>− {formatMZN(discount)}</span></div>}
-                <div className="flex justify-between font-semibold"><span>Total</span><span>{formatMZN(total)}</span></div>
-                <div className="flex justify-between"><span>Pagamento</span><span>{paymentLabel}</span></div>
-                {paymentKind === "cash" && (
-                  <>
-                    <div className="flex justify-between"><span>Entregue</span><span>{formatMZN(received)}</span></div>
-                    <div className="flex justify-between font-semibold"><span>Troco</span><span>{formatMZN(change)}</span></div>
-                  </>
+              <div className="flex justify-center overflow-auto rounded-md bg-background p-2">
+                {settings && (
+                  <ReceiptBody
+                    s={settings}
+                    items={cart.map((i) => ({ name: i.name, quantity: i.quantity, unit_label: i.unit_label, unit_price: i.unit_price }))}
+                    subtotal={subtotal}
+                    discount={discount}
+                    total={total}
+                    paymentLabel={paymentLabel}
+                    received={paymentKind === "cash" ? received : null}
+                    change={paymentKind === "cash" ? change : null}
+                    saleId="PRE-VIEW"
+                    operatorName={profile?.full_name ?? user?.email ?? null}
+                    at={new Date()}
+                  />
                 )}
               </div>
               <Button className="w-full" size="lg" disabled={finalize.isPending} onClick={() => finalize.mutate()}>
@@ -354,19 +355,25 @@ function VendasPage() {
       </Card>
 
       <Dialog open={!!lastSale} onOpenChange={(o) => { if (!o) { setLastSale(null); resetAll(); } }}>
-        <DialogContent>
+        <DialogContent className="max-w-[min(96vw,640px)]">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2"><Receipt className="h-5 w-5" /> Recibo</DialogTitle>
+            <DialogTitle className="flex items-center gap-2"><Receipt className="h-5 w-5" /> Recibo da venda</DialogTitle>
           </DialogHeader>
-          <div className="space-y-1 rounded-md border p-4 text-sm">
-            <p className="text-center text-base font-semibold">PharmaSys</p>
-            <p className="text-center text-xs text-muted-foreground">Ref: <span className="font-mono">{lastSale?.id.slice(0, 8)}</span></p>
-            <p className="text-center text-xs text-muted-foreground">{lastSale && formatDateTime(lastSale.at)}</p>
-            <Separator className="my-2" />
-            <div className="flex justify-between"><span>Total</span><span className="font-semibold">{formatMZN(total)}</span></div>
-            <div className="flex justify-between"><span>Pagamento</span><span>{paymentLabel}</span></div>
-            {paymentKind === "cash" && (
-              <div className="flex justify-between"><span>Troco</span><span>{formatMZN(change)}</span></div>
+          <div id="print-area" className="flex justify-center overflow-auto rounded-md border bg-muted/30 p-3">
+            {settings && lastSale && (
+              <ReceiptBody
+                s={settings}
+                items={cart.map((i) => ({ name: i.name, quantity: i.quantity, unit_label: i.unit_label, unit_price: i.unit_price }))}
+                subtotal={subtotal}
+                discount={discount}
+                total={total}
+                paymentLabel={paymentLabel}
+                received={paymentKind === "cash" ? received : null}
+                change={paymentKind === "cash" ? change : null}
+                saleId={lastSale.id}
+                operatorName={profile?.full_name ?? user?.email ?? null}
+                at={lastSale.at}
+              />
             )}
           </div>
           <DialogFooter className="gap-2">

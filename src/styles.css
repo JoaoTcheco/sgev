@@ -130,3 +130,9 @@
   * { border-color: var(--color-border); }
   body { background-color: var(--color-background); color: var(--color-foreground); }
 }
+
+@media print {
+  body * { visibility: hidden !important; }
+  #print-area, #print-area * { visibility: visible !important; }
+  #print-area { position: absolute !important; left: 0; top: 0; width: 100%; padding: 0 !important; border: 0 !important; background: white !important; }
+}
