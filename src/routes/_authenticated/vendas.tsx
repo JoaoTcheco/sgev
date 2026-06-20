@@ -16,6 +16,10 @@ import { formatMZN, formatDateTime } from "@/lib/format";
 import { usePharmacySettings } from "@/hooks/use-settings";
 import { useAuthUser, useProfile } from "@/hooks/use-auth";
 import { ReceiptBody } from "@/routes/_authenticated/configuracoes";
+import { useOpenCashSession } from "@/hooks/use-cash-session";
+import { Link } from "@tanstack/react-router";
+import { AlertTriangle } from "lucide-react";
+
 
 export const Route = createFileRoute("/_authenticated/vendas")({
   head: () => ({ meta: [{ title: "Vendas — PharmaSys" }] }),
@@ -55,6 +59,8 @@ function VendasPage() {
   const { data: settings } = usePharmacySettings();
   const { user } = useAuthUser();
   const { data: profile } = useProfile(user?.id);
+  const { data: openSession } = useOpenCashSession();
+
   const [search, setSearch] = useState("");
   const [cart, setCart] = useState<CartItem[]>([]);
   const [discount, setDiscount] = useState(0);
@@ -161,7 +167,20 @@ function VendasPage() {
   function printReceipt() { window.print(); }
 
   return (
-    <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_440px]">
+    <div className="space-y-4">
+      {!openSession && (
+        <Card className="border-amber-500/50 bg-amber-500/10">
+          <CardContent className="flex flex-col gap-2 py-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-2 text-sm">
+              <AlertTriangle className="h-5 w-5 text-amber-600" />
+              <span><strong>Sem turno aberto.</strong> Abra um turno de caixa para registar vendas.</span>
+            </div>
+            <Button asChild size="sm"><Link to="/caixa">Ir para Caixa</Link></Button>
+          </CardContent>
+        </Card>
+      )}
+      <div className={`grid grid-cols-1 gap-4 lg:grid-cols-[1fr_440px] ${!openSession ? "pointer-events-none opacity-60" : ""}`}>
+
       <Card>
         <CardHeader className="flex flex-row items-center justify-between gap-3">
           <div>
@@ -385,6 +404,8 @@ function VendasPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      </div>
     </div>
   );
+
 }
