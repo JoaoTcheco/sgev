@@ -25,6 +25,7 @@ import { Route as AuthenticatedConfiguracoesRouteImport } from './routes/_authen
 import { Route as AuthenticatedCaixaRouteImport } from './routes/_authenticated/caixa'
 import { Route as AuthenticatedAlertasRouteImport } from './routes/_authenticated/alertas'
 import { Route as AuthenticatedReciboIndexRouteImport } from './routes/_authenticated/recibo.index'
+import { Route as ApiPublicUploadDocsRouteImport } from './routes/api/public/upload-docs'
 import { Route as AuthenticatedReciboRefRouteImport } from './routes/_authenticated/recibo.$ref'
 
 const AuthRoute = AuthRouteImport.update({
@@ -111,6 +112,11 @@ const AuthenticatedReciboIndexRoute =
     path: '/recibo/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const ApiPublicUploadDocsRoute = ApiPublicUploadDocsRouteImport.update({
+  id: '/api/public/upload-docs',
+  path: '/api/public/upload-docs',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedReciboRefRoute = AuthenticatedReciboRefRouteImport.update({
   id: '/recibo/$ref',
   path: '/recibo/$ref',
@@ -133,6 +139,7 @@ export interface FileRoutesByFullPath {
   '/utilizadores': typeof AuthenticatedUtilizadoresRoute
   '/vendas': typeof AuthenticatedVendasRoute
   '/recibo/$ref': typeof AuthenticatedReciboRefRoute
+  '/api/public/upload-docs': typeof ApiPublicUploadDocsRoute
   '/recibo/': typeof AuthenticatedReciboIndexRoute
 }
 export interface FileRoutesByTo {
@@ -151,6 +158,7 @@ export interface FileRoutesByTo {
   '/utilizadores': typeof AuthenticatedUtilizadoresRoute
   '/vendas': typeof AuthenticatedVendasRoute
   '/recibo/$ref': typeof AuthenticatedReciboRefRoute
+  '/api/public/upload-docs': typeof ApiPublicUploadDocsRoute
   '/recibo': typeof AuthenticatedReciboIndexRoute
 }
 export interface FileRoutesById {
@@ -171,6 +179,7 @@ export interface FileRoutesById {
   '/_authenticated/utilizadores': typeof AuthenticatedUtilizadoresRoute
   '/_authenticated/vendas': typeof AuthenticatedVendasRoute
   '/_authenticated/recibo/$ref': typeof AuthenticatedReciboRefRoute
+  '/api/public/upload-docs': typeof ApiPublicUploadDocsRoute
   '/_authenticated/recibo/': typeof AuthenticatedReciboIndexRoute
 }
 export interface FileRouteTypes {
@@ -191,6 +200,7 @@ export interface FileRouteTypes {
     | '/utilizadores'
     | '/vendas'
     | '/recibo/$ref'
+    | '/api/public/upload-docs'
     | '/recibo/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -209,6 +219,7 @@ export interface FileRouteTypes {
     | '/utilizadores'
     | '/vendas'
     | '/recibo/$ref'
+    | '/api/public/upload-docs'
     | '/recibo'
   id:
     | '__root__'
@@ -228,6 +239,7 @@ export interface FileRouteTypes {
     | '/_authenticated/utilizadores'
     | '/_authenticated/vendas'
     | '/_authenticated/recibo/$ref'
+    | '/api/public/upload-docs'
     | '/_authenticated/recibo/'
   fileRoutesById: FileRoutesById
 }
@@ -235,6 +247,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  ApiPublicUploadDocsRoute: typeof ApiPublicUploadDocsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -351,6 +364,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedReciboIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/public/upload-docs': {
+      id: '/api/public/upload-docs'
+      path: '/api/public/upload-docs'
+      fullPath: '/api/public/upload-docs'
+      preLoaderRoute: typeof ApiPublicUploadDocsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/recibo/$ref': {
       id: '/_authenticated/recibo/$ref'
       path: '/recibo/$ref'
@@ -402,6 +422,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  ApiPublicUploadDocsRoute: ApiPublicUploadDocsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
