@@ -15,7 +15,7 @@ import {
   Settings,
   Receipt,
   Banknote,
-  
+  BookOpen,
 } from "lucide-react";
 import {
   Sidebar,
