@@ -15,6 +15,7 @@ import { Separator } from "@/components/ui/separator";
 import { useAuthUser, useUserRoles, highestRole } from "@/hooks/use-auth";
 import { usePharmacySettings, receiptWidthClass, type PharmacySettings, type ReceiptWidth } from "@/hooks/use-settings";
 import { formatMZN, formatDateTime } from "@/lib/format";
+import { QrCode } from "@/components/qr-code";
 
 export const Route = createFileRoute("/_authenticated/configuracoes")({
   head: () => ({ meta: [{ title: "Configurações — PharmaSys" }] }),
