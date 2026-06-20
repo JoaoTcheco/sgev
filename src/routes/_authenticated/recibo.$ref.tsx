@@ -1,13 +1,15 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
-import { ArrowLeft, Loader2, Printer, Search, ShieldCheck, ShieldAlert } from "lucide-react";
+import { useMemo, useState } from "react";
+import { ArrowLeft, Loader2, Printer, Search, ShieldCheck, ShieldAlert, ScanLine } from "lucide-react";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { usePharmacySettings } from "@/hooks/use-settings";
+import { useBarcodeScanner } from "@/hooks/use-barcode-scanner";
 import { formatDateTime } from "@/lib/format";
 import { ReceiptBody } from "@/routes/_authenticated/configuracoes";
 
