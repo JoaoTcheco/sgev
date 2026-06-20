@@ -91,13 +91,18 @@ function ReciboPage() {
         <Button variant="ghost" size="sm" asChild>
           <Link to="/vendas"><ArrowLeft className="mr-1 h-4 w-4" /> Voltar a vendas</Link>
         </Button>
-        <form onSubmit={lookup} className="flex items-center gap-2">
-          <div className="relative">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Nº do recibo (REC-2026-…)" className="w-72 pl-9" />
+        <div className="flex items-center gap-3">
+          <div className="hidden items-center gap-1.5 text-xs text-muted-foreground md:flex">
+            <ScanLine className="h-4 w-4 animate-pulse text-emerald-600" /> Leitor ativo — escaneie outro recibo
           </div>
-          <Button type="submit">Procurar</Button>
-        </form>
+          <form onSubmit={lookup} className="flex items-center gap-2">
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Nº do recibo (REC-2026-…)" className="w-72 pl-9" />
+            </div>
+            <Button type="submit">Procurar</Button>
+          </form>
+        </div>
       </div>
 
       {isLoading ? (
@@ -111,13 +116,26 @@ function ReciboPage() {
         </Card>
       ) : (
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1fr_460px]">
-          <Card>
+          <Card className={integrity?.ok ? "border-emerald-500/50" : "border-amber-500/50"}>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="flex items-center gap-2">
-                <ShieldCheck className="h-5 w-5 text-emerald-600" /> Recibo válido
+                {integrity?.ok ? (
+                  <><ShieldCheck className="h-5 w-5 text-emerald-600" /> Recibo válido e autenticado</>
+                ) : (
+                  <><ShieldAlert className="h-5 w-5 text-amber-600" /> Recibo com inconsistências</>
+                )}
               </CardTitle>
               <Badge variant={data.status === "completed" ? "default" : "secondary"}>{data.status}</Badge>
             </CardHeader>
+            {integrity && !integrity.ok && (
+              <CardContent className="pt-0">
+                <ul className="space-y-1 rounded-md border border-amber-500/40 bg-amber-500/5 p-3 text-xs">
+                  {!integrity.statusOk && <li>• Estado da venda não é “completed”.</li>}
+                  {!integrity.subtotalOk && <li>• Soma dos itens ({integrity.itemsSum.toFixed(2)} MT) não bate com o subtotal.</li>}
+                  {!integrity.totalOk && <li>• Total não corresponde a Subtotal − Desconto.</li>}
+                </ul>
+              </CardContent>
+            )}
             <CardContent className="space-y-4 text-sm">
               <div className="grid grid-cols-2 gap-3">
                 <Field label="Número">{data.receipt_number ?? "—"}</Field>
