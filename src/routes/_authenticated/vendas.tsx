@@ -13,6 +13,9 @@ import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { formatMZN, formatDateTime } from "@/lib/format";
+import { usePharmacySettings } from "@/hooks/use-settings";
+import { useAuthUser, useProfile } from "@/hooks/use-auth";
+import { ReceiptBody } from "@/routes/_authenticated/configuracoes";
 
 export const Route = createFileRoute("/_authenticated/vendas")({
   head: () => ({ meta: [{ title: "Vendas — PharmaSys" }] }),
