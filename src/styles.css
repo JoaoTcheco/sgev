@@ -135,4 +135,12 @@
   body * { visibility: hidden !important; }
   #print-area, #print-area * { visibility: visible !important; }
   #print-area { position: absolute !important; left: 0; top: 0; width: 100%; padding: 0 !important; border: 0 !important; background: white !important; }
+  #print-area, #print-area * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+  #print-area .barcode-block { page-break-inside: avoid; break-inside: avoid; background: #fff !important; padding: 4px 6px !important; }
+  #print-area .barcode-block svg { display: block; max-width: 100%; height: auto; shape-rendering: crispEdges; image-rendering: pixelated; }
+  @page { margin: 4mm; }
 }
