@@ -80,7 +80,7 @@ function CaixaPage() {
   const [notes, setNotes] = useState("");
   const closeMut = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.rpc("close_cash_session", { p_counted: Number(counted) || 0, p_notes: notes || null });
+      const { error } = await supabase.rpc("close_cash_session", { p_counted: Number(counted) || 0, p_notes: notes ?? "" });
       if (error) throw error;
     },
     onSuccess: () => {

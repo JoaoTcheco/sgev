@@ -56,7 +56,7 @@ function AprovacoesPage() {
   const reviewMut = useMutation({
     mutationFn: async () => {
       const { error } = await supabase.rpc("review_deletion", {
-        p_id: target!.id, p_approve: mode === "approve", p_reason: reviewReason || null,
+        p_id: target!.id, p_approve: mode === "approve", p_reason: reviewReason ?? "",
       });
       if (error) throw error;
     },
