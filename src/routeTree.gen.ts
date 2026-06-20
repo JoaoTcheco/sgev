@@ -23,6 +23,7 @@ import { Route as AuthenticatedDashboardRouteImport } from './routes/_authentica
 import { Route as AuthenticatedContasRouteImport } from './routes/_authenticated/contas'
 import { Route as AuthenticatedConfiguracoesRouteImport } from './routes/_authenticated/configuracoes'
 import { Route as AuthenticatedAlertasRouteImport } from './routes/_authenticated/alertas'
+import { Route as AuthenticatedReciboRefRouteImport } from './routes/_authenticated/recibo.$ref'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -97,6 +98,11 @@ const AuthenticatedAlertasRoute = AuthenticatedAlertasRouteImport.update({
   path: '/alertas',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedReciboRefRoute = AuthenticatedReciboRefRouteImport.update({
+  id: '/recibo/$ref',
+  path: '/recibo/$ref',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -112,6 +118,7 @@ export interface FileRoutesByFullPath {
   '/relatorios': typeof AuthenticatedRelatoriosRoute
   '/utilizadores': typeof AuthenticatedUtilizadoresRoute
   '/vendas': typeof AuthenticatedVendasRoute
+  '/recibo/$ref': typeof AuthenticatedReciboRefRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -127,6 +134,7 @@ export interface FileRoutesByTo {
   '/relatorios': typeof AuthenticatedRelatoriosRoute
   '/utilizadores': typeof AuthenticatedUtilizadoresRoute
   '/vendas': typeof AuthenticatedVendasRoute
+  '/recibo/$ref': typeof AuthenticatedReciboRefRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -144,6 +152,7 @@ export interface FileRoutesById {
   '/_authenticated/relatorios': typeof AuthenticatedRelatoriosRoute
   '/_authenticated/utilizadores': typeof AuthenticatedUtilizadoresRoute
   '/_authenticated/vendas': typeof AuthenticatedVendasRoute
+  '/_authenticated/recibo/$ref': typeof AuthenticatedReciboRefRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -161,6 +170,7 @@ export interface FileRouteTypes {
     | '/relatorios'
     | '/utilizadores'
     | '/vendas'
+    | '/recibo/$ref'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -176,6 +186,7 @@ export interface FileRouteTypes {
     | '/relatorios'
     | '/utilizadores'
     | '/vendas'
+    | '/recibo/$ref'
   id:
     | '__root__'
     | '/'
@@ -192,6 +203,7 @@ export interface FileRouteTypes {
     | '/_authenticated/relatorios'
     | '/_authenticated/utilizadores'
     | '/_authenticated/vendas'
+    | '/_authenticated/recibo/$ref'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -300,6 +312,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAlertasRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/recibo/$ref': {
+      id: '/_authenticated/recibo/$ref'
+      path: '/recibo/$ref'
+      fullPath: '/recibo/$ref'
+      preLoaderRoute: typeof AuthenticatedReciboRefRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
@@ -315,6 +334,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedRelatoriosRoute: typeof AuthenticatedRelatoriosRoute
   AuthenticatedUtilizadoresRoute: typeof AuthenticatedUtilizadoresRoute
   AuthenticatedVendasRoute: typeof AuthenticatedVendasRoute
+  AuthenticatedReciboRefRoute: typeof AuthenticatedReciboRefRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -329,6 +349,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedRelatoriosRoute: AuthenticatedRelatoriosRoute,
   AuthenticatedUtilizadoresRoute: AuthenticatedUtilizadoresRoute,
   AuthenticatedVendasRoute: AuthenticatedVendasRoute,
+  AuthenticatedReciboRefRoute: AuthenticatedReciboRefRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
