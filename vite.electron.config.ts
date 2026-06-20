@@ -1,22 +1,25 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
+import tailwindcss from "@tailwindcss/vite";
 import path from "node:path";
 
-// Build SPA bundle for Electron (no TanStack Start SSR, no server functions).
+const stub = path.resolve(__dirname, "src/integrations/local/stub.ts");
+const startShim = path.resolve(__dirname, "src/integrations/local/start-shim.ts");
+
 export default defineConfig({
   base: "./",
-  plugins: [react()],
+  plugins: [react(), tailwindcss()],
   resolve: {
-    alias: {
-      "@": path.resolve(__dirname, "src"),
-      "@/integrations/supabase/client": path.resolve(__dirname, "src/integrations/local/client.ts"),
-      // Stub server-only modules so they don't pull node deps
-      "@/integrations/supabase/client.server": path.resolve(__dirname, "src/integrations/local/stub.ts"),
-      "@/integrations/supabase/auth-middleware": path.resolve(__dirname, "src/integrations/local/stub.ts"),
-      "@/integrations/supabase/auth-attacher": path.resolve(__dirname, "src/integrations/local/stub.ts"),
-      "@/lib/admin-users.functions": path.resolve(__dirname, "src/integrations/local/admin-users.ts"),
-      "@tanstack/react-start": path.resolve(__dirname, "src/integrations/local/start-shim.ts"),
-    },
+    alias: [
+      { find: /^@\/integrations\/supabase\/client$/, replacement: path.resolve(__dirname, "src/integrations/local/client.ts") },
+      { find: /^@\/integrations\/supabase\/client\.server$/, replacement: stub },
+      { find: /^@\/integrations\/supabase\/auth-middleware$/, replacement: stub },
+      { find: /^@\/integrations\/supabase\/auth-attacher$/, replacement: stub },
+      { find: /^@\/lib\/admin-users\.functions$/, replacement: path.resolve(__dirname, "src/integrations/local/admin-users.ts") },
+      { find: /^@tanstack\/react-start\/server$/, replacement: stub },
+      { find: /^@tanstack\/react-start$/, replacement: startShim },
+      { find: "@", replacement: path.resolve(__dirname, "src") },
+    ],
   },
   build: {
     outDir: "dist",
