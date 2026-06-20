@@ -25,7 +25,7 @@ import { Route as AuthenticatedConfiguracoesRouteImport } from './routes/_authen
 import { Route as AuthenticatedCaixaRouteImport } from './routes/_authenticated/caixa'
 import { Route as AuthenticatedAlertasRouteImport } from './routes/_authenticated/alertas'
 import { Route as AuthenticatedReciboIndexRouteImport } from './routes/_authenticated/recibo.index'
-import { Route as ApiPublicSetupAdminRouteImport } from './routes/api/public/_setup-admin'
+import { Route as ApiPublicSetupAdminRouteImport } from './routes/api/public/setup-admin'
 import { Route as AuthenticatedReciboRefRouteImport } from './routes/_authenticated/recibo.$ref'
 
 const AuthRoute = AuthRouteImport.update({
@@ -113,8 +113,8 @@ const AuthenticatedReciboIndexRoute =
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const ApiPublicSetupAdminRoute = ApiPublicSetupAdminRouteImport.update({
-  id: '/api/public/_setup-admin',
-  path: '/api/public',
+  id: '/api/public/setup-admin',
+  path: '/api/public/setup-admin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedReciboRefRoute = AuthenticatedReciboRefRouteImport.update({
@@ -139,7 +139,7 @@ export interface FileRoutesByFullPath {
   '/utilizadores': typeof AuthenticatedUtilizadoresRoute
   '/vendas': typeof AuthenticatedVendasRoute
   '/recibo/$ref': typeof AuthenticatedReciboRefRoute
-  '/api/public': typeof ApiPublicSetupAdminRoute
+  '/api/public/setup-admin': typeof ApiPublicSetupAdminRoute
   '/recibo/': typeof AuthenticatedReciboIndexRoute
 }
 export interface FileRoutesByTo {
@@ -158,7 +158,7 @@ export interface FileRoutesByTo {
   '/utilizadores': typeof AuthenticatedUtilizadoresRoute
   '/vendas': typeof AuthenticatedVendasRoute
   '/recibo/$ref': typeof AuthenticatedReciboRefRoute
-  '/api/public': typeof ApiPublicSetupAdminRoute
+  '/api/public/setup-admin': typeof ApiPublicSetupAdminRoute
   '/recibo': typeof AuthenticatedReciboIndexRoute
 }
 export interface FileRoutesById {
@@ -179,7 +179,7 @@ export interface FileRoutesById {
   '/_authenticated/utilizadores': typeof AuthenticatedUtilizadoresRoute
   '/_authenticated/vendas': typeof AuthenticatedVendasRoute
   '/_authenticated/recibo/$ref': typeof AuthenticatedReciboRefRoute
-  '/api/public/_setup-admin': typeof ApiPublicSetupAdminRoute
+  '/api/public/setup-admin': typeof ApiPublicSetupAdminRoute
   '/_authenticated/recibo/': typeof AuthenticatedReciboIndexRoute
 }
 export interface FileRouteTypes {
@@ -200,7 +200,7 @@ export interface FileRouteTypes {
     | '/utilizadores'
     | '/vendas'
     | '/recibo/$ref'
-    | '/api/public'
+    | '/api/public/setup-admin'
     | '/recibo/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -219,7 +219,7 @@ export interface FileRouteTypes {
     | '/utilizadores'
     | '/vendas'
     | '/recibo/$ref'
-    | '/api/public'
+    | '/api/public/setup-admin'
     | '/recibo'
   id:
     | '__root__'
@@ -239,7 +239,7 @@ export interface FileRouteTypes {
     | '/_authenticated/utilizadores'
     | '/_authenticated/vendas'
     | '/_authenticated/recibo/$ref'
-    | '/api/public/_setup-admin'
+    | '/api/public/setup-admin'
     | '/_authenticated/recibo/'
   fileRoutesById: FileRoutesById
 }
@@ -364,10 +364,10 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedReciboIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/api/public/_setup-admin': {
-      id: '/api/public/_setup-admin'
-      path: '/api/public'
-      fullPath: '/api/public'
+    '/api/public/setup-admin': {
+      id: '/api/public/setup-admin'
+      path: '/api/public/setup-admin'
+      fullPath: '/api/public/setup-admin'
       preLoaderRoute: typeof ApiPublicSetupAdminRouteImport
       parentRoute: typeof rootRouteImport
     }

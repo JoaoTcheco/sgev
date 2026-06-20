@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 
 // TEMPORARY: one-off password reset for documentation screenshots.
 // Delete after use.
-export const Route = createFileRoute("/api/public/_setup-admin")({
+export const Route = createFileRoute("/api/public/setup-admin")({
   server: {
     handlers: {
       POST: async ({ request }) => {
