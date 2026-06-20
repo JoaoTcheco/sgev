@@ -62,7 +62,7 @@ function VendasPage() {
   const [paymentKind, setPaymentKind] = useState<PaymentKind>("cash");
   const [wallet, setWallet] = useState<DigitalWallet>("mpesa");
   const [received, setReceived] = useState<number>(0);
-  const [lastSale, setLastSale] = useState<{ id: string; at: Date } | null>(null);
+  const [lastSale, setLastSale] = useState<{ id: string; receipt_number: string | null; at: Date } | null>(null);
 
   const { data: products = [], isLoading } = useQuery({
     queryKey: ["pdv-products", search],
