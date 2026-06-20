@@ -404,6 +404,8 @@ function VendasPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      </div>
     </div>
   );
+
 }
