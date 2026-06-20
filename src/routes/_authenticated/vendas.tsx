@@ -52,6 +52,9 @@ const WALLET_TO_ENUM: Record<DigitalWallet, "debit" | "pix" | "other"> = {
 
 function VendasPage() {
   const queryClient = useQueryClient();
+  const { data: settings } = usePharmacySettings();
+  const { user } = useAuthUser();
+  const { data: profile } = useProfile(user?.id);
   const [search, setSearch] = useState("");
   const [cart, setCart] = useState<CartItem[]>([]);
   const [discount, setDiscount] = useState(0);
