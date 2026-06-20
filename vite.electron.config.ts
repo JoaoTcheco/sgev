@@ -14,6 +14,7 @@ export default defineConfig({
       "@/integrations/supabase/client.server": path.resolve(__dirname, "src/integrations/local/stub.ts"),
       "@/integrations/supabase/auth-middleware": path.resolve(__dirname, "src/integrations/local/stub.ts"),
       "@/integrations/supabase/auth-attacher": path.resolve(__dirname, "src/integrations/local/stub.ts"),
+      "@/lib/admin-users.functions": path.resolve(__dirname, "src/integrations/local/admin-users.ts"),
       "@tanstack/react-start": path.resolve(__dirname, "src/integrations/local/start-shim.ts"),
     },
   },
