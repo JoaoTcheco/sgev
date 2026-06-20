@@ -373,6 +373,7 @@ function VendasPage() {
                 received={paymentKind === "cash" ? received : null}
                 change={paymentKind === "cash" ? change : null}
                 saleId={lastSale.id}
+                receiptNumber={lastSale.receipt_number}
                 operatorName={profile?.full_name ?? user?.email ?? null}
                 at={lastSale.at}
               />
