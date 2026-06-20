@@ -7,10 +7,13 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatMZN, formatDate } from "@/lib/format";
 
+import { RoleGate } from "@/components/role-gate";
+
 export const Route = createFileRoute("/_authenticated/relatorios")({
   head: () => ({ meta: [{ title: "Relatórios — PharmaSys" }] }),
-  component: RelatoriosPage,
+  component: () => <RoleGate allow={["admin"]}><RelatoriosPage /></RoleGate>,
 });
+
 
 function RelatoriosPage() {
   const { data, isLoading } = useQuery({

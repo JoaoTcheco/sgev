@@ -7,10 +7,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { formatMZN, formatDateTime } from "@/lib/format";
 
+import { RoleGate } from "@/components/role-gate";
+
 export const Route = createFileRoute("/_authenticated/contas")({
   head: () => ({ meta: [{ title: "Contas — PharmaSys" }] }),
-  component: ContasPage,
+  component: () => <RoleGate allow={["admin", "pharmacist"]}><ContasPage /></RoleGate>,
 });
+
 
 const LABELS: Record<string, string> = {
   cash: "Numerário",
