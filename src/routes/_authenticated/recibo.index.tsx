@@ -27,7 +27,7 @@ function ReciboLookup() {
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-sm text-muted-foreground">
-            Introduza o número do recibo (ex.: <code>REC-2026-000001</code>) ou leia o código QR impresso para abrir os detalhes da venda.
+            Introduza o número do recibo (ex.: <code>REC-2026-000001</code>) ou leia o código de barras impresso com um leitor para abrir os detalhes da venda.
           </p>
           <form onSubmit={go} className="flex items-center gap-2">
             <div className="relative flex-1">
