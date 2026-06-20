@@ -149,6 +149,51 @@ export type Database = {
           },
         ]
       }
+      cash_sessions: {
+        Row: {
+          closed_at: string | null
+          counted_amount: number | null
+          created_at: string
+          difference: number | null
+          expected_amount: number | null
+          id: string
+          notes: string | null
+          opened_at: string
+          opening_amount: number
+          status: Database["public"]["Enums"]["cash_session_status"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          closed_at?: string | null
+          counted_amount?: number | null
+          created_at?: string
+          difference?: number | null
+          expected_amount?: number | null
+          id?: string
+          notes?: string | null
+          opened_at?: string
+          opening_amount?: number
+          status?: Database["public"]["Enums"]["cash_session_status"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          closed_at?: string | null
+          counted_amount?: number | null
+          created_at?: string
+          difference?: number | null
+          expected_amount?: number | null
+          id?: string
+          notes?: string | null
+          opened_at?: string
+          opening_amount?: number
+          status?: Database["public"]["Enums"]["cash_session_status"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       categories: {
         Row: {
           created_at: string
@@ -202,6 +247,51 @@ export type Database = {
           notes?: string | null
           phone?: string | null
           tax_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      deletion_requests: {
+        Row: {
+          created_at: string
+          entity: string
+          entity_id: string
+          entity_label: string | null
+          id: string
+          reason: string
+          requested_by: string
+          review_reason: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: Database["public"]["Enums"]["deletion_status"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          entity: string
+          entity_id: string
+          entity_label?: string | null
+          id?: string
+          reason: string
+          requested_by: string
+          review_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["deletion_status"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          entity?: string
+          entity_id?: string
+          entity_label?: string | null
+          id?: string
+          reason?: string
+          requested_by?: string
+          review_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["deletion_status"]
           updated_at?: string
         }
         Relationships: []
@@ -433,6 +523,7 @@ export type Database = {
       }
       sales: {
         Row: {
+          cash_session_id: string | null
           created_at: string
           customer_id: string | null
           discount: number
@@ -447,6 +538,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          cash_session_id?: string | null
           created_at?: string
           customer_id?: string | null
           discount?: number
@@ -461,6 +553,7 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          cash_session_id?: string | null
           created_at?: string
           customer_id?: string | null
           discount?: number
@@ -475,6 +568,13 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "sales_cash_session_id_fkey"
+            columns: ["cash_session_id"]
+            isOneToOne: false
+            referencedRelation: "cash_sessions"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "sales_customer_id_fkey"
             columns: ["customer_id"]
@@ -622,6 +722,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      close_cash_session: {
+        Args: { p_counted: number; p_notes: string }
+        Returns: string
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -631,6 +735,7 @@ export type Database = {
       }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
       is_staff: { Args: { _user_id: string }; Returns: boolean }
+      open_cash_session: { Args: { p_opening: number }; Returns: string }
       process_sale: {
         Args: {
           p_customer_id: string
@@ -641,11 +746,21 @@ export type Database = {
         Returns: string
       }
       refresh_alerts: { Args: never; Returns: undefined }
+      request_deletion: {
+        Args: { p_entity: string; p_entity_id: string; p_reason: string }
+        Returns: string
+      }
+      review_deletion: {
+        Args: { p_approve: boolean; p_id: string; p_reason: string }
+        Returns: undefined
+      }
     }
     Enums: {
       alert_severity: "info" | "warning" | "critical"
       alert_type: "low_stock" | "near_expiry" | "expired"
       app_role: "admin" | "pharmacist" | "cashier"
+      cash_session_status: "open" | "closed"
+      deletion_status: "pending" | "approved" | "rejected"
       medicine_tarja: "livre" | "amarela" | "vermelha" | "preta"
       movement_type: "in" | "out" | "adjust" | "loss" | "return"
       payment_method: "cash" | "debit" | "credit" | "pix" | "other"
@@ -780,6 +895,8 @@ export const Constants = {
       alert_severity: ["info", "warning", "critical"],
       alert_type: ["low_stock", "near_expiry", "expired"],
       app_role: ["admin", "pharmacist", "cashier"],
+      cash_session_status: ["open", "closed"],
+      deletion_status: ["pending", "approved", "rejected"],
       medicine_tarja: ["livre", "amarela", "vermelha", "preta"],
       movement_type: ["in", "out", "adjust", "loss", "return"],
       payment_method: ["cash", "debit", "credit", "pix", "other"],
