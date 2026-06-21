@@ -1,0 +1,13 @@
+{
+  "name": "pharmasys-desktop",
+  "productName": "PharmaSys",
+  "version": "1.0.0",
+  "description": "PharmaSys - Sistema de gestão para farmácias (modo offline)",
+  "main": "electron/main.cjs",
+  "author": "PharmaSys",
+  "license": "MIT",
+  "dependencies": {
+    "better-sqlite3": "^11.10.0",
+    "bcryptjs": "^2.4.3"
+  }
+}
