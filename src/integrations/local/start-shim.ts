@@ -9,3 +9,13 @@ export function createServerFn() {
 }
 export function createStart() { return {}; }
 export function useServerFn(fn: any) { return fn; }
+export function createMiddleware() {
+  const chain: any = {
+    server: () => chain,
+    client: () => chain,
+    middleware: () => chain,
+    validator: () => chain,
+  };
+  return chain;
+}
+export function getRequest() { return new Request("http://localhost/"); }
