@@ -22,12 +22,18 @@ function rewritePlugin(): Plugin {
   return {
     name: "electron-rewrites",
     enforce: "pre",
-    resolveId(id) {
+    resolveId(id, importer) {
       if (REWRITES[id]) return REWRITES[id];
+      // Catch relative or already-resolved paths to the same modules
+      if (id.endsWith("/integrations/supabase/auth-middleware") || id.endsWith("/integrations/supabase/auth-middleware.ts")) return STUB;
+      if (id.endsWith("/integrations/supabase/auth-attacher") || id.endsWith("/integrations/supabase/auth-attacher.ts")) return STUB;
+      if (id.endsWith("/integrations/supabase/client.server") || id.endsWith("/integrations/supabase/client.server.ts")) return STUB;
+      if (id === "@tanstack/react-start/server") return STUB;
       return null;
     },
   };
 }
+
 
 export default defineConfig({
   base: "./",
