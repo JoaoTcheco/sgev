@@ -513,43 +513,40 @@ function BarcodeDialog({
   const [code, setCode] = useState(product?.barcode ?? "");
   useEffect(() => { setCode(product?.barcode ?? ""); }, [product?.id, product?.barcode]);
 
-  async function print() {
+  function print() {
     if (!product || !product.barcode) { toast.error("Atribua um código primeiro"); return; }
-    const JsBarcode = (await import("jsbarcode")).default;
-    // Render each barcode to an SVG string in-process (no internet needed)
-    const svgNS = "http://www.w3.org/2000/svg";
-    const renderOne = () => {
-      const svg = document.createElementNS(svgNS, "svg");
-      JsBarcode(svg, product.barcode!, { format: "CODE128", height: 40, width: 1.4, fontSize: 10, margin: 0 });
-      return new XMLSerializer().serializeToString(svg);
-    };
-    const svgMarkup = renderOne();
+    const w = window.open("", "_blank", "width=800,height=600");
+    if (!w) return;
     const labels = Array.from({ length: qty }).map(() => `
       <div class="label">
         <div class="name">${escapeHtml(product.name)}</div>
-        <div class="bc">${svgMarkup}</div>
+        <svg class="bc"></svg>
         <div class="price">${formatMZN(product.sale_price)}</div>
       </div>
     `).join("");
-    const w = window.open("", "_blank", "width=800,height=600");
-    if (!w) return;
     w.document.write(`<!doctype html><html><head><title>Etiquetas — ${escapeHtml(product.name)}</title>
+      <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
       <style>
         @page { size: A4; margin: 8mm; }
         body { font-family: system-ui, sans-serif; margin: 0; }
         .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4mm; }
         .label { border: 1px dashed #ccc; padding: 4mm; text-align: center; page-break-inside: avoid; }
         .name { font-size: 11px; font-weight: 600; margin-bottom: 2mm; }
-        .bc svg { width: 100%; height: 40px; }
+        .bc { width: 100%; height: 40px; }
         .price { font-size: 12px; font-weight: 700; margin-top: 1mm; }
         @media print { .label { border-color: transparent; } }
       </style></head><body>
       <div class="grid">${labels}</div>
-      <script>window.onload=function(){setTimeout(function(){window.print();},200);};</script>
-      </body></html>`);
+      <script>
+        window.onload = function(){
+          document.querySelectorAll('.bc').forEach(function(svg){
+            JsBarcode(svg, ${JSON.stringify(product.barcode)}, { format:'CODE128', height:40, width:1.4, fontSize:10, margin:0 });
+          });
+          setTimeout(function(){ window.print(); }, 300);
+        };
+      </script></body></html>`);
     w.document.close();
   }
-
 
   return (
     <Dialog open={!!product} onOpenChange={(o) => !o && onClose()}>
