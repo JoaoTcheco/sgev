@@ -81,7 +81,11 @@ function VendasPage() {
         .eq("active", true)
         .order("name")
         .limit(40);
-      if (search.trim()) q = q.ilike("name", `%${search.trim()}%`);
+      if (search.trim()) {
+        const term = `%${search.trim()}%`;
+        q = q.or(`name.ilike.${term},barcode.ilike.${term}`);
+      }
+
       const { data, error } = await q;
       if (error) throw error;
       return data ?? [];
