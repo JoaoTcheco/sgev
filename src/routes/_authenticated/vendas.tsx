@@ -129,6 +129,21 @@ function VendasPage() {
 
   function removeItem(idx: number) { setCart((prev) => prev.filter((_, i) => i !== idx)); }
 
+  // Hardware barcode scanner → look up product by exact barcode and add to cart.
+  useBarcodeScanner(async (code) => {
+    if (!openSession || step !== "cart") return;
+    const { data, error } = await supabase
+      .from("products")
+      .select("id, name, sale_price, sub_unit_price, sub_unit_label, unit, pack_size, requires_prescription, barcode, batches(quantity, expiry_date)")
+      .eq("barcode", code)
+      .eq("active", true)
+      .maybeSingle();
+    if (error) { toast.error("Falha", { description: error.message }); return; }
+    if (!data) { toast.error(`Código ${code} não encontrado`); return; }
+    addToCart(data, "pack");
+  });
+
+
   const subtotal = useMemo(() => cart.reduce((s, i) => s + i.quantity * i.unit_price, 0), [cart]);
   const total = Math.max(0, subtotal - discount);
   const change = Math.max(0, received - total);
