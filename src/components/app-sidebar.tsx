@@ -3,6 +3,7 @@ import {
   LayoutDashboard,
   ShoppingCart,
   Package,
+  PackagePlus,
   AlertTriangle,
   BarChart3,
   Users,
@@ -15,8 +16,8 @@ import {
   Settings,
   Receipt,
   Banknote,
-  
 } from "lucide-react";
+
 import {
   Sidebar,
   SidebarContent,
