@@ -44,8 +44,9 @@ const OPERATIONAL: Item[] = [
   { title: "Validar Recibo", url: "/recibo", icon: Receipt, roles: ["admin", "pharmacist", "cashier"] },
   { title: "Alertas", url: "/alertas", icon: AlertTriangle, roles: ["admin", "pharmacist", "cashier"] },
   { title: "Estoque", url: "/estoque", icon: Package, roles: ["admin", "pharmacist"] },
+  { title: "Entrada", url: "/entrada", icon: PackagePlus, roles: ["admin", "pharmacist"] },
   { title: "Estatísticas", url: "/estatisticas", icon: BarChart3, roles: ["admin", "pharmacist"] },
-];
+
 
 const MANAGEMENT: Item[] = [
   { title: "Contas", url: "/contas", icon: Wallet, roles: ["admin", "pharmacist"] },
