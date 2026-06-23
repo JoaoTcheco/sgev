@@ -16,6 +16,10 @@ import { useAuthUser, useUserRoles, highestRole } from "@/hooks/use-auth";
 import { usePharmacySettings, receiptWidthClass, type PharmacySettings, type ReceiptWidth } from "@/hooks/use-settings";
 import { formatMZN, formatDateTime } from "@/lib/format";
 import { Barcode } from "@/components/barcode";
+import { useLabelSettings, DEFAULT_LABEL_SETTINGS, type LabelMode } from "@/hooks/use-label-settings";
+import { printLabels } from "@/lib/print-labels";
+import { Printer, RotateCcw } from "lucide-react";
+
 
 export const Route = createFileRoute("/_authenticated/configuracoes")({
   head: () => ({ meta: [{ title: "Configurações — PharmaSys" }] }),
