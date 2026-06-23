@@ -210,7 +210,7 @@ function VendasPage() {
           </div>
           <div className="relative w-72">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Nome do medicamento…" className="pl-9" />
+            <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Nome ou código de barras…" className="pl-9" />
           </div>
         </CardHeader>
         <CardContent>
