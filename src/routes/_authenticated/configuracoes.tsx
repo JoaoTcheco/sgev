@@ -152,6 +152,10 @@ function ConfiguracoesPage() {
           </CardContent>
         </Card>
 
+        <LabelSettingsCard />
+
+
+
         <div className="flex justify-end">
           <Button onClick={() => save.mutate()} disabled={disabled || save.isPending} size="lg">
             {save.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
