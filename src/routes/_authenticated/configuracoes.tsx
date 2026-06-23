@@ -317,3 +317,211 @@ function Row({ label, value, bold }: { label: string; value: string; bold?: bool
 function Dashed() {
   return <div className="my-1 border-t border-dashed border-black/60" />;
 }
+
+function LabelSettingsCard() {
+  const { settings, update, reset } = useLabelSettings();
+  const sample = {
+    name: "Paracetamol 500mg",
+    barcode: "2000000001234",
+    price: 120,
+    batch_number: "L240115",
+    expiry_date: "2027-08-31",
+    qty: 1,
+  };
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2"><Printer className="h-5 w-5" /> Etiquetas e impressora</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+          <Field label="Modo de impressão">
+            <Select value={settings.mode} onValueChange={(v) => update({ mode: v as LabelMode })}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="a4">Folha A4 (grelha)</SelectItem>
+                <SelectItem value="thermal">Impressora térmica (rolo)</SelectItem>
+              </SelectContent>
+            </Select>
+          </Field>
+          <Field label="Impressora preferida (sugestão)">
+            <Input
+              value={settings.printerName}
+              onChange={(e) => update({ printerName: e.target.value })}
+              placeholder="Ex.: Zebra ZD220 / HP LaserJet"
+            />
+          </Field>
+        </div>
+
+        <p className="text-xs text-muted-foreground">
+          A escolha da impressora é feita na janela de impressão do navegador. O nome acima aparece como dica antes de imprimir.
+        </p>
+
+        <Separator />
+
+        {settings.mode === "a4" ? (
+          <div className="space-y-3">
+            <h4 className="text-sm font-semibold">Layout A4</h4>
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+              <Field label="Colunas">
+                <Input type="number" min={1} max={6} value={settings.a4.columns}
+                  onChange={(e) => update((s) => ({ ...s, a4: { ...s.a4, columns: clamp(Number(e.target.value), 1, 6) } }))} />
+              </Field>
+              <Field label="Margem (mm)">
+                <Input type="number" min={0} max={30} value={settings.a4.marginMm}
+                  onChange={(e) => update((s) => ({ ...s, a4: { ...s.a4, marginMm: clamp(Number(e.target.value), 0, 30) } }))} />
+              </Field>
+              <Field label="Espaço entre (mm)">
+                <Input type="number" min={0} max={20} value={settings.a4.gapMm}
+                  onChange={(e) => update((s) => ({ ...s, a4: { ...s.a4, gapMm: clamp(Number(e.target.value), 0, 20) } }))} />
+              </Field>
+              <Field label="Altura etiqueta (mm)">
+                <Input type="number" min={15} max={80} value={settings.a4.labelHeightMm}
+                  onChange={(e) => update((s) => ({ ...s, a4: { ...s.a4, labelHeightMm: clamp(Number(e.target.value), 15, 80) } }))} />
+              </Field>
+            </div>
+            <div className="flex flex-wrap gap-4">
+              <ToggleField label="Mostrar preço" checked={settings.a4.showPrice}
+                onChange={(v) => update((s) => ({ ...s, a4: { ...s.a4, showPrice: v } }))} />
+              <ToggleField label="Mostrar lote" checked={settings.a4.showBatch}
+                onChange={(v) => update((s) => ({ ...s, a4: { ...s.a4, showBatch: v } }))} />
+              <ToggleField label="Mostrar validade" checked={settings.a4.showExpiry}
+                onChange={(v) => update((s) => ({ ...s, a4: { ...s.a4, showExpiry: v } }))} />
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <h4 className="text-sm font-semibold">Etiqueta térmica</h4>
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+              <Field label="Largura (mm)">
+                <Input type="number" min={20} max={110} value={settings.thermal.widthMm}
+                  onChange={(e) => update((s) => ({ ...s, thermal: { ...s.thermal, widthMm: clamp(Number(e.target.value), 20, 110) } }))} />
+              </Field>
+              <Field label="Altura (mm)">
+                <Input type="number" min={15} max={100} value={settings.thermal.heightMm}
+                  onChange={(e) => update((s) => ({ ...s, thermal: { ...s.thermal, heightMm: clamp(Number(e.target.value), 15, 100) } }))} />
+              </Field>
+              <Field label="Margem interna (mm)">
+                <Input type="number" min={0} max={10} value={settings.thermal.marginMm}
+                  onChange={(e) => update((s) => ({ ...s, thermal: { ...s.thermal, marginMm: clamp(Number(e.target.value), 0, 10) } }))} />
+              </Field>
+              <Field label="Altura do código (mm)">
+                <Input type="number" min={6} max={40} value={settings.thermal.barcodeHeightMm}
+                  onChange={(e) => update((s) => ({ ...s, thermal: { ...s.thermal, barcodeHeightMm: clamp(Number(e.target.value), 6, 40) } }))} />
+              </Field>
+              <Field label="Tamanho fonte (pt)">
+                <Input type="number" min={6} max={16} value={settings.thermal.fontSizePt}
+                  onChange={(e) => update((s) => ({ ...s, thermal: { ...s.thermal, fontSizePt: clamp(Number(e.target.value), 6, 16) } }))} />
+              </Field>
+            </div>
+            <div className="flex flex-wrap gap-4">
+              <ToggleField label="Mostrar preço" checked={settings.thermal.showPrice}
+                onChange={(v) => update((s) => ({ ...s, thermal: { ...s.thermal, showPrice: v } }))} />
+              <ToggleField label="Mostrar lote" checked={settings.thermal.showBatch}
+                onChange={(v) => update((s) => ({ ...s, thermal: { ...s.thermal, showBatch: v } }))} />
+              <ToggleField label="Mostrar validade" checked={settings.thermal.showExpiry}
+                onChange={(v) => update((s) => ({ ...s, thermal: { ...s.thermal, showExpiry: v } }))} />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Dica: na janela de impressão, escolha a impressora térmica e defina margens "Nenhuma" e escala "100%" para alinhar ao rolo.
+            </p>
+          </div>
+        )}
+
+        <Separator />
+
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="text-xs text-muted-foreground">
+            Configurações guardadas localmente neste dispositivo.
+          </p>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={() => reset()}>
+              <RotateCcw className="mr-1 h-4 w-4" /> Repor padrão
+            </Button>
+            <Button size="sm" onClick={() => printLabels([sample])}>
+              <Printer className="mr-1 h-4 w-4" /> Imprimir teste
+            </Button>
+          </div>
+        </div>
+
+        <div className="rounded-lg border bg-muted/30 p-3">
+          <p className="mb-2 text-xs font-medium text-muted-foreground">
+            Pré-visualização ({settings.mode === "a4" ? `A4 · ${settings.a4.columns} colunas` : `${settings.thermal.widthMm}×${settings.thermal.heightMm} mm`})
+          </p>
+          <LabelPreview />
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function LabelPreview() {
+  const { settings } = useLabelSettings();
+  if (settings.mode === "thermal") {
+    const { widthMm, heightMm, marginMm, barcodeHeightMm, fontSizePt, showPrice, showBatch, showExpiry } = settings.thermal;
+    return (
+      <div className="flex justify-center bg-white p-3">
+        <div
+          style={{ width: `${widthMm * 3}px`, height: `${heightMm * 3}px`, padding: `${marginMm * 3}px`, fontSize: `${fontSizePt}pt` }}
+          className="flex flex-col items-center justify-center overflow-hidden border border-dashed border-zinc-300 text-zinc-900"
+        >
+          <div className="font-bold leading-tight">Paracetamol 500mg</div>
+          <div style={{ height: `${barcodeHeightMm * 3}px`, width: "100%" }} className="my-1">
+            <Barcode value="2000000001234" height={barcodeHeightMm * 3} displayValue={false} />
+          </div>
+          {(showBatch || showExpiry) && (
+            <div className="flex w-full justify-between text-[8pt]">
+              {showBatch && <span>L:240115</span>}
+              {showExpiry && <span>V:31/08/27</span>}
+            </div>
+          )}
+          {showPrice && <div className="font-extrabold">{formatMZN(120)}</div>}
+        </div>
+      </div>
+    );
+  }
+  const { columns, gapMm, labelHeightMm, showPrice, showBatch, showExpiry } = settings.a4.columns
+    ? settings.a4
+    : DEFAULT_LABEL_SETTINGS.a4;
+  const cells = Array.from({ length: columns * 2 });
+  return (
+    <div
+      className="bg-white p-3"
+      style={{ display: "grid", gridTemplateColumns: `repeat(${columns}, 1fr)`, gap: `${gapMm * 2}px` }}
+    >
+      {cells.map((_, i) => (
+        <div
+          key={i}
+          style={{ height: `${labelHeightMm * 2}px` }}
+          className="flex flex-col items-center justify-center overflow-hidden border border-dashed border-zinc-300 p-1 text-[9px] text-zinc-900"
+        >
+          <div className="font-semibold">Paracetamol 500mg</div>
+          <div className="w-full" style={{ height: "40%" }}>
+            <Barcode value="2000000001234" height={Math.max(20, labelHeightMm)} displayValue={false} />
+          </div>
+          {(showBatch || showExpiry) && (
+            <div className="flex w-full justify-between text-[7px]">
+              {showBatch && <span>Lote: 240115</span>}
+              {showExpiry && <span>Val: 31/08/27</span>}
+            </div>
+          )}
+          {showPrice && <div className="font-bold">{formatMZN(120)}</div>}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ToggleField({ label, checked, onChange }: { label: string; checked: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <label className="flex items-center gap-2 text-sm">
+      <Switch checked={checked} onCheckedChange={onChange} />
+      {label}
+    </label>
+  );
+}
+
+function clamp(n: number, min: number, max: number) {
+  if (!Number.isFinite(n)) return min;
+  return Math.min(max, Math.max(min, n));
+}
