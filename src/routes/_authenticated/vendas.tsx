@@ -17,7 +17,9 @@ import { usePharmacySettings } from "@/hooks/use-settings";
 import { useAuthUser, useProfile } from "@/hooks/use-auth";
 import { ReceiptBody } from "@/routes/_authenticated/configuracoes";
 import { useOpenCashSession } from "@/hooks/use-cash-session";
+import { useBarcodeScanner } from "@/hooks/use-barcode-scanner";
 import { Link } from "@tanstack/react-router";
+
 import { AlertTriangle } from "lucide-react";
 
 
@@ -79,7 +81,11 @@ function VendasPage() {
         .eq("active", true)
         .order("name")
         .limit(40);
-      if (search.trim()) q = q.ilike("name", `%${search.trim()}%`);
+      if (search.trim()) {
+        const term = `%${search.trim()}%`;
+        q = q.or(`name.ilike.${term},barcode.ilike.${term}`);
+      }
+
       const { data, error } = await q;
       if (error) throw error;
       return data ?? [];
@@ -126,6 +132,21 @@ function VendasPage() {
   }
 
   function removeItem(idx: number) { setCart((prev) => prev.filter((_, i) => i !== idx)); }
+
+  // Hardware barcode scanner → look up product by exact barcode and add to cart.
+  useBarcodeScanner(async (code) => {
+    if (!openSession || step !== "cart") return;
+    const { data, error } = await supabase
+      .from("products")
+      .select("id, name, sale_price, sub_unit_price, sub_unit_label, unit, pack_size, requires_prescription, barcode, batches(quantity, expiry_date)")
+      .eq("barcode", code)
+      .eq("active", true)
+      .maybeSingle();
+    if (error) { toast.error("Falha", { description: error.message }); return; }
+    if (!data) { toast.error(`Código ${code} não encontrado`); return; }
+    addToCart(data, "pack");
+  });
+
 
   const subtotal = useMemo(() => cart.reduce((s, i) => s + i.quantity * i.unit_price, 0), [cart]);
   const total = Math.max(0, subtotal - discount);
@@ -189,7 +210,7 @@ function VendasPage() {
           </div>
           <div className="relative w-72">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Nome do medicamento…" className="pl-9" />
+            <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Nome ou código de barras…" className="pl-9" />
           </div>
         </CardHeader>
         <CardContent>
