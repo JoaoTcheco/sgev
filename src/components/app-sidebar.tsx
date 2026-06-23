@@ -46,6 +46,9 @@ const OPERATIONAL: Item[] = [
   { title: "Estoque", url: "/estoque", icon: Package, roles: ["admin", "pharmacist"] },
   { title: "Entrada", url: "/entrada", icon: PackagePlus, roles: ["admin", "pharmacist"] },
   { title: "Estatísticas", url: "/estatisticas", icon: BarChart3, roles: ["admin", "pharmacist"] },
+];
+
+
 
 
 const MANAGEMENT: Item[] = [
