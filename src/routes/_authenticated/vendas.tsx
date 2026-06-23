@@ -17,7 +17,9 @@ import { usePharmacySettings } from "@/hooks/use-settings";
 import { useAuthUser, useProfile } from "@/hooks/use-auth";
 import { ReceiptBody } from "@/routes/_authenticated/configuracoes";
 import { useOpenCashSession } from "@/hooks/use-cash-session";
+import { useBarcodeScanner } from "@/hooks/use-barcode-scanner";
 import { Link } from "@tanstack/react-router";
+
 import { AlertTriangle } from "lucide-react";
 
 
