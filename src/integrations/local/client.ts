@@ -40,7 +40,9 @@ async function call<T = unknown>(channel: string, payload?: unknown): Promise<T>
 }
 
 // ---------- Query builder ----------
-class QueryBuilder<T = Record<string, unknown>> implements PromiseLike<{ data: T; error: null } | { data: null; error: { message: string } }> {
+type QueryResult = { data: unknown; error: null } | { data: null; error: { message: string } };
+
+class QueryBuilder implements PromiseLike<QueryResult> {
   private filters: Filter[] = [];
   private orders: Order[] = [];
   private _limit?: number;
