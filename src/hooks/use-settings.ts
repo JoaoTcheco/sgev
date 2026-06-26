@@ -1,37 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { getPharmacySettings, type PharmacySettingsRow } from "@/lib/db";
 
 export type ReceiptWidth = "58mm" | "80mm" | "a4";
 
-export interface PharmacySettings {
-  id: boolean;
-  name: string;
-  slogan: string | null;
-  nuit: string | null;
-  address: string | null;
-  city: string | null;
-  phone: string | null;
-  email: string | null;
-  website: string | null;
-  logo_url: string | null;
-  receipt_width: ReceiptWidth;
-  receipt_header: string | null;
-  receipt_footer: string | null;
-  show_pharmacist: boolean;
-}
+export type PharmacySettings = PharmacySettingsRow;
 
 export function usePharmacySettings() {
   return useQuery({
     queryKey: ["pharmacy-settings"],
-    queryFn: async (): Promise<PharmacySettings | null> => {
-      const { data, error } = await supabase
-        .from("pharmacy_settings")
-        .select("*")
-        .eq("id", true)
-        .maybeSingle();
-      if (error) throw error;
-      return data as PharmacySettings | null;
-    },
+    queryFn: () => getPharmacySettings(),
     staleTime: 60_000,
   });
 }
