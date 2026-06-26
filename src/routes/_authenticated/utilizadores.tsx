@@ -142,7 +142,7 @@ function UtilizadoresPage() {
               <DialogTrigger asChild>
                 <Button><UserPlus className="mr-2 h-4 w-4" /> Novo utilizador</Button>
               </DialogTrigger>
-              <CreateUserDialog onClose={() => setCreateOpen(false)} createFn={createFn} onCreated={invalidate} />
+              <CreateUserDialog onClose={() => setCreateOpen(false)} createFn={fns.create} onCreated={invalidate} />
             </Dialog>
           </div>
         </CardHeader>
