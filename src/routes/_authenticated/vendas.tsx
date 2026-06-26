@@ -384,7 +384,25 @@ function VendasPage() {
                 </div>
               )}
 
-              <Button className="w-full" size="lg" disabled={paymentKind === "cash" && received < total} onClick={() => setStep("receipt")}>
+              <div className="space-y-2 border-t pt-3">
+                <Label className="text-sm font-semibold">Conta de destino do dinheiro</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  {accounts.map((a: any) => (
+                    <button key={a.id} type="button" onClick={() => setAccountId(a.id)}
+                      className={`rounded-md border p-2 text-left text-sm ${accountId === a.id ? "border-primary bg-primary/5 font-semibold" : ""}`}>
+                      <div className="flex items-center gap-1">
+                        {a.name}
+                        {a.is_system && <Badge variant="secondary" className="text-[9px]">SISTEMA</Badge>}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+                {accounts.length === 0 && (
+                  <p className="text-xs text-destructive">Sem contas activas. Crie uma em Contas.</p>
+                )}
+              </div>
+
+              <Button className="w-full" size="lg" disabled={(paymentKind === "cash" && received < total) || !accountId} onClick={() => setStep("receipt")}>
                 Avançar
               </Button>
             </div>
