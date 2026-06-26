@@ -7,9 +7,28 @@ import path from "node:path";
 // Standalone SPA build for Electron desktop bundle.
 // Bypasses TanStack Start / Nitro and produces a static dist-spa/index.html
 // that Electron can load via file://.
+// Force-stub files that are server-only — Rollup load hook returns an inert module.
+const STUBBED = new Set([
+  path.resolve(__dirname, "src/integrations/supabase/auth-middleware.ts"),
+  path.resolve(__dirname, "src/integrations/supabase/auth-attacher.ts"),
+  path.resolve(__dirname, "src/integrations/supabase/client.server.ts"),
+  path.resolve(__dirname, "src/server.ts"),
+  path.resolve(__dirname, "src/start.ts"),
+  path.resolve(__dirname, "src/lib/error-capture.ts"),
+  path.resolve(__dirname, "src/lib/config.server.ts"),
+]);
+
 export default defineConfig({
   base: "./",
   plugins: [
+    {
+      name: "electron-server-stubs",
+      enforce: "pre",
+      load(id) {
+        const clean = id.split("?")[0];
+        if (STUBBED.has(clean)) return "export default {}; export const requireSupabaseAuth = undefined; export const attachSupabaseAuth = undefined; export const supabaseAdmin = undefined;";
+      },
+    },
     TanStackRouterVite({
       target: "react",
       autoCodeSplitting: true,
