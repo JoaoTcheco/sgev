@@ -22,12 +22,15 @@
   "build": {
     "appId": "mz.pharmasys.desktop",
     "productName": "PharmaSys",
-    "directories": { "output": "dist-electron" },
+    "directories": { "output": "/mnt/documents/pharmasys-dist" },
     "files": ["electron/**/*", "dist-spa/**/*", "node_modules/better-sqlite3/**/*", "node_modules/bcryptjs/**/*", "package.json"],
     "asarUnpack": ["**/node_modules/better-sqlite3/**/*"],
+    "removePackageScripts": true,
     "win": {
       "target": [{ "target": "nsis", "arch": ["x64"] }],
-      "icon": "build/icon.ico"
+      "icon": "build/icon.png",
+      "signAndEditExecutable": false,
+      "signtoolOptions": null
     },
     "nsis": {
       "oneClick": false,
@@ -35,11 +38,13 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "PharmaSys"
+      "shortcutName": "PharmaSys",
+      "artifactName": "PharmaSys-Setup-${version}.${ext}"
     },
     "linux": {
       "target": ["AppImage"],
-      "category": "Office"
+      "category": "Office",
+      "icon": "build/icon.png"
     }
   },
   "dependencies": {
