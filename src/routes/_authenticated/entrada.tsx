@@ -3,7 +3,7 @@ import { useCallback, useMemo, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Search, Plus, Trash2, Loader2, PackagePlus, Printer, CheckCircle2, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { listEntradaProducts, listSuppliersMin, findProductByBarcode, addBatchEntry } from "@/lib/db";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -50,30 +50,12 @@ function EntradaPage() {
 
   const { data: products = [], isLoading } = useQuery({
     queryKey: ["entrada-products", search],
-    queryFn: async () => {
-      let q = supabase
-        .from("products")
-        .select("id, name, manufacturer, barcode, sale_price, unit")
-        .eq("active", true)
-        .order("name")
-        .limit(30);
-      if (search.trim()) {
-        const term = `%${search.trim()}%`;
-        q = q.or(`name.ilike.${term},barcode.ilike.${term},manufacturer.ilike.${term}`);
-      }
-      const { data, error } = await q;
-      if (error) throw error;
-      return data ?? [];
-    },
+    queryFn: () => listEntradaProducts(search),
   });
 
   const { data: suppliers = [] } = useQuery({
     queryKey: ["suppliers-min"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("suppliers").select("id, legal_name").eq("active", true).order("legal_name");
-      if (error) throw error;
-      return data ?? [];
-    },
+    queryFn: () => listSuppliersMin(),
   });
 
   const addProduct = useCallback((p: { id: string; name: string; barcode: string | null; sale_price: number }) => {
