@@ -3,7 +3,9 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Banknote, Loader2, Play, Square, ArrowDownCircle, ArrowUpCircle, AlertTriangle, History } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { listMyCashSessions, listSessionSales, openCashSession, closeCashSession, type CashSessionRow } from "@/lib/db";
+import { isDesktop } from "@/lib/desktop";
+import { useDesktopAuth } from "@/hooks/use-desktop-auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,15 +22,12 @@ export const Route = createFileRoute("/_authenticated/caixa")({
   component: CaixaPage,
 });
 
-type Session = {
-  id: string; opened_at: string; closed_at: string | null;
-  opening_amount: number; counted_amount: number | null;
-  expected_amount: number | null; difference: number | null;
-  notes: string | null; status: "open" | "closed";
-};
+type Session = CashSessionRow;
 
 function CaixaPage() {
   const { user } = useAuthUser();
+  const { user: dUser } = useDesktopAuth();
+  const userId = isDesktop() ? dUser?.id : user?.id;
   const qc = useQueryClient();
   const [openAmt, setOpenAmt] = useState("0");
   const [closeOpen, setCloseOpen] = useState(false);
