@@ -21,6 +21,7 @@ app.commandLine.appendSwitch(
     'HardwareMediaKeyHandling',
     'OptimizationHints',
     'PasswordManagerOnboardingAndroid',
+    'TSFImeSupport',
     'WinUseBrowserSpellChecker',
   ].join(','),
 );
