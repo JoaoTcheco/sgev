@@ -251,6 +251,65 @@ export type Database = {
         }
         Relationships: []
       }
+      financial_accounts: {
+        Row: {
+          amount: number
+          created_at: string
+          created_by: string | null
+          description: string
+          due_date: string | null
+          id: string
+          kind: Database["public"]["Enums"]["account_kind"]
+          notes: string | null
+          paid_at: string | null
+          party: string | null
+          payment_method: string | null
+          status: Database["public"]["Enums"]["account_status"]
+          supplier_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          created_by?: string | null
+          description: string
+          due_date?: string | null
+          id?: string
+          kind: Database["public"]["Enums"]["account_kind"]
+          notes?: string | null
+          paid_at?: string | null
+          party?: string | null
+          payment_method?: string | null
+          status?: Database["public"]["Enums"]["account_status"]
+          supplier_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          due_date?: string | null
+          id?: string
+          kind?: Database["public"]["Enums"]["account_kind"]
+          notes?: string | null
+          paid_at?: string | null
+          party?: string | null
+          payment_method?: string | null
+          status?: Database["public"]["Enums"]["account_status"]
+          supplier_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financial_accounts_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pharmacy_settings: {
         Row: {
           address: string | null
@@ -703,6 +762,8 @@ export type Database = {
       refresh_alerts: { Args: never; Returns: undefined }
     }
     Enums: {
+      account_kind: "payable" | "receivable"
+      account_status: "pending" | "paid" | "overdue" | "cancelled"
       alert_severity: "info" | "warning" | "critical"
       alert_type: "low_stock" | "near_expiry" | "expired"
       app_role: "admin" | "pharmacist" | "cashier"
@@ -838,6 +899,8 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      account_kind: ["payable", "receivable"],
+      account_status: ["pending", "paid", "overdue", "cancelled"],
       alert_severity: ["info", "warning", "critical"],
       alert_type: ["low_stock", "near_expiry", "expired"],
       app_role: ["admin", "pharmacist", "cashier"],
