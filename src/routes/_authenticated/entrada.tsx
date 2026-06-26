@@ -170,6 +170,7 @@ function EntradaPage() {
       queryClient.invalidateQueries({ queryKey: ["stock"] });
       queryClient.invalidateQueries({ queryKey: ["pdv-products"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["alerts"] });
     }
     if (okCount < pending.length) toast.error("Alguns itens falharam — reveja a tabela.");
   }

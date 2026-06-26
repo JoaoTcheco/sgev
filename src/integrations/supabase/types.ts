@@ -400,6 +400,7 @@ export type Database = {
           category_id: string | null
           cost_price: number
           created_at: string
+          expiry_alert_days: number
           id: string
           ideal_stock: number
           manufacturer: string | null
@@ -421,6 +422,7 @@ export type Database = {
           category_id?: string | null
           cost_price?: number
           created_at?: string
+          expiry_alert_days?: number
           id?: string
           ideal_stock?: number
           manufacturer?: string | null
@@ -442,6 +444,7 @@ export type Database = {
           category_id?: string | null
           cost_price?: number
           created_at?: string
+          expiry_alert_days?: number
           id?: string
           ideal_stock?: number
           manufacturer?: string | null

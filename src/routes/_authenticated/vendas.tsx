@@ -204,6 +204,9 @@ function VendasPage() {
       setLastSale({ id: saleId, receipt_number, at: new Date() });
       queryClient.invalidateQueries({ queryKey: ["pdv-products"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["alerts"] });
+      queryClient.invalidateQueries({ queryKey: ["stock"] });
+      queryClient.invalidateQueries({ queryKey: ["accounts"] });
     },
     onError: (e: Error) => toast.error("Falha ao finalizar", { description: e.message }),
   });
