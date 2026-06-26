@@ -70,7 +70,28 @@ function VendasPage() {
   const [paymentKind, setPaymentKind] = useState<PaymentKind>("cash");
   const [wallet, setWallet] = useState<DigitalWallet>("mpesa");
   const [received, setReceived] = useState<number>(0);
+  const [accountId, setAccountId] = useState<string | null>(null);
   const [lastSale, setLastSale] = useState<{ id: string; receipt_number: string | null; at: Date } | null>(null);
+
+  const { data: accounts = [] } = useQuery({
+    queryKey: ["pdv-accounts"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("financial_accounts")
+        .select("id, name, is_system, active")
+        .eq("active", true)
+        .order("is_system", { ascending: false })
+        .order("name");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  // Default to Caixa once accounts arrive
+  if (!accountId && accounts.length > 0) {
+    const caixa = accounts.find((a: any) => a.is_system) ?? accounts[0];
+    if (caixa) setTimeout(() => setAccountId(caixa.id), 0);
+  }
 
   const { data: products = [], isLoading } = useQuery({
     queryKey: ["pdv-products", search],
@@ -163,6 +184,7 @@ function VendasPage() {
     mutationFn: async () => {
       if (cart.length === 0) throw new Error("Carrinho vazio");
       if (paymentKind === "cash" && received < total) throw new Error("Valor recebido insuficiente");
+      if (!accountId) throw new Error("Selecione a conta de destino");
       const { data, error } = await supabase.rpc("process_sale", {
         p_customer_id: null as unknown as string,
         p_payment_method: paymentEnum,
@@ -170,6 +192,7 @@ function VendasPage() {
         p_items: cart.map((i) => ({
           product_id: i.product_id, quantity: i.quantity, unit_price: i.unit_price, unit_kind: i.unit_kind,
         })),
+        p_account_id: accountId,
       });
       if (error) throw error;
       const saleId = data as string;
@@ -361,7 +384,25 @@ function VendasPage() {
                 </div>
               )}
 
-              <Button className="w-full" size="lg" disabled={paymentKind === "cash" && received < total} onClick={() => setStep("receipt")}>
+              <div className="space-y-2 border-t pt-3">
+                <Label className="text-sm font-semibold">Conta de destino do dinheiro</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  {accounts.map((a: any) => (
+                    <button key={a.id} type="button" onClick={() => setAccountId(a.id)}
+                      className={`rounded-md border p-2 text-left text-sm ${accountId === a.id ? "border-primary bg-primary/5 font-semibold" : ""}`}>
+                      <div className="flex items-center gap-1">
+                        {a.name}
+                        {a.is_system && <Badge variant="secondary" className="text-[9px]">SISTEMA</Badge>}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+                {accounts.length === 0 && (
+                  <p className="text-xs text-destructive">Sem contas activas. Crie uma em Contas.</p>
+                )}
+              </div>
+
+              <Button className="w-full" size="lg" disabled={(paymentKind === "cash" && received < total) || !accountId} onClick={() => setStep("receipt")}>
                 Avançar
               </Button>
             </div>
