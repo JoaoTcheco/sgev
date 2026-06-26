@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Search, Plus, Minus, Trash2, ShoppingCart, Loader2, Receipt, ArrowLeft, Printer, Banknote, CreditCard, Smartphone } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { listPosProducts, findProductByBarcode, processSale } from "@/lib/db";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -74,22 +74,7 @@ function VendasPage() {
 
   const { data: products = [], isLoading } = useQuery({
     queryKey: ["pdv-products", search],
-    queryFn: async () => {
-      let q = supabase
-        .from("products")
-        .select("id, name, sale_price, sub_unit_price, sub_unit_label, unit, pack_size, requires_prescription, batches(quantity, expiry_date)")
-        .eq("active", true)
-        .order("name")
-        .limit(40);
-      if (search.trim()) {
-        const term = `%${search.trim()}%`;
-        q = q.or(`name.ilike.${term},barcode.ilike.${term}`);
-      }
-
-      const { data, error } = await q;
-      if (error) throw error;
-      return data ?? [];
-    },
+    queryFn: () => listPosProducts(search),
   });
 
   function availableUnits(batches: Array<{ quantity: number; expiry_date: string }> | null) {
@@ -136,15 +121,13 @@ function VendasPage() {
   // Hardware barcode scanner → look up product by exact barcode and add to cart.
   useBarcodeScanner(async (code) => {
     if (!openSession || step !== "cart") return;
-    const { data, error } = await supabase
-      .from("products")
-      .select("id, name, sale_price, sub_unit_price, sub_unit_label, unit, pack_size, requires_prescription, barcode, batches(quantity, expiry_date)")
-      .eq("barcode", code)
-      .eq("active", true)
-      .maybeSingle();
-    if (error) { toast.error("Falha", { description: error.message }); return; }
-    if (!data) { toast.error(`Código ${code} não encontrado`); return; }
-    addToCart(data, "pack");
+    try {
+      const data = await findProductByBarcode(code);
+      if (!data) { toast.error(`Código ${code} não encontrado`); return; }
+      addToCart(data, "pack");
+    } catch (e) {
+      toast.error("Falha", { description: (e as Error).message });
+    }
   });
 
 
@@ -163,18 +146,16 @@ function VendasPage() {
     mutationFn: async () => {
       if (cart.length === 0) throw new Error("Carrinho vazio");
       if (paymentKind === "cash" && received < total) throw new Error("Valor recebido insuficiente");
-      const { data, error } = await supabase.rpc("process_sale", {
-        p_customer_id: null as unknown as string,
-        p_payment_method: paymentEnum,
-        p_discount: discount,
-        p_items: cart.map((i) => ({
+      return processSale({
+        paymentKind,
+        wallet,
+        discount,
+        items: cart.map((i) => ({
           product_id: i.product_id, quantity: i.quantity, unit_price: i.unit_price, unit_kind: i.unit_kind,
         })),
+        amountReceived: paymentKind === "cash" ? received : null,
+        changeDue: paymentKind === "cash" ? change : null,
       });
-      if (error) throw error;
-      const saleId = data as string;
-      const { data: sale } = await supabase.from("sales").select("receipt_number").eq("id", saleId).maybeSingle();
-      return { saleId, receipt_number: (sale?.receipt_number as string | null) ?? null };
     },
     onSuccess: ({ saleId, receipt_number }) => {
       toast.success("Venda finalizada", { description: receipt_number ? `Recibo ${receipt_number}` : undefined });
