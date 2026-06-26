@@ -81,9 +81,13 @@ function EntradaPage() {
     },
   });
 
-  const addProduct = useCallback((p: { id: string; name: string; barcode: string | null; sale_price: number }) => {
+  type ProductLite = {
+    id: string; name: string; barcode: string | null; sub_barcode?: string | null;
+    sale_price: number; pack_size?: number | null; sub_unit_label?: string | null; unit?: string | null;
+  };
+
+  const addProduct = useCallback((p: ProductLite) => {
     setRows((prev) => {
-      // If same product already pending, just bump qty
       const idx = prev.findIndex((r) => r.product_id === p.id && r.status !== "saved");
       if (idx >= 0) {
         const next = [...prev];
@@ -97,11 +101,16 @@ function EntradaPage() {
           product_id: p.id,
           name: p.name,
           barcode: p.barcode,
+          sub_barcode: p.sub_barcode ?? null,
           sale_price: Number(p.sale_price ?? 0),
+          pack_size: Math.max(1, Number(p.pack_size ?? 1)),
+          sub_unit_label: p.sub_unit_label ?? null,
+          unit: p.unit ?? "cx",
           batch_number: "",
           expiry_date: "",
           quantity: 1,
           cost_price: 0,
+          entry_as_pack: Math.max(1, Number(p.pack_size ?? 1)) > 1, // default to caixa when product has pack
           supplier_id: defaultSupplier || null,
           status: "pending",
         },
@@ -109,12 +118,12 @@ function EntradaPage() {
     });
   }, [defaultSupplier]);
 
-  // Hardware scanner: lookup by exact barcode, add to draft.
+  // Hardware scanner: lookup by barcode or sub_barcode.
   useBarcodeScanner(async (code) => {
     const { data, error } = await supabase
       .from("products")
-      .select("id, name, barcode, sale_price")
-      .eq("barcode", code)
+      .select("id, name, barcode, sub_barcode, sale_price, pack_size, sub_unit_label, unit")
+      .or(`barcode.eq.${code},sub_barcode.eq.${code}`)
       .eq("active", true)
       .maybeSingle();
     if (error) { toast.error("Falha na busca", { description: error.message }); return; }
