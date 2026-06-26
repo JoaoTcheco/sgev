@@ -285,8 +285,8 @@ async function rpc(name: string, params?: Record<string, unknown>) {
 
 // ---------- Public client ----------
 export const supabase = {
-  from<T = Record<string, unknown>>(table: string) {
-    return new QueryBuilder<T>(table);
+  from(table: string) {
+    return new QueryBuilder(table);
   },
   rpc,
   auth: authApi,
