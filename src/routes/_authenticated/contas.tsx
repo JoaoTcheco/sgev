@@ -148,7 +148,7 @@ function ContasPage() {
         p_account_id: adjustFor.id,
         p_type: adjType,
         p_amount: adjType === "reset" ? 0 : Number(adjAmount),
-        p_reason: adjReason.trim() || null,
+        p_reason: adjReason.trim() || "",
       });
       if (error) throw error;
     },
