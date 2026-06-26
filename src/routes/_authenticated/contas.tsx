@@ -27,18 +27,11 @@ function ContasPage() {
   const { data, isLoading } = useQuery({
     queryKey: ["accounts-30d"],
     queryFn: async () => {
-      const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-      const { data, error } = await supabase
-        .from("sales")
-        .select("id, sale_number, total, payment_method, created_at, status")
-        .gte("created_at", since)
-        .order("created_at", { ascending: false })
-        .limit(200);
-      if (error) throw error;
+      const rows = (await listAccounts30d()) as Array<{ payment_method: string; total: number | string }>;
       const totals = new Map<string, number>();
-      for (const s of data ?? []) totals.set(s.payment_method, (totals.get(s.payment_method) ?? 0) + Number(s.total));
-      const grand = (data ?? []).reduce((s, x) => s + Number(x.total), 0);
-      return { rows: data ?? [], totals: [...totals.entries()], grand };
+      for (const s of rows) totals.set(s.payment_method, (totals.get(s.payment_method) ?? 0) + Number(s.total));
+      const grand = rows.reduce((s, x) => s + Number(x.total), 0);
+      return { rows, totals: [...totals.entries()], grand };
     },
   });
 
