@@ -1,9 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Search, Plus, Loader2, Package, Pencil, Trash2, Barcode as BarcodeIcon, Printer } from "lucide-react";
+import { Search, Plus, Loader2, Package, Pencil, Trash2, Barcode as BarcodeIcon } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -18,6 +17,16 @@ import { formatMZN, formatDate } from "@/lib/format";
 import { useAuthUser, useUserRoles, highestRole } from "@/hooks/use-auth";
 import { Barcode } from "@/components/barcode";
 import { RoleGate } from "@/components/role-gate";
+import {
+  listStockProducts,
+  listSuppliersMin,
+  listCategoriesMin,
+  addBatchEntry,
+  saveProduct as saveProductDb,
+  deleteOrDisableProduct,
+  assignProductBarcode,
+  type StockProductRow,
+} from "@/lib/db";
 
 export const Route = createFileRoute("/_authenticated/estoque")({
   head: () => ({ meta: [{ title: "Estoque — PharmaSys" }] }),
