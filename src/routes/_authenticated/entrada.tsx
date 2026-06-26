@@ -153,9 +153,16 @@ function EntradaPage() {
     return null;
   }
 
+  function convertRow(r: DraftRow) {
+    const ps = Math.max(1, r.pack_size || 1);
+    if (r.entry_as_pack && ps > 1) {
+      return { qtyUnits: Math.floor(r.quantity) * ps, costPerUnit: r.cost_price / ps };
+    }
+    return { qtyUnits: Math.floor(r.quantity), costPerUnit: r.cost_price };
+  }
+
   async function confirmAll() {
     if (pending.length === 0) { toast.error("Sem itens pendentes"); return; }
-    // Validate first
     for (const r of pending) {
       const err = validateRow(r);
       if (err) { toast.error(`${r.name}: ${err}`); return; }
@@ -163,13 +170,14 @@ function EntradaPage() {
     setSaving(true);
     let okCount = 0;
     for (const r of pending) {
+      const { qtyUnits, costPerUnit } = convertRow(r);
       const { error } = await supabase.rpc("add_batch_entry", {
         p_product_id: r.product_id,
         p_supplier_id: (r.supplier_id ?? defaultSupplier ?? null) as unknown as string,
         p_batch_number: r.batch_number.trim(),
         p_expiry_date: r.expiry_date,
-        p_quantity: Math.floor(r.quantity),
-        p_cost_price: r.cost_price,
+        p_quantity: qtyUnits,
+        p_cost_price: Number(costPerUnit.toFixed(4)),
       });
       if (error) {
         updateRow(r.uid, { status: "error", error: error.message });
@@ -191,14 +199,29 @@ function EntradaPage() {
 
   function printRowLabels(r: DraftRow) {
     if (!r.barcode) { toast.error("Produto sem código de barras — atribua em Estoque."); return; }
+    const qtyLabels = r.entry_as_pack ? Math.max(1, Math.floor(r.quantity)) : Math.max(1, Math.floor(r.quantity));
     printLabels([{
       name: r.name,
       barcode: r.barcode,
       price: r.sale_price,
-      cost: r.cost_price,
+      cost: r.entry_as_pack ? r.cost_price : r.cost_price * Math.max(1, r.pack_size),
       batch_number: r.batch_number,
       expiry_date: r.expiry_date,
-      qty: Math.min(120, Math.max(1, r.quantity)),
+      qty: Math.min(120, qtyLabels),
+    }]);
+  }
+
+  function printRowSubLabels(r: DraftRow) {
+    if (!r.sub_barcode) { toast.error("Produto sem código da sub-unidade — defina em Estoque."); return; }
+    const { qtyUnits, costPerUnit } = convertRow(r);
+    printLabels([{
+      name: `${r.name} · ${r.sub_unit_label ?? "un"}`,
+      barcode: r.sub_barcode,
+      price: null,
+      cost: costPerUnit,
+      batch_number: r.batch_number,
+      expiry_date: r.expiry_date,
+      qty: Math.min(240, Math.max(1, qtyUnits)),
     }]);
   }
 
@@ -209,10 +232,10 @@ function EntradaPage() {
       name: r.name,
       barcode: r.barcode!,
       price: r.sale_price,
-      cost: r.cost_price,
+      cost: r.entry_as_pack ? r.cost_price : r.cost_price * Math.max(1, r.pack_size),
       batch_number: r.batch_number,
       expiry_date: r.expiry_date,
-      qty: Math.min(120, Math.max(1, r.quantity)),
+      qty: Math.min(120, Math.max(1, Math.floor(r.quantity))),
     })));
   }
 
