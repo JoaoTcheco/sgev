@@ -34,6 +34,9 @@ export default defineConfig({
       { find: /^@tanstack\/start-.*/, replacement: path.resolve(__dirname, "src/electron-stubs/tanstack-start.ts") },
       { find: /^@\/integrations\/supabase\/auth-middleware$/, replacement: path.resolve(__dirname, "src/electron-stubs/tanstack-start.ts") },
       { find: /^@\/integrations\/supabase\/auth-attacher$/, replacement: path.resolve(__dirname, "src/electron-stubs/tanstack-start.ts") },
+      { find: /^@\/integrations\/supabase\/client\.server$/, replacement: path.resolve(__dirname, "src/electron-stubs/empty.ts") },
+      { find: /^@\/integrations\/supabase\/types$/, replacement: path.resolve(__dirname, "src/electron-stubs/empty.ts") },
+      { find: /^@\/lib\/api\/.*\.functions$/, replacement: path.resolve(__dirname, "src/electron-stubs/empty.ts") },
       // Node built-ins pulled in by TanStack router-core SSR helpers — stub for SPA.
       { find: "node:stream", replacement: path.resolve(__dirname, "src/electron-stubs/empty.ts") },
       { find: "node:stream/web", replacement: path.resolve(__dirname, "src/electron-stubs/empty.ts") },
