@@ -32,6 +32,8 @@ import {
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { isDesktop } from "@/lib/desktop";
+import { desktopSignOut } from "@/hooks/use-desktop-auth";
 import { useAuthUser, useUserRoles, useProfile, highestRole, roleLabel } from "@/hooks/use-auth";
 import { useQueryClient } from "@tanstack/react-query";
 
