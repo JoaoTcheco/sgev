@@ -50,11 +50,6 @@ const WALLET_LABELS: Record<DigitalWallet, string> = {
   emola: "e-Mola",
 };
 
-const WALLET_TO_ENUM: Record<DigitalWallet, "debit" | "pix" | "other"> = {
-  bank: "debit",
-  mpesa: "pix",
-  emola: "other",
-};
 
 function VendasPage() {
   const queryClient = useQueryClient();
@@ -134,7 +129,6 @@ function VendasPage() {
   const subtotal = useMemo(() => cart.reduce((s, i) => s + i.quantity * i.unit_price, 0), [cart]);
   const total = Math.max(0, subtotal - discount);
   const change = Math.max(0, received - total);
-  const paymentEnum = paymentKind === "cash" ? "cash" : WALLET_TO_ENUM[wallet];
   const paymentLabel = paymentKind === "cash" ? "Numerário" : WALLET_LABELS[wallet];
 
   function resetAll() {
