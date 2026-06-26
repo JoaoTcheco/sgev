@@ -39,23 +39,7 @@ function ReciboPage() {
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["sale-by-ref", ref],
-    queryFn: async () => {
-      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(ref);
-      const base = supabase
-        .from("sales")
-        .select("id, receipt_number, created_at, subtotal, discount, total, payment_method, status, user_id, sale_items(id, product_name, quantity, unit_price, total, unit_label, unit_kind)");
-      const { data: sale, error } = isUuid
-        ? await base.eq("id", ref).maybeSingle()
-        : await base.eq("receipt_number", ref).maybeSingle();
-      if (error) throw error;
-      if (!sale) return null;
-      let operator: { full_name: string | null; email: string | null } | null = null;
-      if (sale.user_id) {
-        const { data: prof } = await supabase.from("profiles").select("full_name, email").eq("id", sale.user_id).maybeSingle();
-        operator = prof as any;
-      }
-      return { ...sale, operator };
-    },
+    queryFn: () => getSaleByRef(ref),
   });
 
   useBarcodeScanner((code) => {
