@@ -19,15 +19,9 @@ function RelatoriosPage() {
   const { data, isLoading } = useQuery({
     queryKey: ["report-sales-30d"],
     queryFn: async () => {
-      const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-      const { data, error } = await supabase
-        .from("sale_items")
-        .select("product_name, quantity, total, unit_price, created_at")
-        .gte("created_at", since)
-        .limit(5000);
-      if (error) throw error;
+      const items = (await listReportSales30d()) as Array<{ product_name: string; quantity: number; total: number | string }>;
       const agg = new Map<string, { qty: number; total: number }>();
-      for (const i of data ?? []) {
+      for (const i of items) {
         const cur = agg.get(i.product_name) ?? { qty: 0, total: 0 };
         agg.set(i.product_name, { qty: cur.qty + i.quantity, total: cur.total + Number(i.total) });
       }
