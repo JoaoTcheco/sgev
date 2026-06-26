@@ -500,3 +500,159 @@ export async function assignProductBarcode(id: string, barcode: string): Promise
   const { error } = await supabase.from("products").update({ barcode }).eq("id", id);
   if (error) throw error;
 }
+
+// ===== Alertas =====
+export type AlertRow = {
+  id: string;
+  type: string;
+  severity: string;
+  message: string;
+  created_at: string;
+  resolved: boolean;
+};
+
+export async function listAlerts(): Promise<AlertRow[]> {
+  if (isDesktop()) {
+    const rows = await desktop.select<any>(
+      `SELECT id, type, severity, message, created_at, resolved FROM alerts
+       WHERE resolved = 0 ORDER BY severity DESC, created_at DESC LIMIT 200`,
+    );
+    return rows.map((r) => ({ ...r, resolved: !!r.resolved })) as AlertRow[];
+  }
+  const { data, error } = await supabase
+    .from("alerts")
+    .select("id, type, severity, message, created_at, resolved")
+    .eq("resolved", false)
+    .order("severity", { ascending: false })
+    .order("created_at", { ascending: false })
+    .limit(200);
+  if (error) throw error;
+  return (data ?? []) as AlertRow[];
+}
+
+export async function refreshAlerts(): Promise<void> {
+  if (isDesktop()) {
+    await desktop.rpc.refreshAlerts();
+    return;
+  }
+  const { error } = await supabase.rpc("refresh_alerts");
+  if (error) throw error;
+}
+
+export async function resolveAlert(id: string): Promise<void> {
+  if (isDesktop()) {
+    await desktop.update("alerts", id, { resolved: 1 });
+    return;
+  }
+  const { error } = await supabase.from("alerts").update({ resolved: true }).eq("id", id);
+  if (error) throw error;
+}
+
+// ===== Fornecedores (CRUD) =====
+export type SupplierRow = {
+  id: string;
+  legal_name: string;
+  tax_id: string | null;
+  contact_name: string | null;
+  email: string | null;
+  phone: string | null;
+  address: string | null;
+  active: boolean;
+};
+
+function mapDesktopSupplier(r: any): SupplierRow {
+  return {
+    id: r.id,
+    legal_name: r.name,
+    tax_id: r.nuit ?? null,
+    contact_name: r.contact ?? null,
+    email: r.email ?? null,
+    phone: r.phone ?? null,
+    address: r.address ?? null,
+    active: !!r.active,
+  };
+}
+
+export async function listSuppliers(): Promise<SupplierRow[]> {
+  if (isDesktop()) {
+    const rows = await desktop.select<any>("SELECT * FROM suppliers ORDER BY name");
+    return rows.map(mapDesktopSupplier);
+  }
+  const { data, error } = await supabase.from("suppliers").select("*").order("legal_name");
+  if (error) throw error;
+  return (data ?? []) as SupplierRow[];
+}
+
+export async function saveSupplier(p: Partial<SupplierRow> & { id?: string }): Promise<void> {
+  if (isDesktop()) {
+    const values = {
+      name: p.legal_name ?? "",
+      nuit: p.tax_id ?? null,
+      contact: p.contact_name ?? null,
+      email: p.email ?? null,
+      phone: p.phone ?? null,
+      address: p.address ?? null,
+      active: p.active ? 1 : 0,
+    };
+    if (p.id) await desktop.update("suppliers", p.id, values);
+    else await desktop.insert("suppliers", values);
+    return;
+  }
+  if (p.id) {
+    const { error } = await supabase.from("suppliers").update(p).eq("id", p.id);
+    if (error) throw error;
+  } else {
+    const { error } = await supabase.from("suppliers").insert(p as any);
+    if (error) throw error;
+  }
+}
+
+// ===== Definições da farmácia =====
+export type PharmacySettingsRow = {
+  id: boolean;
+  name: string;
+  slogan: string | null;
+  nuit: string | null;
+  address: string | null;
+  city: string | null;
+  phone: string | null;
+  email: string | null;
+  website: string | null;
+  logo_url: string | null;
+  receipt_width: "58mm" | "80mm" | "a4";
+  receipt_header: string | null;
+  receipt_footer: string | null;
+  show_pharmacist: boolean;
+};
+
+function mapDesktopSettings(r: any): PharmacySettingsRow {
+  const size = (r.receipt_size ?? "80mm").toLowerCase();
+  const width = size === "a4" || size === "58mm" || size === "80mm" ? (size as "58mm" | "80mm" | "a4") : "80mm";
+  return {
+    id: true,
+    name: r.name ?? "Farmácia",
+    slogan: null,
+    nuit: r.nuit ?? null,
+    address: r.address ?? null,
+    city: null,
+    phone: r.phone ?? null,
+    email: r.email ?? null,
+    website: null,
+    logo_url: r.logo_url ?? null,
+    receipt_width: width,
+    receipt_header: r.receipt_header ?? null,
+    receipt_footer: r.receipt_footer ?? null,
+    show_pharmacist: false,
+  };
+}
+
+export async function getPharmacySettings(): Promise<PharmacySettingsRow | null> {
+  if (isDesktop()) {
+    const row = await desktop.get<any>("SELECT * FROM pharmacy_settings WHERE id = 1");
+    return row ? mapDesktopSettings(row) : null;
+  }
+  const { data, error } = await supabase.from("pharmacy_settings").select("*").eq("id", true).maybeSingle();
+  if (error) throw error;
+  return (data ?? null) as PharmacySettingsRow | null;
+}
+
