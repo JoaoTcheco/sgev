@@ -25,7 +25,7 @@ function createWindow() {
     win.loadURL("http://localhost:8080");
     win.webContents.openDevTools({ mode: "detach" });
   } else {
-    win.loadFile(path.join(__dirname, "..", "dist", "index.html"));
+    win.loadFile(path.join(__dirname, "..", "dist-spa", "electron-index.html"));
   }
 
   win.webContents.setWindowOpenHandler(({ url }) => {
