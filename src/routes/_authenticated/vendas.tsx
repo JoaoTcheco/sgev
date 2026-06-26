@@ -154,18 +154,19 @@ function VendasPage() {
 
   function removeItem(idx: number) { setCart((prev) => prev.filter((_, i) => i !== idx)); }
 
-  // Hardware barcode scanner → look up product by exact barcode and add to cart.
+  // Hardware barcode scanner → match by barcode (caixa) or sub_barcode (caixinha avulsa).
   useBarcodeScanner(async (code) => {
     if (!openSession || step !== "cart") return;
     const { data, error } = await supabase
       .from("products")
-      .select("id, name, sale_price, sub_unit_price, sub_unit_label, unit, pack_size, requires_prescription, barcode, batches(quantity, expiry_date)")
-      .eq("barcode", code)
+      .select("id, name, sale_price, sub_unit_price, sub_unit_label, unit, pack_size, requires_prescription, barcode, sub_barcode, batches(quantity, expiry_date)")
+      .or(`barcode.eq.${code},sub_barcode.eq.${code}`)
       .eq("active", true)
       .maybeSingle();
     if (error) { toast.error("Falha", { description: error.message }); return; }
     if (!data) { toast.error(`Código ${code} não encontrado`); return; }
-    addToCart(data, "pack");
+    const kind: UnitKind = data.sub_barcode === code ? "sub" : "pack";
+    addToCart(data, kind);
   });
 
 
