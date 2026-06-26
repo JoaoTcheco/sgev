@@ -184,6 +184,7 @@ function VendasPage() {
     mutationFn: async () => {
       if (cart.length === 0) throw new Error("Carrinho vazio");
       if (paymentKind === "cash" && received < total) throw new Error("Valor recebido insuficiente");
+      if (!accountId) throw new Error("Selecione a conta de destino");
       const { data, error } = await supabase.rpc("process_sale", {
         p_customer_id: null as unknown as string,
         p_payment_method: paymentEnum,
@@ -191,6 +192,7 @@ function VendasPage() {
         p_items: cart.map((i) => ({
           product_id: i.product_id, quantity: i.quantity, unit_price: i.unit_price, unit_kind: i.unit_kind,
         })),
+        p_account_id: accountId,
       });
       if (error) throw error;
       const saleId = data as string;
