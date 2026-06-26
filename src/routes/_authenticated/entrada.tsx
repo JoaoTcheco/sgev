@@ -347,7 +347,7 @@ function EntradaPage() {
                       </span>
                       <label className="flex items-center gap-2 text-xs">
                         <span>Caixa</span>
-                        <Switch checked={r.entry_as_pack} onCheckedChange={(v) => updateRow(r.uid, { entry_as_pack: v })} />
+                        <Switch checked={r.entry_as_pack} onCheckedChange={(v: boolean) => updateRow(r.uid, { entry_as_pack: v })} />
                       </label>
                     </div>
                   )}
