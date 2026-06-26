@@ -22,14 +22,11 @@ function HistoricoPage() {
     queryKey: ["history"],
     queryFn: async () => {
       const [moves, logs, sales] = await Promise.all([
-        supabase.from("stock_movements").select("id, type, quantity, reason, created_at, products(name)").order("created_at", { ascending: false }).limit(50),
-        supabase.from("audit_logs").select("id, entity, action, created_at, details").order("created_at", { ascending: false }).limit(50),
-        supabase.from("sales").select("id, receipt_number, sale_number, total, status, created_at").order("created_at", { ascending: false }).limit(30),
+        listStockMovementsHistory(50),
+        listAuditLogsHistory(50),
+        listSalesHistory(30),
       ]);
-      if (moves.error) throw moves.error;
-      if (logs.error) throw logs.error;
-      if (sales.error) throw sales.error;
-      return { moves: moves.data ?? [], logs: logs.data ?? [], sales: (sales.data ?? []) as SaleRow[] };
+      return { moves, logs, sales };
     },
   });
 
