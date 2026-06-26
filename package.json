@@ -11,8 +11,9 @@
     "preview": "vite preview",
     "lint": "eslint .",
     "format": "prettier --write .",
+    "build:spa": "vite build --config vite.spa.config.ts",
     "electron:dev": "PHARMASYS_DEV_URL=http://localhost:8080 electron .",
-    "electron:pack:win": "electron-packager . PharmaSys --platform=win32 --arch=x64 --out=electron-release --overwrite --ignore='^/src' --ignore='^/public' --ignore='^/electron-release' --ignore='^/supabase' --ignore='^/\\.git'"
+    "electron:pack:win": "npm run build:spa && electron-packager . PharmaSys --platform=win32 --arch=x64 --out=electron-release --overwrite --ignore='^/src' --ignore='^/public' --ignore='^/electron-release' --ignore='^/supabase' --ignore='^/electron/spa' --ignore='^/\\.git'"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

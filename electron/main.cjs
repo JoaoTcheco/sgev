@@ -29,12 +29,13 @@ function createWindow() {
     },
   });
 
-  const indexPath = path.join(__dirname, '..', 'dist', 'index.html');
-  if (fs.existsSync(indexPath)) {
+  const indexPath = path.join(__dirname, 'dist', 'index.html');
+  if (process.env.PHARMASYS_DEV_URL) {
+    mainWindow.loadURL(process.env.PHARMASYS_DEV_URL);
+  } else if (fs.existsSync(indexPath)) {
     mainWindow.loadFile(indexPath);
   } else {
-    // dev fallback (when running `electron .` against vite dev server)
-    mainWindow.loadURL(process.env.PHARMASYS_DEV_URL || 'http://localhost:8080');
+    mainWindow.loadURL('data:text/html,<h1>PharmaSys: build SPA em falta. Execute npm run build:spa.</h1>');
   }
 
   mainWindow.setMenuBarVisibility(false);
