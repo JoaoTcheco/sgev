@@ -304,21 +304,18 @@ function CreateUserDialog({ onClose, createFn, onCreated }: { onClose: () => voi
 
 function EditUserDialog({ user, updateFn, onClose, onSaved }: {
   user: UserRow | null;
-  updateFn: ReturnType<typeof useServerFn<typeof adminUpdateUser>>;
+  updateFn: UpdateFn;
   onClose: () => void;
   onSaved: () => void;
 }) {
   const [fullName, setFullName] = useState(user?.full_name ?? "");
   const [email, setEmail] = useState(user?.email ?? "");
 
-
   const mut = useMutation({
     mutationFn: () => updateFn({
-      data: {
-        user_id: user!.id,
-        full_name: fullName !== user?.full_name ? fullName : undefined,
-        email: email !== user?.email ? email : undefined,
-      },
+      user_id: user!.id,
+      full_name: fullName !== user?.full_name ? fullName : undefined,
+      email: email !== user?.email ? email : undefined,
     }),
     onSuccess: () => { toast.success("Utilizador atualizado"); onSaved(); onClose(); },
     onError: (e: Error) => toast.error("Falha ao atualizar", { description: e.message }),
