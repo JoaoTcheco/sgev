@@ -82,7 +82,8 @@ export function AppSidebar() {
   async function handleLogout() {
     await queryClient.cancelQueries();
     queryClient.clear();
-    await supabase.auth.signOut();
+    if (isDesktop()) desktopSignOut();
+    else await supabase.auth.signOut();
     navigate({ to: "/auth", replace: true });
   }
 
