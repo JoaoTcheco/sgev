@@ -302,11 +302,14 @@ function EstoquePage() {
         onClose={() => setBarcodeOpen(null)}
         onAssign={async (code) => {
           if (!barcodeOpen) return;
-          const { error } = await supabase.from("products").update({ barcode: code }).eq("id", barcodeOpen.id);
-          if (error) { toast.error("Falha", { description: error.message }); return; }
-          toast.success("Código atribuído");
-          queryClient.invalidateQueries({ queryKey: ["stock"] });
-          setBarcodeOpen({ ...barcodeOpen, barcode: code });
+          try {
+            await assignProductBarcode(barcodeOpen.id, code);
+            toast.success("Código atribuído");
+            queryClient.invalidateQueries({ queryKey: ["stock"] });
+            setBarcodeOpen({ ...barcodeOpen, barcode: code });
+          } catch (e) {
+            toast.error("Falha", { description: (e as Error).message });
+          }
         }}
       />
     </div>
