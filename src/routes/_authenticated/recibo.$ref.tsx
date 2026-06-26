@@ -29,6 +29,9 @@ const PAYMENT_LABEL: Record<string, string> = {
   pix: "M-Pesa",
   other: "e-Mola",
   bank_transfer: "Transferência",
+  mpesa: "M-Pesa",
+  emola: "e-Mola",
+  bank: "Transferência Bancária",
 };
 
 function ReciboPage() {
