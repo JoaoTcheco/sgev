@@ -409,6 +409,7 @@ export type Database = {
           pack_size: number
           requires_prescription: boolean
           sale_price: number
+          sub_barcode: string | null
           sub_unit_label: string | null
           sub_unit_price: number | null
           tarja: Database["public"]["Enums"]["medicine_tarja"] | null
@@ -431,6 +432,7 @@ export type Database = {
           pack_size?: number
           requires_prescription?: boolean
           sale_price?: number
+          sub_barcode?: string | null
           sub_unit_label?: string | null
           sub_unit_price?: number | null
           tarja?: Database["public"]["Enums"]["medicine_tarja"] | null
@@ -453,6 +455,7 @@ export type Database = {
           pack_size?: number
           requires_prescription?: boolean
           sale_price?: number
+          sub_barcode?: string | null
           sub_unit_label?: string | null
           sub_unit_price?: number | null
           tarja?: Database["public"]["Enums"]["medicine_tarja"] | null
