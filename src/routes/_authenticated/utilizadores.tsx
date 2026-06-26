@@ -6,7 +6,6 @@ import {
   Users, Loader2, UserPlus, KeyRound, ShieldCheck, ShieldOff, Lock, Pencil, Trash2, History,
 } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -25,18 +24,54 @@ import { useAuthUser, useUserRoles, highestRole, roleLabel, type AppRole } from 
 import {
   adminCreateUser, adminResetPassword, adminUpdateUser, adminDeleteUser,
 } from "@/lib/admin-users.functions";
+import { isDesktop, desktop } from "@/lib/desktop";
+import {
+  listAdminUsers, adminSetUserRole, adminSetUserActive, listAdminAuditLogs,
+  type AdminUserRow,
+} from "@/lib/db";
+import { getDesktopUser } from "@/hooks/use-desktop-auth";
 
 export const Route = createFileRoute("/_authenticated/utilizadores")({
   head: () => ({ meta: [{ title: "Utilizadores — PharmaSys" }] }),
   component: UtilizadoresPage,
 });
 
-type UserRow = {
-  id: string; full_name: string | null; email: string | null;
-  active: boolean; created_at: string; roles: AppRole[];
-};
+type UserRow = AdminUserRow;
 
 const ROLES: AppRole[] = ["admin", "pharmacist", "cashier"];
+
+// Wrappers que escolhem entre server-fn (web) e desktop bridge (Electron).
+function useAdminFns() {
+  const createWeb = useServerFn(adminCreateUser);
+  const resetWeb = useServerFn(adminResetPassword);
+  const updateWeb = useServerFn(adminUpdateUser);
+  const deleteWeb = useServerFn(adminDeleteUser);
+
+  const actor = () => {
+    const id = getDesktopUser()?.id;
+    if (!id) throw new Error("Sessão desktop inválida");
+    return id;
+  };
+
+  return {
+    create: (data: { email: string; password: string; full_name: string; role: AppRole }) =>
+      isDesktop()
+        ? desktop.admin.createUser({ actor_id: actor(), ...data })
+        : createWeb({ data }),
+    reset: (data: { user_id: string; password: string }) =>
+      isDesktop()
+        ? desktop.admin.resetPassword({ actor_id: actor(), ...data })
+        : resetWeb({ data }),
+    update: (data: { user_id: string; full_name?: string; email?: string }) =>
+      isDesktop()
+        ? desktop.admin.updateUser({ actor_id: actor(), ...data })
+        : updateWeb({ data }),
+    remove: (data: { user_id: string }) =>
+      isDesktop()
+        ? desktop.admin.deleteUser({ actor_id: actor(), ...data })
+        : deleteWeb({ data }),
+  };
+}
 
 function UtilizadoresPage() {
   const { user } = useAuthUser();
@@ -45,30 +80,13 @@ function UtilizadoresPage() {
   const queryClient = useQueryClient();
 
   const { data = [], isLoading } = useQuery<UserRow[]>({
-    queryKey: ["users-admin"],
-    queryFn: async () => {
-      const [{ data: profiles, error }, { data: roles, error: rErr }] = await Promise.all([
-        supabase.from("profiles").select("id, full_name, email, active, created_at").order("created_at", { ascending: false }),
-        supabase.from("user_roles").select("user_id, role"),
-      ]);
-      if (error) throw error;
-      if (rErr) throw rErr;
-      const map = new Map<string, AppRole[]>();
-      for (const r of roles ?? []) {
-        const list = map.get(r.user_id) ?? [];
-        list.push(r.role as AppRole);
-        map.set(r.user_id, list);
-      }
-      return (profiles ?? []).map((p: any) => ({ ...p, roles: map.get(p.id) ?? [] }));
-    },
+    queryKey: ["users-admin", isDesktop() ? "desktop" : "web"],
+    queryFn: () => listAdminUsers(),
   });
 
   const adminCount = data.filter((u) => u.roles.includes("admin")).length;
 
-  const createFn = useServerFn(adminCreateUser);
-  const resetFn = useServerFn(adminResetPassword);
-  const updateFn = useServerFn(adminUpdateUser);
-  const deleteFn = useServerFn(adminDeleteUser);
+  const fns = useAdminFns();
 
   const [createOpen, setCreateOpen] = useState(false);
   const [resetUser, setResetUser] = useState<UserRow | null>(null);
@@ -79,25 +97,19 @@ function UtilizadoresPage() {
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ["users-admin"] });
 
   const setRole = useMutation({
-    mutationFn: async ({ userId, role }: { userId: string; role: AppRole }) => {
-      const { error } = await supabase.rpc("admin_set_user_role", { p_user_id: userId, p_role: role });
-      if (error) throw error;
-    },
+    mutationFn: ({ userId, role }: { userId: string; role: AppRole }) => adminSetUserRole(userId, role),
     onSuccess: () => { toast.success("Perfil atualizado"); invalidate(); },
     onError: (e: Error) => toast.error("Falha ao alterar perfil", { description: e.message }),
   });
 
   const setActive = useMutation({
-    mutationFn: async ({ userId, active }: { userId: string; active: boolean }) => {
-      const { error } = await supabase.rpc("admin_set_user_active", { p_user_id: userId, p_active: active });
-      if (error) throw error;
-    },
+    mutationFn: ({ userId, active }: { userId: string; active: boolean }) => adminSetUserActive(userId, active),
     onSuccess: (_d, v) => { toast.success(v.active ? "Utilizador ativado" : "Utilizador desativado"); invalidate(); },
     onError: (e: Error) => toast.error("Falha", { description: e.message }),
   });
 
   const deleteMut = useMutation({
-    mutationFn: (userId: string) => deleteFn({ data: { user_id: userId } }),
+    mutationFn: (userId: string) => fns.remove({ user_id: userId }),
     onSuccess: () => { toast.success("Utilizador eliminado"); setDeleteUser(null); invalidate(); },
     onError: (e: Error) => toast.error("Falha ao eliminar", { description: e.message }),
   });
@@ -130,7 +142,7 @@ function UtilizadoresPage() {
               <DialogTrigger asChild>
                 <Button><UserPlus className="mr-2 h-4 w-4" /> Novo utilizador</Button>
               </DialogTrigger>
-              <CreateUserDialog onClose={() => setCreateOpen(false)} createFn={createFn} onCreated={invalidate} />
+              <CreateUserDialog onClose={() => setCreateOpen(false)} createFn={fns.create} onCreated={invalidate} />
             </Dialog>
           </div>
         </CardHeader>
@@ -216,11 +228,11 @@ function UtilizadoresPage() {
       </Card>
 
       <Dialog open={!!resetUser} onOpenChange={(o) => !o && setResetUser(null)}>
-        <ResetPasswordDialog user={resetUser} resetFn={resetFn} onClose={() => setResetUser(null)} />
+        <ResetPasswordDialog user={resetUser} resetFn={fns.reset} onClose={() => setResetUser(null)} />
       </Dialog>
 
       <Dialog open={!!editUser} onOpenChange={(o) => !o && setEditUser(null)}>
-        <EditUserDialog user={editUser} updateFn={updateFn} onClose={() => setEditUser(null)} onSaved={invalidate} />
+        <EditUserDialog user={editUser} updateFn={fns.update} onClose={() => setEditUser(null)} onSaved={invalidate} />
       </Dialog>
 
       <AlertDialog open={!!deleteUser} onOpenChange={(o) => !o && setDeleteUser(null)}>
@@ -252,10 +264,14 @@ function UtilizadoresPage() {
   );
 }
 
-function CreateUserDialog({ onClose, createFn, onCreated }: { onClose: () => void; createFn: ReturnType<typeof useServerFn<typeof adminCreateUser>>; onCreated: () => void }) {
+type CreateFn = (data: { email: string; password: string; full_name: string; role: AppRole }) => Promise<unknown>;
+type ResetFn = (data: { user_id: string; password: string }) => Promise<unknown>;
+type UpdateFn = (data: { user_id: string; full_name?: string; email?: string }) => Promise<unknown>;
+
+function CreateUserDialog({ onClose, createFn, onCreated }: { onClose: () => void; createFn: CreateFn; onCreated: () => void }) {
   const [form, setForm] = useState({ email: "", password: "", full_name: "", role: "cashier" as AppRole });
   const mut = useMutation({
-    mutationFn: () => createFn({ data: form }),
+    mutationFn: () => createFn(form),
     onSuccess: () => { toast.success("Utilizador criado", { description: form.email }); onCreated(); onClose(); },
     onError: (e: Error) => toast.error("Falha ao criar", { description: e.message }),
   });
@@ -288,21 +304,18 @@ function CreateUserDialog({ onClose, createFn, onCreated }: { onClose: () => voi
 
 function EditUserDialog({ user, updateFn, onClose, onSaved }: {
   user: UserRow | null;
-  updateFn: ReturnType<typeof useServerFn<typeof adminUpdateUser>>;
+  updateFn: UpdateFn;
   onClose: () => void;
   onSaved: () => void;
 }) {
   const [fullName, setFullName] = useState(user?.full_name ?? "");
   const [email, setEmail] = useState(user?.email ?? "");
 
-
   const mut = useMutation({
     mutationFn: () => updateFn({
-      data: {
-        user_id: user!.id,
-        full_name: fullName !== user?.full_name ? fullName : undefined,
-        email: email !== user?.email ? email : undefined,
-      },
+      user_id: user!.id,
+      full_name: fullName !== user?.full_name ? fullName : undefined,
+      email: email !== user?.email ? email : undefined,
     }),
     onSuccess: () => { toast.success("Utilizador atualizado"); onSaved(); onClose(); },
     onError: (e: Error) => toast.error("Falha ao atualizar", { description: e.message }),
@@ -326,10 +339,10 @@ function EditUserDialog({ user, updateFn, onClose, onSaved }: {
   );
 }
 
-function ResetPasswordDialog({ user, resetFn, onClose }: { user: UserRow | null; resetFn: ReturnType<typeof useServerFn<typeof adminResetPassword>>; onClose: () => void }) {
+function ResetPasswordDialog({ user, resetFn, onClose }: { user: UserRow | null; resetFn: ResetFn; onClose: () => void }) {
   const [password, setPassword] = useState("");
   const mut = useMutation({
-    mutationFn: () => resetFn({ data: { user_id: user!.id, password } }),
+    mutationFn: () => resetFn({ user_id: user!.id, password }),
     onSuccess: () => { toast.success("Palavra-passe redefinida"); setPassword(""); onClose(); },
     onError: (e: Error) => toast.error("Falha", { description: e.message }),
   });
@@ -354,18 +367,9 @@ function ResetPasswordDialog({ user, resetFn, onClose }: { user: UserRow | null;
 
 function AuditDialog({ open }: { open: boolean }) {
   const { data = [], isLoading } = useQuery({
-    queryKey: ["audit-users"],
+    queryKey: ["audit-users", isDesktop() ? "desktop" : "web"],
     enabled: open,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("audit_logs")
-        .select("id, user_id, entity_id, action, details, created_at")
-        .eq("entity", "user")
-        .order("created_at", { ascending: false })
-        .limit(100);
-      if (error) throw error;
-      return data ?? [];
-    },
+    queryFn: () => listAdminAuditLogs(),
   });
   return (
     <DialogContent className="max-w-2xl">

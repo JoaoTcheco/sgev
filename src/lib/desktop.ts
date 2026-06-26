@@ -47,6 +47,29 @@ export const desktop = {
       call<{ ok: true }>("auth.change-password", input),
   },
 
+  admin: {
+    listUsers: () =>
+      call<Array<{ id: string; full_name: string | null; email: string; active: boolean; created_at: string; roles: Role[] }>>(
+        "admin.list-users",
+      ),
+    createUser: (input: { actor_id: string; email: string; password: string; full_name: string; role: Role }) =>
+      call<{ id: string }>("admin.create-user", input),
+    setRole: (input: { actor_id: string; user_id: string; role: Role }) =>
+      call<{ ok: true }>("admin.set-role", input),
+    setActive: (input: { actor_id: string; user_id: string; active: boolean }) =>
+      call<{ ok: true }>("admin.set-active", input),
+    resetPassword: (input: { actor_id: string; user_id: string; password: string }) =>
+      call<{ ok: true }>("admin.reset-password", input),
+    updateUser: (input: { actor_id: string; user_id: string; full_name?: string; email?: string }) =>
+      call<{ ok: true }>("admin.update-user", input),
+    deleteUser: (input: { actor_id: string; user_id: string }) =>
+      call<{ ok: true }>("admin.delete-user", input),
+    auditLogs: () =>
+      call<Array<{ id: string; user_id: string | null; entity_id: string | null; action: string; details: string | null; created_at: string; actor_name: string | null }>>(
+        "admin.audit-logs",
+      ),
+  },
+
   // SQL directo (para queries complexas)
   select: <T = Record<string, unknown>>(sql: string, params: unknown[] = []) =>
     call<T[]>("select", { sql, params }),

@@ -501,6 +501,92 @@ export async function assignProductBarcode(id: string, barcode: string): Promise
   if (error) throw error;
 }
 
+// ===== Admin: gestão de utilizadores =====
+export type AdminUserRow = {
+  id: string;
+  full_name: string | null;
+  email: string | null;
+  active: boolean;
+  created_at: string;
+  roles: Array<"admin" | "pharmacist" | "cashier">;
+};
+
+export async function listAdminUsers(): Promise<AdminUserRow[]> {
+  if (isDesktop()) {
+    return (await desktop.admin.listUsers()) as AdminUserRow[];
+  }
+  const [{ data: profiles, error }, { data: roles, error: rErr }] = await Promise.all([
+    supabase.from("profiles").select("id, full_name, email, active, created_at").order("created_at", { ascending: false }),
+    supabase.from("user_roles").select("user_id, role"),
+  ]);
+  if (error) throw error;
+  if (rErr) throw rErr;
+  const map = new Map<string, AdminUserRow["roles"]>();
+  for (const r of roles ?? []) {
+    const list = map.get(r.user_id) ?? [];
+    list.push(r.role as AdminUserRow["roles"][number]);
+    map.set(r.user_id, list);
+  }
+  return (profiles ?? []).map((p: any) => ({ ...p, roles: map.get(p.id) ?? [] }));
+}
+
+function actorId(): string {
+  const id = getDesktopUser()?.id;
+  if (!id) throw new Error("Sessão desktop inválida");
+  return id;
+}
+
+export async function adminSetUserRole(userId: string, role: AdminUserRow["roles"][number]) {
+  if (isDesktop()) {
+    await desktop.admin.setRole({ actor_id: actorId(), user_id: userId, role });
+    return;
+  }
+  const { error } = await supabase.rpc("admin_set_user_role", { p_user_id: userId, p_role: role });
+  if (error) throw error;
+}
+
+export async function adminSetUserActive(userId: string, active: boolean) {
+  if (isDesktop()) {
+    await desktop.admin.setActive({ actor_id: actorId(), user_id: userId, active });
+    return;
+  }
+  const { error } = await supabase.rpc("admin_set_user_active", { p_user_id: userId, p_active: active });
+  if (error) throw error;
+}
+
+export type AdminAuditRow = {
+  id: string;
+  user_id: string | null;
+  entity_id: string | null;
+  action: string;
+  details: any;
+  created_at: string;
+  actor_name?: string | null;
+};
+
+export async function listAdminAuditLogs(): Promise<AdminAuditRow[]> {
+  if (isDesktop()) {
+    const rows = await desktop.admin.auditLogs();
+    return rows.map((r) => ({
+      ...r,
+      details: r.details ? safeParse(r.details) : null,
+    }));
+  }
+  const { data, error } = await supabase
+    .from("audit_logs")
+    .select("id, user_id, entity_id, action, details, created_at")
+    .eq("entity", "user")
+    .order("created_at", { ascending: false })
+    .limit(100);
+  if (error) throw error;
+  return (data ?? []) as AdminAuditRow[];
+}
+
+function safeParse(s: string) {
+  try { return JSON.parse(s); } catch { return s; }
+}
+
+
 // ===== Alertas =====
 export type AlertRow = {
   id: string;
