@@ -13,7 +13,8 @@
     "format": "prettier --write .",
     "build:spa": "vite build --config vite.spa.config.ts",
     "electron:dev": "PHARMASYS_DEV_URL=http://localhost:8080 electron .",
-    "electron:pack:win": "npm run build:spa && electron-packager . PharmaSys --platform=win32 --arch=x64 --out=electron-release --overwrite --ignore='^/src' --ignore='^/public' --ignore='^/electron-release' --ignore='^/supabase' --ignore='^/electron/spa' --ignore='^/\\.git'"
+    "electron:prebuild:win": "cd node_modules/better-sqlite3 && npx prebuild-install --platform=win32 --arch=x64 --runtime=electron --target=33.4.11",
+    "electron:pack:win": "npm run build:spa && npm run electron:prebuild:win && electron-packager . PharmaSys --platform=win32 --arch=x64 --out=electron-release --overwrite --asar.unpack=**/*.node --prune=true --ignore='^/src$' --ignore='^/src/' --ignore='^/public$' --ignore='^/public/' --ignore='^/electron-release' --ignore='^/supabase' --ignore='^/electron/spa' --ignore='^/\\.git'"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -69,7 +70,9 @@
     "tw-animate-css": "^1.3.4",
     "vaul": "^1.1.2",
     "vite-tsconfig-paths": "^6.0.2",
-    "zod": "^3.24.2"
+    "zod": "^3.24.2",
+    "bcryptjs": "^3.0.3",
+    "better-sqlite3": "^12.11.1"
   },
   "devDependencies": {
     "@electron/packager": "^20.0.1",
@@ -80,8 +83,6 @@
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
     "@vitejs/plugin-react": "^5.0.4",
-    "bcryptjs": "^3.0.3",
-    "better-sqlite3": "^12.11.1",
     "electron": "33",
     "eslint": "^9.32.0",
     "eslint-config-prettier": "^10.1.1",
