@@ -30,12 +30,14 @@ export default defineConfig({
         find: /^@\/lib\/admin-users\.functions$/,
         replacement: path.resolve(__dirname, "src/electron-stubs/admin-users.ts"),
       },
-      // Stub all TanStack Start packages — Electron is pure SPA.
       { find: /^@tanstack\/react-start.*/, replacement: path.resolve(__dirname, "src/electron-stubs/tanstack-start.ts") },
       { find: /^@tanstack\/start-.*/, replacement: path.resolve(__dirname, "src/electron-stubs/tanstack-start.ts") },
-      // The auth middleware/attacher import server-only things; stub them.
       { find: /^@\/integrations\/supabase\/auth-middleware$/, replacement: path.resolve(__dirname, "src/electron-stubs/tanstack-start.ts") },
       { find: /^@\/integrations\/supabase\/auth-attacher$/, replacement: path.resolve(__dirname, "src/electron-stubs/tanstack-start.ts") },
+      // Node built-ins pulled in by TanStack router-core SSR helpers — stub for SPA.
+      { find: "node:stream", replacement: path.resolve(__dirname, "src/electron-stubs/empty.ts") },
+      { find: "node:stream/web", replacement: path.resolve(__dirname, "src/electron-stubs/empty.ts") },
+      { find: "node:async_hooks", replacement: path.resolve(__dirname, "src/electron-stubs/empty.ts") },
     ],
   },
   build: {
