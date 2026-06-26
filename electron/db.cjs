@@ -192,13 +192,25 @@ CREATE TABLE IF NOT EXISTS app_meta (
 );
 `;
 
+function ensureColumn(database, table, column, ddl) {
+  const cols = database.prepare(`PRAGMA table_info(${table})`).all();
+  if (!cols.some((c) => c.name === column)) {
+    database.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${ddl}`);
+  }
+}
+
 function initDatabase(filePath) {
   const dir = path.dirname(filePath);
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
   db = new Database(filePath);
   db.exec(SCHEMA);
 
-  // valor padrão de configurações
+  // Migrations — colunas adicionadas em versões posteriores
+  ensureColumn(db, "products", "manufacturer", "TEXT");
+  ensureColumn(db, "products", "ideal_stock", "INTEGER NOT NULL DEFAULT 0");
+  ensureColumn(db, "products", "tarja", "TEXT");
+  ensureColumn(db, "products", "active_ingredient", "TEXT");
+
   const settings = db.prepare("SELECT id FROM pharmacy_settings WHERE id = 1").get();
   if (!settings) {
     db.prepare(
