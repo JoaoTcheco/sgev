@@ -5,6 +5,7 @@ export type LabelInput = {
   name: string;
   barcode: string;
   price?: number | null;
+  cost?: number | null;
   batch_number?: string | null;
   expiry_date?: string | null; // YYYY-MM-DD
   qty: number;
@@ -28,6 +29,7 @@ function expand(entries: LabelInput[]) {
       name: e.name,
       barcode: e.barcode,
       price: e.price ?? null,
+      cost: e.cost ?? null,
       lote: e.batch_number ?? null,
       val: e.expiry_date ?? null,
     })),
