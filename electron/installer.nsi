@@ -29,8 +29,6 @@ BrandingText "PharmaSys - Gestao de Farmacia"
 Var StartWithWindows
 
 !define MUI_ABORTWARNING
-!define MUI_ICON   "${SRCDIR}\PharmaSys.exe"
-!define MUI_UNICON "${SRCDIR}\PharmaSys.exe"
 
 !insertmacro MUI_PAGE_WELCOME
 !insertmacro MUI_PAGE_DIRECTORY
