@@ -381,12 +381,14 @@ function LabelSettingsCard() {
               </Field>
             </div>
             <div className="flex flex-wrap gap-4">
-              <ToggleField label="Mostrar preço" checked={settings.a4.showPrice}
-                onChange={(v) => update((s) => ({ ...s, a4: { ...s.a4, showPrice: v } }))} />
-              <ToggleField label="Mostrar lote" checked={settings.a4.showBatch}
-                onChange={(v) => update((s) => ({ ...s, a4: { ...s.a4, showBatch: v } }))} />
-              <ToggleField label="Mostrar validade" checked={settings.a4.showExpiry}
-                onChange={(v) => update((s) => ({ ...s, a4: { ...s.a4, showExpiry: v } }))} />
+             <ToggleField label="Mostrar preço" checked={settings.a4.showPrice}
+               onChange={(v) => update((s) => ({ ...s, a4: { ...s.a4, showPrice: v } }))} />
+             <ToggleField label="Mostrar custo" checked={settings.a4.showCost}
+               onChange={(v) => update((s) => ({ ...s, a4: { ...s.a4, showCost: v } }))} />
+             <ToggleField label="Mostrar lote" checked={settings.a4.showBatch}
+               onChange={(v) => update((s) => ({ ...s, a4: { ...s.a4, showBatch: v } }))} />
+             <ToggleField label="Mostrar validade" checked={settings.a4.showExpiry}
+               onChange={(v) => update((s) => ({ ...s, a4: { ...s.a4, showExpiry: v } }))} />
             </div>
           </div>
         ) : (
