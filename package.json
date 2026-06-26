@@ -11,16 +11,16 @@
     "preview": "vite preview",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "electron:dev": "BUILD_TARGET=electron concurrently -k \"vite dev\" \"wait-on http://localhost:8080 && electron .\"",
-    "electron:build": "BUILD_TARGET=electron vite build",
-    "dist:win": "BUILD_TARGET=electron vite build && electron-builder --win nsis --x64",
-    "dist:linux": "BUILD_TARGET=electron vite build && electron-builder --linux AppImage --x64"
+    "electron:dev": "BUILD_TARGET=electron concurrently -k \"vite dev -c vite.electron.config.ts\" \"wait-on http://localhost:5173 && electron .\"",
+    "electron:build": "vite build -c vite.electron.config.ts",
+    "dist:win": "vite build -c vite.electron.config.ts && electron-builder --win nsis --x64",
+    "dist:linux": "vite build -c vite.electron.config.ts && electron-builder --linux AppImage --x64"
   },
   "build": {
     "appId": "mz.pharmasys.desktop",
     "productName": "PharmaSys",
     "directories": { "output": "dist-electron" },
-    "files": ["electron/**/*", "dist/**/*", "node_modules/better-sqlite3/**/*", "package.json"],
+    "files": ["electron/**/*", "dist-spa/**/*", "node_modules/better-sqlite3/**/*", "node_modules/bcryptjs/**/*", "package.json"],
     "asarUnpack": ["**/node_modules/better-sqlite3/**/*"],
     "win": {
       "target": [{ "target": "nsis", "arch": ["x64"] }],
