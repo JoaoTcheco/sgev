@@ -35,26 +35,12 @@ function EstatisticasPage() {
     queryKey: ["stats", range],
     queryFn: async () => {
       const now = Date.now();
-      const since = new Date(now - days * 86400_000).toISOString();
-      const prevFrom = new Date(now - days * 2 * 86400_000).toISOString();
-      const prevTo = since;
-
-      const [sales, prevSales, items, products, categories, profiles] = await Promise.all([
-        supabase.from("sales").select("id, total, created_at, payment_method, user_id, status").gte("created_at", since).eq("status", "completed"),
-        supabase.from("sales").select("id, total").gte("created_at", prevFrom).lt("created_at", prevTo).eq("status", "completed"),
-        supabase.from("sale_items").select("product_id, product_name, quantity, unit_price, total, created_at").gte("created_at", since).limit(10000),
-        supabase.from("products").select("id, cost_price, category_id, pack_size"),
-        supabase.from("categories").select("id, name"),
-        supabase.from("profiles").select("id, full_name, email"),
-      ]);
-      for (const r of [sales, prevSales, items, products, categories, profiles]) {
-        if (r.error) throw r.error;
-      }
-      const salesRows = sales.data ?? [];
-      const itemsRows = items.data ?? [];
-      const productMap = new Map((products.data ?? []).map((p: any) => [p.id, p]));
-      const categoryMap = new Map((categories.data ?? []).map((c: any) => [c.id, c.name]));
-      const profileMap = new Map((profiles.data ?? []).map((p: any) => [p.id, p.full_name ?? p.email ?? "—"]));
+      const bundle = await getStatsBundle(days);
+      const salesRows = bundle.sales;
+      const itemsRows = bundle.items;
+      const productMap = new Map(bundle.products.map((p) => [p.id, p]));
+      const categoryMap = new Map(bundle.categories.map((c) => [c.id, c.name]));
+      const profileMap = new Map(bundle.profiles.map((p) => [p.id, p.full_name ?? p.email ?? "—"]));
 
       // Daily series
       const byDay = new Map<string, number>();
