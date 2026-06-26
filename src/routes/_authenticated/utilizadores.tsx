@@ -264,10 +264,14 @@ function UtilizadoresPage() {
   );
 }
 
-function CreateUserDialog({ onClose, createFn, onCreated }: { onClose: () => void; createFn: ReturnType<typeof useServerFn<typeof adminCreateUser>>; onCreated: () => void }) {
+type CreateFn = (data: { email: string; password: string; full_name: string; role: AppRole }) => Promise<unknown>;
+type ResetFn = (data: { user_id: string; password: string }) => Promise<unknown>;
+type UpdateFn = (data: { user_id: string; full_name?: string; email?: string }) => Promise<unknown>;
+
+function CreateUserDialog({ onClose, createFn, onCreated }: { onClose: () => void; createFn: CreateFn; onCreated: () => void }) {
   const [form, setForm] = useState({ email: "", password: "", full_name: "", role: "cashier" as AppRole });
   const mut = useMutation({
-    mutationFn: () => createFn({ data: form }),
+    mutationFn: () => createFn(form),
     onSuccess: () => { toast.success("Utilizador criado", { description: form.email }); onCreated(); onClose(); },
     onError: (e: Error) => toast.error("Falha ao criar", { description: e.message }),
   });
