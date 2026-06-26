@@ -3,9 +3,7 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Banknote, Loader2, Play, Square, ArrowDownCircle, ArrowUpCircle, AlertTriangle, History } from "lucide-react";
 import { toast } from "sonner";
-import { listMyCashSessions, listSessionSales, openCashSession, closeCashSession, type CashSessionRow } from "@/lib/db";
-import { isDesktop } from "@/lib/desktop";
-import { useDesktopAuth } from "@/hooks/use-desktop-auth";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,20 +20,32 @@ export const Route = createFileRoute("/_authenticated/caixa")({
   component: CaixaPage,
 });
 
-type Session = CashSessionRow;
+type Session = {
+  id: string; opened_at: string; closed_at: string | null;
+  opening_amount: number; counted_amount: number | null;
+  expected_amount: number | null; difference: number | null;
+  notes: string | null; status: "open" | "closed";
+};
 
 function CaixaPage() {
   const { user } = useAuthUser();
-  const { user: dUser } = useDesktopAuth();
-  const userId = isDesktop() ? dUser?.id : user?.id;
   const qc = useQueryClient();
   const [openAmt, setOpenAmt] = useState("0");
   const [closeOpen, setCloseOpen] = useState(false);
 
   const sessions = useQuery<Session[]>({
-    queryKey: ["my-cash-sessions", userId],
-    enabled: !!userId,
-    queryFn: () => listMyCashSessions(userId!),
+    queryKey: ["my-cash-sessions"],
+    enabled: !!user?.id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("cash_sessions")
+        .select("id, opened_at, closed_at, opening_amount, counted_amount, expected_amount, difference, notes, status")
+        .eq("user_id", user!.id)
+        .order("opened_at", { ascending: false })
+        .limit(20);
+      if (error) throw error;
+      return (data ?? []) as Session[];
+    },
   });
 
   const active = sessions.data?.find((s) => s.status === "open") ?? null;
@@ -45,15 +55,23 @@ function CaixaPage() {
     enabled: !!active,
     refetchInterval: 15000,
     queryFn: async () => {
-      const data = await listSessionSales(active!.id);
-      const cash = data.filter((s: any) => s.payment_method === "cash").reduce((a: number, b: any) => a + Number(b.total), 0);
-      const other = data.filter((s: any) => s.payment_method !== "cash").reduce((a: number, b: any) => a + Number(b.total), 0);
+      const { data, error } = await supabase
+        .from("sales")
+        .select("total, payment_method, status")
+        .eq("cash_session_id", active!.id)
+        .eq("status", "completed");
+      if (error) throw error;
+      const cash = data.filter((s) => s.payment_method === "cash").reduce((a, b) => a + Number(b.total), 0);
+      const other = data.filter((s) => s.payment_method !== "cash").reduce((a, b) => a + Number(b.total), 0);
       return { cash, other, count: data.length, expected: Number(active!.opening_amount) + cash };
     },
   });
 
   const openMut = useMutation({
-    mutationFn: () => openCashSession(Number(openAmt) || 0),
+    mutationFn: async () => {
+      const { error } = await supabase.rpc("open_cash_session", { p_opening: Number(openAmt) || 0 });
+      if (error) throw error;
+    },
     onSuccess: () => { toast.success("Turno aberto"); setOpenAmt("0"); qc.invalidateQueries({ queryKey: ["my-cash-sessions"] }); },
     onError: (e: Error) => toast.error("Falha", { description: e.message }),
   });
@@ -61,7 +79,10 @@ function CaixaPage() {
   const [counted, setCounted] = useState("");
   const [notes, setNotes] = useState("");
   const closeMut = useMutation({
-    mutationFn: () => closeCashSession(Number(counted) || 0, notes ?? ""),
+    mutationFn: async () => {
+      const { error } = await supabase.rpc("close_cash_session", { p_counted: Number(counted) || 0, p_notes: notes ?? "" });
+      if (error) throw error;
+    },
     onSuccess: () => {
       toast.success("Turno fechado");
       setCloseOpen(false); setCounted(""); setNotes("");

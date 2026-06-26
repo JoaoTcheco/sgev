@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, Truck, Loader2, Pencil } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,15 +11,16 @@ import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+
 import { RoleGate } from "@/components/role-gate";
-import { listSuppliers, saveSupplier, type SupplierRow } from "@/lib/db";
 
 export const Route = createFileRoute("/_authenticated/fornecedores")({
   head: () => ({ meta: [{ title: "Fornecedores — PharmaSys" }] }),
   component: () => <RoleGate allow={["admin", "pharmacist"]}><FornecedoresPage /></RoleGate>,
 });
 
-type Supplier = SupplierRow;
+
+type Supplier = { id: string; legal_name: string; tax_id: string | null; contact_name: string | null; email: string | null; phone: string | null; address: string | null; active: boolean };
 
 function FornecedoresPage() {
   const qc = useQueryClient();
@@ -27,11 +29,23 @@ function FornecedoresPage() {
 
   const { data = [], isLoading } = useQuery({
     queryKey: ["suppliers"],
-    queryFn: () => listSuppliers(),
+    queryFn: async () => {
+      const { data, error } = await supabase.from("suppliers").select("*").order("legal_name");
+      if (error) throw error;
+      return data ?? [];
+    },
   });
 
   const save = useMutation({
-    mutationFn: (payload: Partial<Supplier>) => saveSupplier(payload),
+    mutationFn: async (payload: Partial<Supplier>) => {
+      if (payload.id) {
+        const { error } = await supabase.from("suppliers").update(payload).eq("id", payload.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("suppliers").insert(payload as any);
+        if (error) throw error;
+      }
+    },
     onSuccess: () => {
       toast.success("Fornecedor guardado");
       setOpen(false);

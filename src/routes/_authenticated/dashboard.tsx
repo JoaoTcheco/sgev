@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { getDashboardStats } from "@/lib/db";
+import { supabase } from "@/integrations/supabase/client";
 import { formatMZN } from "@/lib/format";
 import { ShoppingCart, AlertTriangle, Package, TrendingUp } from "lucide-react";
 import { useAuthUser, useProfile } from "@/hooks/use-auth";
@@ -17,7 +17,33 @@ function DashboardPage() {
 
   const { data: stats } = useQuery({
     queryKey: ["dashboard-stats"],
-    queryFn: getDashboardStats,
+    queryFn: async () => {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const [salesRes, alertsRes, productsRes] = await Promise.all([
+        supabase
+          .from("sales")
+          .select("total")
+          .eq("status", "completed")
+          .gte("created_at", today.toISOString()),
+        supabase.from("alerts").select("id, severity").eq("resolved", false),
+        supabase.from("products").select("id").eq("active", true),
+      ]);
+
+      const sales = salesRes.data ?? [];
+      const totalSales = sales.reduce((a, s) => a + Number(s.total), 0);
+      const alerts = alertsRes.data ?? [];
+
+      return {
+        salesCount: sales.length,
+        totalSales,
+        ticketMedio: sales.length ? totalSales / sales.length : 0,
+        alertsActive: alerts.length,
+        alertsCritical: alerts.filter((a) => a.severity === "critical").length,
+        productsActive: productsRes.data?.length ?? 0,
+      };
+    },
   });
 
   return (

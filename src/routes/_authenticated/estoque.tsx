@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Search, Plus, Loader2, Package, Pencil, Trash2, Barcode as BarcodeIcon, Printer } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -17,25 +18,35 @@ import { formatMZN, formatDate } from "@/lib/format";
 import { useAuthUser, useUserRoles, highestRole } from "@/hooks/use-auth";
 import { Barcode } from "@/components/barcode";
 import { RoleGate } from "@/components/role-gate";
-import {
-  listStockProducts,
-  listSuppliersMin,
-  listCategoriesMin,
-  addBatchEntry,
-  saveProduct as saveProductDb,
-  deleteOrDisableProduct,
-  assignProductBarcode,
-  type StockProductRow,
-} from "@/lib/db";
 
 export const Route = createFileRoute("/_authenticated/estoque")({
   head: () => ({ meta: [{ title: "Estoque — PharmaSys" }] }),
   component: () => <RoleGate allow={["admin", "pharmacist"]}><EstoquePage /></RoleGate>,
 });
 
-type ProductRow = StockProductRow;
+type ProductRow = {
+  id: string;
+  name: string;
+  manufacturer: string | null;
+  unit: string | null;
+  pack_size: number;
+  min_stock: number;
+  sale_price: number;
+  cost_price: number;
+  tarja: "livre" | "amarela" | "vermelha" | "preta" | null;
+  active: boolean;
+  barcode: string | null;
+  category_id: string | null;
+  active_ingredient: string | null;
+  requires_prescription: boolean;
+  sub_unit_label: string | null;
+  sub_unit_price: number | null;
+  ideal_stock: number;
+  batches: { id: string; expiry_date: string; quantity: number }[] | null;
+};
 
 function generateBarcode(): string {
+  // EAN-13-like 13 digit numeric (no checksum requirement for CODE128, but keep numeric for scan compatibility)
   const ts = Date.now().toString().slice(-10);
   const rnd = Math.floor(Math.random() * 1000).toString().padStart(3, "0");
   return ts + rnd;
@@ -56,22 +67,52 @@ function EstoquePage() {
 
   const { data: rows = [], isLoading } = useQuery({
     queryKey: ["stock", search],
-    queryFn: () => listStockProducts(search),
+    queryFn: async () => {
+      let q = supabase
+        .from("products")
+        .select("id, name, manufacturer, unit, pack_size, min_stock, ideal_stock, sale_price, cost_price, tarja, active, barcode, category_id, active_ingredient, requires_prescription, sub_unit_label, sub_unit_price, batches(id, expiry_date, quantity)")
+        .order("name")
+        .limit(200);
+      if (search.trim()) {
+        const term = `%${search.trim()}%`;
+        q = q.or(`name.ilike.${term},barcode.ilike.${term},manufacturer.ilike.${term}`);
+      }
+      const { data, error } = await q;
+      if (error) throw error;
+      return (data ?? []) as ProductRow[];
+    },
   });
 
   const { data: suppliers = [] } = useQuery({
     queryKey: ["suppliers-min"],
-    queryFn: () => listSuppliersMin(),
+    queryFn: async () => {
+      const { data, error } = await supabase.from("suppliers").select("id, legal_name").eq("active", true).order("legal_name");
+      if (error) throw error;
+      return data ?? [];
+    },
   });
 
   const { data: categories = [] } = useQuery({
     queryKey: ["categories-min"],
-    queryFn: () => listCategoriesMin(),
+    queryFn: async () => {
+      const { data, error } = await supabase.from("categories").select("id, name").order("name");
+      if (error) throw error;
+      return data ?? [];
+    },
   });
 
   const addBatch = useMutation({
-    mutationFn: (payload: { product_id: string; supplier_id: string | null; batch_number: string; expiry_date: string; quantity: number; cost_price: number }) =>
-      addBatchEntry(payload),
+    mutationFn: async (payload: { product_id: string; supplier_id: string | null; batch_number: string; expiry_date: string; quantity: number; cost_price: number }) => {
+      const { error } = await supabase.rpc("add_batch_entry", {
+        p_product_id: payload.product_id,
+        p_supplier_id: payload.supplier_id as unknown as string,
+        p_batch_number: payload.batch_number,
+        p_expiry_date: payload.expiry_date,
+        p_quantity: payload.quantity,
+        p_cost_price: payload.cost_price,
+      });
+      if (error) throw error;
+    },
     onSuccess: () => {
       toast.success("Lote registado");
       setBatchOpen(null);
@@ -81,9 +122,8 @@ function EstoquePage() {
   });
 
   const saveProduct = useMutation({
-    mutationFn: (p: Partial<ProductRow> & { id?: string }) =>
-      saveProductDb({
-        id: p.id,
+    mutationFn: async (p: Partial<ProductRow> & { id?: string }) => {
+      const payload = {
         name: p.name!,
         manufacturer: p.manufacturer || null,
         unit: p.unit || "cx",
@@ -92,7 +132,7 @@ function EstoquePage() {
         ideal_stock: Number(p.ideal_stock || 0),
         cost_price: Number(p.cost_price || 0),
         sale_price: Number(p.sale_price || 0),
-        tarja: (p.tarja as ProductRow["tarja"]) || null,
+        tarja: p.tarja || null,
         active: p.active ?? true,
         barcode: p.barcode?.trim() || generateBarcode(),
         category_id: p.category_id || null,
@@ -100,7 +140,15 @@ function EstoquePage() {
         requires_prescription: p.requires_prescription ?? false,
         sub_unit_label: p.sub_unit_label || null,
         sub_unit_price: p.sub_unit_price ? Number(p.sub_unit_price) : null,
-      }),
+      };
+      if (p.id) {
+        const { error } = await supabase.from("products").update(payload).eq("id", p.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("products").insert(payload);
+        if (error) throw error;
+      }
+    },
     onSuccess: () => {
       toast.success("Produto guardado");
       setProductOpen(null);
@@ -110,7 +158,16 @@ function EstoquePage() {
   });
 
   const deleteProduct = useMutation({
-    mutationFn: (id: string) => deleteOrDisableProduct(id),
+    mutationFn: async (id: string) => {
+      // Try hard delete; if FK conflict (lotes/vendas), soft-disable
+      const { error } = await supabase.from("products").delete().eq("id", id);
+      if (error) {
+        const { error: e2 } = await supabase.from("products").update({ active: false }).eq("id", id);
+        if (e2) throw e2;
+        return "disabled" as const;
+      }
+      return "deleted" as const;
+    },
     onSuccess: (r) => {
       toast.success(r === "deleted" ? "Produto eliminado" : "Produto desativado (possui histórico)");
       setDeleteOpen(null);
@@ -302,14 +359,11 @@ function EstoquePage() {
         onClose={() => setBarcodeOpen(null)}
         onAssign={async (code) => {
           if (!barcodeOpen) return;
-          try {
-            await assignProductBarcode(barcodeOpen.id, code);
-            toast.success("Código atribuído");
-            queryClient.invalidateQueries({ queryKey: ["stock"] });
-            setBarcodeOpen({ ...barcodeOpen, barcode: code });
-          } catch (e) {
-            toast.error("Falha", { description: (e as Error).message });
-          }
+          const { error } = await supabase.from("products").update({ barcode: code }).eq("id", barcodeOpen.id);
+          if (error) { toast.error("Falha", { description: error.message }); return; }
+          toast.success("Código atribuído");
+          queryClient.invalidateQueries({ queryKey: ["stock"] });
+          setBarcodeOpen({ ...barcodeOpen, barcode: code });
         }}
       />
     </div>

@@ -1,8 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { useAuthUser } from "@/hooks/use-auth";
-import { useDesktopAuth } from "@/hooks/use-desktop-auth";
-import { getOpenCashSession } from "@/lib/db";
-import { isDesktop } from "@/lib/desktop";
 
 export type OpenSession = {
   id: string;
@@ -12,15 +10,19 @@ export type OpenSession = {
 
 export function useOpenCashSession() {
   const { user } = useAuthUser();
-  const { user: dUser } = useDesktopAuth();
-  const userId = isDesktop() ? dUser?.id : user?.id;
   return useQuery<OpenSession>({
-    queryKey: ["open-cash-session", userId],
-    enabled: !!userId,
+    queryKey: ["open-cash-session", user?.id],
+    enabled: !!user?.id,
     refetchInterval: 30000,
     queryFn: async () => {
-      const row = await getOpenCashSession(userId!);
-      return (row as OpenSession) ?? null;
+      const { data, error } = await supabase
+        .from("cash_sessions")
+        .select("id, opened_at, opening_amount")
+        .eq("user_id", user!.id)
+        .eq("status", "open")
+        .maybeSingle();
+      if (error) throw error;
+      return (data as OpenSession) ?? null;
     },
   });
 }

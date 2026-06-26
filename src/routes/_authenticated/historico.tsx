@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { History, Loader2 } from "lucide-react";
-import { listAuditLogsHistory, listSalesHistory, listStockMovementsHistory } from "@/lib/db";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -22,11 +22,14 @@ function HistoricoPage() {
     queryKey: ["history"],
     queryFn: async () => {
       const [moves, logs, sales] = await Promise.all([
-        listStockMovementsHistory(50),
-        listAuditLogsHistory(50),
-        listSalesHistory(30),
+        supabase.from("stock_movements").select("id, type, quantity, reason, created_at, products(name)").order("created_at", { ascending: false }).limit(50),
+        supabase.from("audit_logs").select("id, entity, action, created_at, details").order("created_at", { ascending: false }).limit(50),
+        supabase.from("sales").select("id, receipt_number, sale_number, total, status, created_at").order("created_at", { ascending: false }).limit(30),
       ]);
-      return { moves, logs, sales };
+      if (moves.error) throw moves.error;
+      if (logs.error) throw logs.error;
+      if (sales.error) throw sales.error;
+      return { moves: moves.data ?? [], logs: logs.data ?? [], sales: (sales.data ?? []) as SaleRow[] };
     },
   });
 
@@ -45,7 +48,7 @@ function HistoricoPage() {
             <TableBody>
               {data?.sales.map((s) => (
                 <TableRow key={s.id}>
-                  <TableCell className="text-sm font-medium">{s.receipt_number ?? (s.sale_number ? `#${s.sale_number}` : "—")}</TableCell>
+                  <TableCell className="text-sm font-medium">{s.receipt_number ?? `#${s.sale_number}`}</TableCell>
                   <TableCell className="text-xs">{formatDateTime(s.created_at)}</TableCell>
                   <TableCell className="text-right">{formatMZN(Number(s.total))}</TableCell>
                   <TableCell>

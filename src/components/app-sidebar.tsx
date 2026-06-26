@@ -32,8 +32,6 @@ import {
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { isDesktop } from "@/lib/desktop";
-import { desktopSignOut } from "@/hooks/use-desktop-auth";
 import { useAuthUser, useUserRoles, useProfile, highestRole, roleLabel } from "@/hooks/use-auth";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -82,8 +80,7 @@ export function AppSidebar() {
   async function handleLogout() {
     await queryClient.cancelQueries();
     queryClient.clear();
-    if (isDesktop()) desktopSignOut();
-    else await supabase.auth.signOut();
+    await supabase.auth.signOut();
     navigate({ to: "/auth", replace: true });
   }
 

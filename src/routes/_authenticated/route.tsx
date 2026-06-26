@@ -3,18 +3,10 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { supabase } from "@/integrations/supabase/client";
 import { Toaster } from "@/components/ui/sonner";
-import { getDesktopUser } from "@/hooks/use-desktop-auth";
-import { isDesktop } from "@/lib/desktop";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
   beforeLoad: async () => {
-    // No modo desktop (Electron) a sessão é local — não há Supabase.
-    if (isDesktop()) {
-      const u = getDesktopUser();
-      if (!u) throw redirect({ to: "/auth" });
-      return { user: { id: u.id, email: u.email } };
-    }
     const { data, error } = await supabase.auth.getUser();
     if (error || !data.user) throw redirect({ to: "/auth" });
     return { user: data.user };
