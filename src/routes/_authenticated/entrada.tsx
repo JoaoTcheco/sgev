@@ -88,16 +88,14 @@ function EntradaPage() {
 
   // Hardware scanner: lookup by exact barcode, add to draft.
   useBarcodeScanner(async (code) => {
-    const { data, error } = await supabase
-      .from("products")
-      .select("id, name, barcode, sale_price")
-      .eq("barcode", code)
-      .eq("active", true)
-      .maybeSingle();
-    if (error) { toast.error("Falha na busca", { description: error.message }); return; }
-    if (!data) { toast.error(`Código ${code} não encontrado`); return; }
-    addProduct(data);
-    toast.success(`+ ${data.name}`);
+    try {
+      const data = await findProductByBarcode(code);
+      if (!data) { toast.error(`Código ${code} não encontrado`); return; }
+      addProduct({ id: data.id, name: data.name, barcode: data.barcode ?? null, sale_price: data.sale_price });
+      toast.success(`+ ${data.name}`);
+    } catch (e) {
+      toast.error("Falha na busca", { description: (e as Error).message });
+    }
   });
 
   function updateRow(uid: string, patch: Partial<DraftRow>) {
@@ -131,19 +129,19 @@ function EntradaPage() {
     setSaving(true);
     let okCount = 0;
     for (const r of pending) {
-      const { error } = await supabase.rpc("add_batch_entry", {
-        p_product_id: r.product_id,
-        p_supplier_id: (r.supplier_id ?? defaultSupplier ?? null) as unknown as string,
-        p_batch_number: r.batch_number.trim(),
-        p_expiry_date: r.expiry_date,
-        p_quantity: Math.floor(r.quantity),
-        p_cost_price: r.cost_price,
-      });
-      if (error) {
-        updateRow(r.uid, { status: "error", error: error.message });
-      } else {
+      try {
+        await addBatchEntry({
+          product_id: r.product_id,
+          supplier_id: r.supplier_id ?? defaultSupplier ?? null,
+          batch_number: r.batch_number.trim(),
+          expiry_date: r.expiry_date,
+          quantity: Math.floor(r.quantity),
+          cost_price: r.cost_price,
+        });
         updateRow(r.uid, { status: "saved" });
         okCount++;
+      } catch (e) {
+        updateRow(r.uid, { status: "error", error: (e as Error).message });
       }
     }
     setSaving(false);
