@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { supabase } from "@/integrations/supabase/client";
+import { getDashboardStats } from "@/lib/db";
 import { formatMZN } from "@/lib/format";
 import { ShoppingCart, AlertTriangle, Package, TrendingUp } from "lucide-react";
 import { useAuthUser, useProfile } from "@/hooks/use-auth";
