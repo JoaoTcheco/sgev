@@ -154,6 +154,10 @@ function ConfiguracoesPage() {
 
         <LabelSettingsCard />
 
+        <BackupCard />
+
+
+
 
 
         <div className="flex justify-end">
