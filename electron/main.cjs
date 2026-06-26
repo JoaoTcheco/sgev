@@ -1,5 +1,5 @@
 // PharmaSys Desktop - Electron main process
-const { app, BrowserWindow, ipcMain, shell } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, shell } = require('electron');
 const path = require('node:path');
 const fs = require('node:fs');
 const { initDatabase, getDb } = require('./db/init.cjs');
@@ -11,7 +11,6 @@ let mainWindow = null;
 // on text/password focus (GPU driver, spell checker, autofill/password service).
 app.disableHardwareAcceleration();
 app.commandLine.appendSwitch('disable-gpu');
-app.commandLine.appendSwitch('disable-software-rasterizer');
 app.commandLine.appendSwitch('disable-renderer-backgrounding');
 app.commandLine.appendSwitch('disable-background-timer-throttling');
 app.commandLine.appendSwitch(
@@ -94,7 +93,7 @@ app.whenReady().then(async () => {
   const dbPath = path.join(userDataDir, 'pharma.db');
   try {
     initDatabase(dbPath);
-    registerIpcHandlers(ipcMain, { getDb, userDataDir, dbPath, shell, getWindow: () => mainWindow });
+    registerIpcHandlers(ipcMain, { getDb, userDataDir, dbPath, dialog, shell, getWindow: () => mainWindow });
   } catch (err) {
     console.error('[PharmaSys] Erro ao iniciar base de dados:', err);
     app.quit();
