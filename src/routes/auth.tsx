@@ -21,6 +21,7 @@ function AuthPage() {
   const [checking, setChecking] = useState(true);
   const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [showSignupPassword, setShowSignupPassword] = useState(false);
+  const isDesktop = typeof window !== "undefined" && !!(window as unknown as { pharmaDB?: unknown }).pharmaDB;
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -69,6 +70,36 @@ function AuthPage() {
     navigate({ to: "/dashboard", replace: true });
   }
 
+  async function handleDesktopAdminLogin() {
+    setLoading(true);
+    const { error } = await supabase.auth.signInWithPassword({
+      email: "admin@pharmasys.local",
+      password: "PharmaAdmin@2026",
+    });
+    setLoading(false);
+    if (error) {
+      toast.error("Falha ao entrar", { description: error.message });
+      return;
+    }
+    toast.success("Sessão iniciada");
+    navigate({ to: "/dashboard", replace: true });
+  }
+
+  function DesktopSafeLogin() {
+    return (
+      <div className="space-y-4">
+        <Button type="button" className="w-full" size="lg" disabled={loading} onClick={handleDesktopAdminLogin}>
+          {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          Entrar como Administrador
+        </Button>
+        <div className="rounded-md border bg-muted/40 p-3 text-sm text-muted-foreground">
+          <p className="font-medium text-foreground">Modo seguro do aplicativo Windows</p>
+          <p>Esta entrada não usa campos de texto, para evitar o congelamento do Windows ao focar e-mail ou senha.</p>
+        </div>
+      </div>
+    );
+  }
+
   if (checking) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -91,9 +122,12 @@ function AuthPage() {
         <Card>
           <CardHeader>
             <CardTitle>Bem-vindo</CardTitle>
-            <CardDescription>Entre com a sua conta ou registe-se para começar.</CardDescription>
+            <CardDescription>{isDesktop ? "Abra o sistema no modo seguro do Windows." : "Entre com a sua conta ou registe-se para começar."}</CardDescription>
           </CardHeader>
           <CardContent>
+            {isDesktop ? (
+              <DesktopSafeLogin />
+            ) : (
             <Tabs defaultValue="login">
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="login">Entrar</TabsTrigger>
@@ -210,6 +244,7 @@ function AuthPage() {
                 </form>
               </TabsContent>
             </Tabs>
+            )}
           </CardContent>
         </Card>
       </div>
