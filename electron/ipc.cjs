@@ -9,7 +9,30 @@ function uid() {
   return randomUUID();
 }
 
-module.exports = function registerHandlers(ipcMain, { getDb, dialog, shell, app }) {
+module.exports = function registerHandlers(ipcMain, { getDb, dialog, shell, app, log }) {
+  const logger = log ?? { info: () => {}, warn: () => {}, error: console.error };
+
+  // Wrapper: regista cada chamada, mede duração e normaliza erros
+  function handle(channel, fn) {
+    ipcMain.handle(channel, async (event, payload) => {
+      const t0 = Date.now();
+      try {
+        const out = await fn(event, payload);
+        const ms = Date.now() - t0;
+        if (ms > 200) logger.warn(`IPC ${channel} demorou ${ms}ms`);
+        else logger.info(`IPC ${channel} ok (${ms}ms)`);
+        return out;
+      } catch (err) {
+        const msg = err && err.message ? err.message : String(err);
+        logger.error(`IPC ${channel} falhou:`, msg, payload ? `payload=${JSON.stringify(payload).slice(0, 300)}` : "");
+        // Re-lança Error com mensagem limpa (Electron serializa apenas .message)
+        throw new Error(msg);
+      }
+    });
+  }
+
+  // Adaptador compatível: substitui ipcMain.handle pelo wrapper neste âmbito
+  ipcMain = { handle: handle };
   // ===== Auth =====
   ipcMain.handle("db:auth.bootstrap-needed", () => {
     const db = getDb();

@@ -527,7 +527,7 @@ function ToggleField({ label, checked, onChange }: { label: string; checked: boo
 
 function BackupCard() {
   const desktop = typeof window !== "undefined" && !!(window as unknown as { pharmasys?: unknown }).pharmasys;
-  const bridge = (window as unknown as { pharmasys?: { backupNow: () => Promise<{ ok: boolean; path?: string }>; restoreBackup: () => Promise<{ ok: boolean }>; openBackupsFolder: () => Promise<{ ok: boolean }> } }).pharmasys;
+  const bridge = (window as unknown as { pharmasys?: { backupNow: () => Promise<{ ok: boolean; path?: string }>; restoreBackup: () => Promise<{ ok: boolean }>; openBackupsFolder: () => Promise<{ ok: boolean }>; openLogsFolder?: () => Promise<{ ok: boolean; path?: string }> } }).pharmasys;
 
   async function doBackup() {
     if (!bridge) return;
@@ -557,6 +557,7 @@ function BackupCard() {
               <Button onClick={doBackup} variant="default"><Save className="mr-2 h-4 w-4" /> Backup agora</Button>
               <Button onClick={() => bridge?.openBackupsFolder()} variant="outline">Abrir pasta de backups</Button>
               <Button onClick={doRestore} variant="destructive">Restaurar de ficheiro…</Button>
+              <Button onClick={() => bridge?.openLogsFolder?.()} variant="outline">Abrir pasta de logs</Button>
             </div>
           </>
         )}

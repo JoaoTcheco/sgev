@@ -16,6 +16,7 @@ type Bridge = {
   backupNow: () => Promise<{ ok: boolean; path?: string }>;
   restoreBackup: () => Promise<{ ok: boolean }>;
   openBackupsFolder: () => Promise<{ ok: boolean }>;
+  openLogsFolder: () => Promise<{ ok: boolean; path?: string }>;
   isDesktop: boolean;
 };
 
@@ -31,7 +32,14 @@ export function isDesktop(): boolean {
 async function call<T>(channel: string, payload?: unknown): Promise<T> {
   const b = getBridge();
   if (!b) throw new Error("Aplicação desktop não detectada");
-  return (await b.query(channel, payload)) as T;
+  try {
+    return (await b.query(channel, payload)) as T;
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    // Log no DevTools para diagnóstico
+    console.error(`[desktop] ${channel} falhou:`, msg);
+    throw new Error(msg);
+  }
 }
 
 export const desktop = {
@@ -124,5 +132,6 @@ export const desktop = {
     now: () => getBridge()!.backupNow(),
     restore: () => getBridge()!.restoreBackup(),
     openFolder: () => getBridge()!.openBackupsFolder(),
+    openLogs: () => getBridge()!.openLogsFolder(),
   },
 };
