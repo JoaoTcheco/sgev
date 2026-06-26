@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { formatMZN } from "@/lib/format";
 import { useBarcodeScanner } from "@/hooks/use-barcode-scanner";
 import { printLabels } from "@/lib/print-labels";
@@ -27,11 +28,16 @@ type DraftRow = {
   product_id: string;
   name: string;
   barcode: string | null;
+  sub_barcode: string | null;
   sale_price: number;
+  pack_size: number;
+  sub_unit_label: string | null;
+  unit: string | null;
   batch_number: string;
   expiry_date: string;
-  quantity: number;
-  cost_price: number;
+  quantity: number;        // quantity displayed (in chosen unit)
+  cost_price: number;      // cost per displayed unit
+  entry_as_pack: boolean;  // when true, quantity/cost refer to caixas; converted on save
   supplier_id: string | null;
   status: "pending" | "saved" | "error";
   error?: string;
@@ -53,7 +59,7 @@ function EntradaPage() {
     queryFn: async () => {
       let q = supabase
         .from("products")
-        .select("id, name, manufacturer, barcode, sale_price, unit")
+        .select("id, name, manufacturer, barcode, sub_barcode, sale_price, unit, pack_size, sub_unit_label")
         .eq("active", true)
         .order("name")
         .limit(30);
@@ -76,9 +82,13 @@ function EntradaPage() {
     },
   });
 
-  const addProduct = useCallback((p: { id: string; name: string; barcode: string | null; sale_price: number }) => {
+  type ProductLite = {
+    id: string; name: string; barcode: string | null; sub_barcode?: string | null;
+    sale_price: number; pack_size?: number | null; sub_unit_label?: string | null; unit?: string | null;
+  };
+
+  const addProduct = useCallback((p: ProductLite) => {
     setRows((prev) => {
-      // If same product already pending, just bump qty
       const idx = prev.findIndex((r) => r.product_id === p.id && r.status !== "saved");
       if (idx >= 0) {
         const next = [...prev];
@@ -92,11 +102,16 @@ function EntradaPage() {
           product_id: p.id,
           name: p.name,
           barcode: p.barcode,
+          sub_barcode: p.sub_barcode ?? null,
           sale_price: Number(p.sale_price ?? 0),
+          pack_size: Math.max(1, Number(p.pack_size ?? 1)),
+          sub_unit_label: p.sub_unit_label ?? null,
+          unit: p.unit ?? "cx",
           batch_number: "",
           expiry_date: "",
           quantity: 1,
           cost_price: 0,
+          entry_as_pack: Math.max(1, Number(p.pack_size ?? 1)) > 1, // default to caixa when product has pack
           supplier_id: defaultSupplier || null,
           status: "pending",
         },
@@ -104,12 +119,12 @@ function EntradaPage() {
     });
   }, [defaultSupplier]);
 
-  // Hardware scanner: lookup by exact barcode, add to draft.
+  // Hardware scanner: lookup by barcode or sub_barcode.
   useBarcodeScanner(async (code) => {
     const { data, error } = await supabase
       .from("products")
-      .select("id, name, barcode, sale_price")
-      .eq("barcode", code)
+      .select("id, name, barcode, sub_barcode, sale_price, pack_size, sub_unit_label, unit")
+      .or(`barcode.eq.${code},sub_barcode.eq.${code}`)
       .eq("active", true)
       .maybeSingle();
     if (error) { toast.error("Falha na busca", { description: error.message }); return; }
@@ -139,9 +154,16 @@ function EntradaPage() {
     return null;
   }
 
+  function convertRow(r: DraftRow) {
+    const ps = Math.max(1, r.pack_size || 1);
+    if (r.entry_as_pack && ps > 1) {
+      return { qtyUnits: Math.floor(r.quantity) * ps, costPerUnit: r.cost_price / ps };
+    }
+    return { qtyUnits: Math.floor(r.quantity), costPerUnit: r.cost_price };
+  }
+
   async function confirmAll() {
     if (pending.length === 0) { toast.error("Sem itens pendentes"); return; }
-    // Validate first
     for (const r of pending) {
       const err = validateRow(r);
       if (err) { toast.error(`${r.name}: ${err}`); return; }
@@ -149,13 +171,14 @@ function EntradaPage() {
     setSaving(true);
     let okCount = 0;
     for (const r of pending) {
+      const { qtyUnits, costPerUnit } = convertRow(r);
       const { error } = await supabase.rpc("add_batch_entry", {
         p_product_id: r.product_id,
         p_supplier_id: (r.supplier_id ?? defaultSupplier ?? null) as unknown as string,
         p_batch_number: r.batch_number.trim(),
         p_expiry_date: r.expiry_date,
-        p_quantity: Math.floor(r.quantity),
-        p_cost_price: r.cost_price,
+        p_quantity: qtyUnits,
+        p_cost_price: Number(costPerUnit.toFixed(4)),
       });
       if (error) {
         updateRow(r.uid, { status: "error", error: error.message });
@@ -177,14 +200,29 @@ function EntradaPage() {
 
   function printRowLabels(r: DraftRow) {
     if (!r.barcode) { toast.error("Produto sem código de barras — atribua em Estoque."); return; }
+    const qtyLabels = r.entry_as_pack ? Math.max(1, Math.floor(r.quantity)) : Math.max(1, Math.floor(r.quantity));
     printLabels([{
       name: r.name,
       barcode: r.barcode,
       price: r.sale_price,
-      cost: r.cost_price,
+      cost: r.entry_as_pack ? r.cost_price : r.cost_price * Math.max(1, r.pack_size),
       batch_number: r.batch_number,
       expiry_date: r.expiry_date,
-      qty: Math.min(120, Math.max(1, r.quantity)),
+      qty: Math.min(120, qtyLabels),
+    }]);
+  }
+
+  function printRowSubLabels(r: DraftRow) {
+    if (!r.sub_barcode) { toast.error("Produto sem código da sub-unidade — defina em Estoque."); return; }
+    const { qtyUnits, costPerUnit } = convertRow(r);
+    printLabels([{
+      name: `${r.name} · ${r.sub_unit_label ?? "un"}`,
+      barcode: r.sub_barcode,
+      price: null,
+      cost: costPerUnit,
+      batch_number: r.batch_number,
+      expiry_date: r.expiry_date,
+      qty: Math.min(240, Math.max(1, qtyUnits)),
     }]);
   }
 
@@ -195,10 +233,10 @@ function EntradaPage() {
       name: r.name,
       barcode: r.barcode!,
       price: r.sale_price,
-      cost: r.cost_price,
+      cost: r.entry_as_pack ? r.cost_price : r.cost_price * Math.max(1, r.pack_size),
       batch_number: r.batch_number,
       expiry_date: r.expiry_date,
-      qty: Math.min(120, Math.max(1, r.quantity)),
+      qty: Math.min(120, Math.max(1, Math.floor(r.quantity))),
     })));
   }
 
@@ -284,9 +322,16 @@ function EntradaPage() {
                       {r.status === "saved" && <Badge className="bg-emerald-600 hover:bg-emerald-700"><CheckCircle2 className="mr-1 h-3 w-3" />OK</Badge>}
                       {r.status === "error" && <Badge variant="destructive"><AlertTriangle className="mr-1 h-3 w-3" />Erro</Badge>}
                       {r.status === "saved" && (
-                        <Button size="icon" variant="ghost" title="Imprimir etiquetas" onClick={() => printRowLabels(r)}>
-                          <Printer className="h-4 w-4" />
-                        </Button>
+                        <>
+                          <Button size="icon" variant="ghost" title="Etiquetas caixa" onClick={() => printRowLabels(r)}>
+                            <Printer className="h-4 w-4" />
+                          </Button>
+                          {r.sub_barcode && (
+                            <Button size="icon" variant="ghost" title="Etiquetas sub-unidade" onClick={() => printRowSubLabels(r)}>
+                              <Printer className="h-4 w-4 text-emerald-600" />
+                            </Button>
+                          )}
+                        </>
                       )}
                       {r.status !== "saved" && (
                         <Button size="icon" variant="ghost" title="Remover" onClick={() => removeRow(r.uid)}>
@@ -295,6 +340,17 @@ function EntradaPage() {
                       )}
                     </div>
                   </div>
+                  {r.pack_size > 1 && r.status !== "saved" && (
+                    <div className="mt-2 flex items-center justify-between rounded-md bg-muted/40 px-2 py-1">
+                      <span className="text-xs text-muted-foreground">
+                        Entrar como <b>{r.entry_as_pack ? `${r.unit ?? "cx"} (×${r.pack_size} ${r.sub_unit_label ?? "un"})` : (r.sub_unit_label ?? "un")}</b>
+                      </span>
+                      <label className="flex items-center gap-2 text-xs">
+                        <span>Caixa</span>
+                        <Switch checked={r.entry_as_pack} onCheckedChange={(v: boolean) => updateRow(r.uid, { entry_as_pack: v })} />
+                      </label>
+                    </div>
+                  )}
                   <div className="mt-2 grid grid-cols-2 gap-2">
                     <div className="space-y-1">
                       <Label className="text-xs">Lote</Label>
@@ -305,14 +361,19 @@ function EntradaPage() {
                       <Input type="date" value={r.expiry_date} disabled={r.status === "saved"} onChange={(e) => updateRow(r.uid, { expiry_date: e.target.value })} />
                     </div>
                     <div className="space-y-1">
-                      <Label className="text-xs">Qtd (un)</Label>
+                      <Label className="text-xs">Qtd ({r.entry_as_pack && r.pack_size > 1 ? (r.unit ?? "cx") : (r.sub_unit_label ?? "un")})</Label>
                       <Input type="number" min={1} value={r.quantity} disabled={r.status === "saved"} onChange={(e) => updateRow(r.uid, { quantity: Math.max(1, Number(e.target.value) || 1) })} />
                     </div>
                     <div className="space-y-1">
-                      <Label className="text-xs">Custo unit.</Label>
+                      <Label className="text-xs">Custo por {r.entry_as_pack && r.pack_size > 1 ? (r.unit ?? "cx") : (r.sub_unit_label ?? "un")}</Label>
                       <Input type="number" step="0.01" min={0} value={r.cost_price} disabled={r.status === "saved"} onChange={(e) => updateRow(r.uid, { cost_price: Math.max(0, Number(e.target.value) || 0) })} />
                     </div>
                   </div>
+                  {r.entry_as_pack && r.pack_size > 1 && r.quantity > 0 && (
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      = {Math.floor(r.quantity) * r.pack_size} {r.sub_unit_label ?? "un"} no estoque · custo unit. {formatMZN(r.cost_price / r.pack_size)}
+                    </p>
+                  )}
                   {r.status === "error" && r.error && <p className="mt-1 text-xs text-destructive">{r.error}</p>}
                 </div>
               ))}
