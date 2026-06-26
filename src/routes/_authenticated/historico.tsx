@@ -45,7 +45,7 @@ function HistoricoPage() {
             <TableBody>
               {data?.sales.map((s) => (
                 <TableRow key={s.id}>
-                  <TableCell className="text-sm font-medium">{s.receipt_number ?? `#${s.sale_number}`}</TableCell>
+                  <TableCell className="text-sm font-medium">{s.receipt_number ?? (s.sale_number ? `#${s.sale_number}` : "—")}</TableCell>
                   <TableCell className="text-xs">{formatDateTime(s.created_at)}</TableCell>
                   <TableCell className="text-right">{formatMZN(Number(s.total))}</TableCell>
                   <TableCell>
