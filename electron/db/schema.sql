@@ -1,8 +1,8 @@
--- PharmaSys Desktop schema (SQLite). Mirrors the cloud Postgres schema.
+-- PharmaSys Desktop schema (SQLite) - alinhado com a cloud Postgres
 PRAGMA foreign_keys = ON;
 PRAGMA journal_mode = WAL;
 
--- Roles / users (local auth, no Supabase)
+-- ============ Auth local (substitui Supabase Auth) ============
 CREATE TABLE IF NOT EXISTS users (
   id TEXT PRIMARY KEY,
   email TEXT NOT NULL UNIQUE COLLATE NOCASE,
@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS user_roles (
   UNIQUE (user_id, role)
 );
 
--- Catalog
+-- ============ Catalogo ============
 CREATE TABLE IF NOT EXISTS categories (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL UNIQUE,
@@ -38,13 +38,12 @@ CREATE TABLE IF NOT EXISTS categories (
 
 CREATE TABLE IF NOT EXISTS suppliers (
   id TEXT PRIMARY KEY,
-  name TEXT NOT NULL,
+  legal_name TEXT NOT NULL,
+  tax_id TEXT,
   contact_name TEXT,
   phone TEXT,
   email TEXT,
   address TEXT,
-  nuit TEXT,
-  notes TEXT,
   active INTEGER NOT NULL DEFAULT 1,
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at TEXT NOT NULL DEFAULT (datetime('now'))
@@ -52,11 +51,11 @@ CREATE TABLE IF NOT EXISTS suppliers (
 
 CREATE TABLE IF NOT EXISTS customers (
   id TEXT PRIMARY KEY,
-  name TEXT NOT NULL,
+  full_name TEXT NOT NULL,
+  tax_id TEXT,
   phone TEXT,
   email TEXT,
-  nuit TEXT,
-  address TEXT,
+  birth_date TEXT,
   notes TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at TEXT NOT NULL DEFAULT (datetime('now'))
@@ -65,21 +64,22 @@ CREATE TABLE IF NOT EXISTS customers (
 CREATE TABLE IF NOT EXISTS products (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
-  description TEXT,
+  active_ingredient TEXT,
   category_id TEXT REFERENCES categories(id) ON DELETE SET NULL,
+  manufacturer TEXT,
   barcode TEXT UNIQUE,
   sub_barcode TEXT UNIQUE,
-  unit TEXT NOT NULL DEFAULT 'cx',
+  tarja TEXT NOT NULL DEFAULT 'livre',
+  requires_prescription INTEGER NOT NULL DEFAULT 0,
+  unit TEXT NOT NULL DEFAULT 'un',
   pack_size INTEGER NOT NULL DEFAULT 1,
   sub_unit_label TEXT,
   sub_unit_price REAL,
-  price REAL NOT NULL DEFAULT 0,
-  cost_price REAL NOT NULL DEFAULT 0,
   min_stock INTEGER NOT NULL DEFAULT 5,
+  ideal_stock INTEGER NOT NULL DEFAULT 20,
   expiry_alert_days INTEGER NOT NULL DEFAULT 60,
-  requires_prescription INTEGER NOT NULL DEFAULT 0,
-  manufacturer TEXT,
-  active_substance TEXT,
+  cost_price REAL NOT NULL DEFAULT 0,
+  sale_price REAL NOT NULL DEFAULT 0,
   active INTEGER NOT NULL DEFAULT 1,
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at TEXT NOT NULL DEFAULT (datetime('now'))
@@ -95,7 +95,7 @@ CREATE TABLE IF NOT EXISTS batches (
   expiry_date TEXT NOT NULL,
   quantity INTEGER NOT NULL DEFAULT 0,
   cost_price REAL NOT NULL DEFAULT 0,
-  received_at TEXT NOT NULL DEFAULT (datetime('now')),
+  received_at TEXT NOT NULL DEFAULT (date('now')),
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
@@ -116,7 +116,7 @@ CREATE TABLE IF NOT EXISTS stock_movements (
 CREATE INDEX IF NOT EXISTS idx_stock_mov_product ON stock_movements(product_id);
 CREATE INDEX IF NOT EXISTS idx_stock_mov_created ON stock_movements(created_at);
 
--- Financial accounts (Caixa, M-Pesa, e-Mola, Banco, ...)
+-- ============ Financeiro ============
 CREATE TABLE IF NOT EXISTS financial_accounts (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL UNIQUE,
@@ -141,7 +141,7 @@ CREATE TABLE IF NOT EXISTS account_movements (
 );
 CREATE INDEX IF NOT EXISTS idx_acc_mov_account ON account_movements(account_id);
 
--- Cash sessions (turno do cashier)
+-- ============ Turno de caixa ============
 CREATE TABLE IF NOT EXISTS cash_sessions (
   id TEXT PRIMARY KEY,
   user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -158,9 +158,10 @@ CREATE TABLE IF NOT EXISTS cash_sessions (
 );
 CREATE INDEX IF NOT EXISTS idx_cash_sessions_user_status ON cash_sessions(user_id, status);
 
--- Sales
+-- ============ Vendas ============
 CREATE TABLE IF NOT EXISTS sales (
   id TEXT PRIMARY KEY,
+  sale_number INTEGER,
   receipt_number TEXT NOT NULL UNIQUE,
   customer_id TEXT REFERENCES customers(id) ON DELETE SET NULL,
   user_id TEXT REFERENCES users(id) ON DELETE SET NULL,
@@ -193,7 +194,7 @@ CREATE TABLE IF NOT EXISTS sale_items (
 CREATE INDEX IF NOT EXISTS idx_sale_items_sale ON sale_items(sale_id);
 CREATE INDEX IF NOT EXISTS idx_sale_items_product ON sale_items(product_id);
 
--- Alerts (recalculated by refresh_alerts)
+-- ============ Alertas ============
 CREATE TABLE IF NOT EXISTS alerts (
   id TEXT PRIMARY KEY,
   type TEXT NOT NULL CHECK (type IN ('low_stock','near_expiry','expired')),
@@ -201,6 +202,7 @@ CREATE TABLE IF NOT EXISTS alerts (
   product_id TEXT REFERENCES products(id) ON DELETE CASCADE,
   batch_id TEXT REFERENCES batches(id) ON DELETE CASCADE,
   message TEXT NOT NULL,
+  read INTEGER NOT NULL DEFAULT 0,
   resolved INTEGER NOT NULL DEFAULT 0,
   resolved_at TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
@@ -208,7 +210,7 @@ CREATE TABLE IF NOT EXISTS alerts (
 CREATE INDEX IF NOT EXISTS idx_alerts_resolved ON alerts(resolved);
 CREATE INDEX IF NOT EXISTS idx_alerts_type ON alerts(type);
 
--- Pharmacy settings (single row, id=1)
+-- ============ Configuracoes ============
 CREATE TABLE IF NOT EXISTS pharmacy_settings (
   id INTEGER PRIMARY KEY CHECK (id = 1),
   name TEXT NOT NULL DEFAULT 'PharmaSys',
@@ -228,7 +230,6 @@ CREATE TABLE IF NOT EXISTS pharmacy_settings (
   updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
--- Audit log
 CREATE TABLE IF NOT EXISTS audit_logs (
   id TEXT PRIMARY KEY,
   user_id TEXT REFERENCES users(id) ON DELETE SET NULL,
@@ -239,9 +240,10 @@ CREATE TABLE IF NOT EXISTS audit_logs (
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
--- Sequential receipt number generator (mirrors sales_receipt_seq)
+-- Sequence para REC-YYYY-NNNNNN
 CREATE TABLE IF NOT EXISTS sequences (
   name TEXT PRIMARY KEY,
   value INTEGER NOT NULL DEFAULT 0
 );
 INSERT OR IGNORE INTO sequences (name, value) VALUES ('sales_receipt', 0);
+INSERT OR IGNORE INTO sequences (name, value) VALUES ('sales_number', 0);
