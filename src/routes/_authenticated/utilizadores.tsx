@@ -367,18 +367,9 @@ function ResetPasswordDialog({ user, resetFn, onClose }: { user: UserRow | null;
 
 function AuditDialog({ open }: { open: boolean }) {
   const { data = [], isLoading } = useQuery({
-    queryKey: ["audit-users"],
+    queryKey: ["audit-users", isDesktop() ? "desktop" : "web"],
     enabled: open,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("audit_logs")
-        .select("id, user_id, entity_id, action, details, created_at")
-        .eq("entity", "user")
-        .order("created_at", { ascending: false })
-        .limit(100);
-      if (error) throw error;
-      return data ?? [];
-    },
+    queryFn: () => listAdminAuditLogs(),
   });
   return (
     <DialogContent className="max-w-2xl">
