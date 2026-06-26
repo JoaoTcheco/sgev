@@ -100,7 +100,7 @@ async function createWindow() {
 process.on("uncaughtException", (err) => log.error("uncaughtException:", err));
 process.on("unhandledRejection", (reason) => log.error("unhandledRejection:", reason));
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   try {
     log.init(app.getPath("userData"));
     const dbPath = path.join(app.getPath("userData"), "pharmasys.db");
@@ -108,10 +108,10 @@ app.whenReady().then(() => {
     log.info("Logs em:", log.getDir());
     initDatabase(dbPath);
     registerHandlers(ipcMain, { getDb, dialog, shell, app, log });
-    createWindow();
+    await createWindow();
 
-    app.on("activate", () => {
-      if (BrowserWindow.getAllWindows().length === 0) createWindow();
+    app.on("activate", async () => {
+      if (BrowserWindow.getAllWindows().length === 0) await createWindow();
     });
   } catch (e) {
     log.error("Falha crítica no arranque:", e);
@@ -119,6 +119,7 @@ app.whenReady().then(() => {
     app.exit(1);
   }
 });
+
 
 // Canal para o renderer obter o caminho dos logs
 ipcMain.handle("app:open-logs-folder", () => {
