@@ -14,6 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
+      account_movements: {
+        Row: {
+          account_id: string
+          amount: number
+          created_at: string
+          id: string
+          reason: string | null
+          sale_id: string | null
+          type: string
+          user_id: string | null
+        }
+        Insert: {
+          account_id: string
+          amount: number
+          created_at?: string
+          id?: string
+          reason?: string | null
+          sale_id?: string | null
+          type: string
+          user_id?: string | null
+        }
+        Update: {
+          account_id?: string
+          amount?: number
+          created_at?: string
+          id?: string
+          reason?: string | null
+          sale_id?: string | null
+          type?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "account_movements_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "financial_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "account_movements_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "sales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       alerts: {
         Row: {
           batch_id: string | null
@@ -253,62 +301,39 @@ export type Database = {
       }
       financial_accounts: {
         Row: {
-          amount: number
+          active: boolean
+          balance: number
           created_at: string
           created_by: string | null
-          description: string
-          due_date: string | null
           id: string
-          kind: Database["public"]["Enums"]["account_kind"]
+          is_system: boolean
+          name: string
           notes: string | null
-          paid_at: string | null
-          party: string | null
-          payment_method: string | null
-          status: Database["public"]["Enums"]["account_status"]
-          supplier_id: string | null
           updated_at: string
         }
         Insert: {
-          amount: number
+          active?: boolean
+          balance?: number
           created_at?: string
           created_by?: string | null
-          description: string
-          due_date?: string | null
           id?: string
-          kind: Database["public"]["Enums"]["account_kind"]
+          is_system?: boolean
+          name: string
           notes?: string | null
-          paid_at?: string | null
-          party?: string | null
-          payment_method?: string | null
-          status?: Database["public"]["Enums"]["account_status"]
-          supplier_id?: string | null
           updated_at?: string
         }
         Update: {
-          amount?: number
+          active?: boolean
+          balance?: number
           created_at?: string
           created_by?: string | null
-          description?: string
-          due_date?: string | null
           id?: string
-          kind?: Database["public"]["Enums"]["account_kind"]
+          is_system?: boolean
+          name?: string
           notes?: string | null
-          paid_at?: string | null
-          party?: string | null
-          payment_method?: string | null
-          status?: Database["public"]["Enums"]["account_status"]
-          supplier_id?: string | null
           updated_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "financial_accounts_supplier_id_fkey"
-            columns: ["supplier_id"]
-            isOneToOne: false
-            referencedRelation: "suppliers"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       pharmacy_settings: {
         Row: {
@@ -537,6 +562,7 @@ export type Database = {
       }
       sales: {
         Row: {
+          account_id: string | null
           cash_session_id: string | null
           created_at: string
           customer_id: string | null
@@ -552,6 +578,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          account_id?: string | null
           cash_session_id?: string | null
           created_at?: string
           customer_id?: string | null
@@ -567,6 +594,7 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          account_id?: string | null
           cash_session_id?: string | null
           created_at?: string
           customer_id?: string | null
@@ -582,6 +610,13 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "sales_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "financial_accounts"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "sales_cash_session_id_fkey"
             columns: ["cash_session_id"]
@@ -725,6 +760,15 @@ export type Database = {
         }
         Returns: string
       }
+      adjust_account: {
+        Args: {
+          p_account_id: string
+          p_amount: number
+          p_reason: string
+          p_type: string
+        }
+        Returns: string
+      }
       admin_set_user_active: {
         Args: { p_active: boolean; p_user_id: string }
         Returns: undefined
@@ -740,6 +784,7 @@ export type Database = {
         Args: { p_counted: number; p_notes: string }
         Returns: string
       }
+      delete_account: { Args: { p_account_id: string }; Returns: undefined }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -750,20 +795,29 @@ export type Database = {
       is_admin: { Args: { _user_id: string }; Returns: boolean }
       is_staff: { Args: { _user_id: string }; Returns: boolean }
       open_cash_session: { Args: { p_opening: number }; Returns: string }
-      process_sale: {
-        Args: {
-          p_customer_id: string
-          p_discount: number
-          p_items: Json
-          p_payment_method: Database["public"]["Enums"]["payment_method"]
-        }
-        Returns: string
-      }
+      process_sale:
+        | {
+            Args: {
+              p_customer_id: string
+              p_discount: number
+              p_items: Json
+              p_payment_method: Database["public"]["Enums"]["payment_method"]
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              p_account_id?: string
+              p_customer_id: string
+              p_discount: number
+              p_items: Json
+              p_payment_method: Database["public"]["Enums"]["payment_method"]
+            }
+            Returns: string
+          }
       refresh_alerts: { Args: never; Returns: undefined }
     }
     Enums: {
-      account_kind: "payable" | "receivable"
-      account_status: "pending" | "paid" | "overdue" | "cancelled"
       alert_severity: "info" | "warning" | "critical"
       alert_type: "low_stock" | "near_expiry" | "expired"
       app_role: "admin" | "pharmacist" | "cashier"
@@ -899,8 +953,6 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      account_kind: ["payable", "receivable"],
-      account_status: ["pending", "paid", "overdue", "cancelled"],
       alert_severity: ["info", "warning", "critical"],
       alert_type: ["low_stock", "near_expiry", "expired"],
       app_role: ["admin", "pharmacist", "cashier"],
