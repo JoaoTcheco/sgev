@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Search, Plus, Loader2, Package, Pencil, Trash2, Barcode as BarcodeIcon } from "lucide-react";
+import { Search, Plus, Loader2, Package, Pencil, Trash2, Barcode as BarcodeIcon, Printer } from "lucide-react";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
