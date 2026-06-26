@@ -27,11 +27,16 @@ type DraftRow = {
   product_id: string;
   name: string;
   barcode: string | null;
+  sub_barcode: string | null;
   sale_price: number;
+  pack_size: number;
+  sub_unit_label: string | null;
+  unit: string | null;
   batch_number: string;
   expiry_date: string;
-  quantity: number;
-  cost_price: number;
+  quantity: number;        // quantity displayed (in chosen unit)
+  cost_price: number;      // cost per displayed unit
+  entry_as_pack: boolean;  // when true, quantity/cost refer to caixas; converted on save
   supplier_id: string | null;
   status: "pending" | "saved" | "error";
   error?: string;
@@ -53,7 +58,7 @@ function EntradaPage() {
     queryFn: async () => {
       let q = supabase
         .from("products")
-        .select("id, name, manufacturer, barcode, sale_price, unit")
+        .select("id, name, manufacturer, barcode, sub_barcode, sale_price, unit, pack_size, sub_unit_label")
         .eq("active", true)
         .order("name")
         .limit(30);
