@@ -321,9 +321,16 @@ function EntradaPage() {
                       {r.status === "saved" && <Badge className="bg-emerald-600 hover:bg-emerald-700"><CheckCircle2 className="mr-1 h-3 w-3" />OK</Badge>}
                       {r.status === "error" && <Badge variant="destructive"><AlertTriangle className="mr-1 h-3 w-3" />Erro</Badge>}
                       {r.status === "saved" && (
-                        <Button size="icon" variant="ghost" title="Imprimir etiquetas" onClick={() => printRowLabels(r)}>
-                          <Printer className="h-4 w-4" />
-                        </Button>
+                        <>
+                          <Button size="icon" variant="ghost" title="Etiquetas caixa" onClick={() => printRowLabels(r)}>
+                            <Printer className="h-4 w-4" />
+                          </Button>
+                          {r.sub_barcode && (
+                            <Button size="icon" variant="ghost" title="Etiquetas sub-unidade" onClick={() => printRowSubLabels(r)}>
+                              <Printer className="h-4 w-4 text-emerald-600" />
+                            </Button>
+                          )}
+                        </>
                       )}
                       {r.status !== "saved" && (
                         <Button size="icon" variant="ghost" title="Remover" onClick={() => removeRow(r.uid)}>
@@ -332,6 +339,17 @@ function EntradaPage() {
                       )}
                     </div>
                   </div>
+                  {r.pack_size > 1 && r.status !== "saved" && (
+                    <div className="mt-2 flex items-center justify-between rounded-md bg-muted/40 px-2 py-1">
+                      <span className="text-xs text-muted-foreground">
+                        Entrar como <b>{r.entry_as_pack ? `${r.unit ?? "cx"} (×${r.pack_size} ${r.sub_unit_label ?? "un"})` : (r.sub_unit_label ?? "un")}</b>
+                      </span>
+                      <label className="flex items-center gap-2 text-xs">
+                        <span>Caixa</span>
+                        <Switch checked={r.entry_as_pack} onCheckedChange={(v) => updateRow(r.uid, { entry_as_pack: v })} />
+                      </label>
+                    </div>
+                  )}
                   <div className="mt-2 grid grid-cols-2 gap-2">
                     <div className="space-y-1">
                       <Label className="text-xs">Lote</Label>
@@ -342,14 +360,19 @@ function EntradaPage() {
                       <Input type="date" value={r.expiry_date} disabled={r.status === "saved"} onChange={(e) => updateRow(r.uid, { expiry_date: e.target.value })} />
                     </div>
                     <div className="space-y-1">
-                      <Label className="text-xs">Qtd (un)</Label>
+                      <Label className="text-xs">Qtd ({r.entry_as_pack && r.pack_size > 1 ? (r.unit ?? "cx") : (r.sub_unit_label ?? "un")})</Label>
                       <Input type="number" min={1} value={r.quantity} disabled={r.status === "saved"} onChange={(e) => updateRow(r.uid, { quantity: Math.max(1, Number(e.target.value) || 1) })} />
                     </div>
                     <div className="space-y-1">
-                      <Label className="text-xs">Custo unit.</Label>
+                      <Label className="text-xs">Custo por {r.entry_as_pack && r.pack_size > 1 ? (r.unit ?? "cx") : (r.sub_unit_label ?? "un")}</Label>
                       <Input type="number" step="0.01" min={0} value={r.cost_price} disabled={r.status === "saved"} onChange={(e) => updateRow(r.uid, { cost_price: Math.max(0, Number(e.target.value) || 0) })} />
                     </div>
                   </div>
+                  {r.entry_as_pack && r.pack_size > 1 && r.quantity > 0 && (
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      = {Math.floor(r.quantity) * r.pack_size} {r.sub_unit_label ?? "un"} no estoque · custo unit. {formatMZN(r.cost_price / r.pack_size)}
+                    </p>
+                  )}
                   {r.status === "error" && r.error && <p className="mt-1 text-xs text-destructive">{r.error}</p>}
                 </div>
               ))}
