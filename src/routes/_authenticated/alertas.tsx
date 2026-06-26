@@ -2,12 +2,12 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle, RefreshCw, Loader2, Check } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatDateTime } from "@/lib/format";
+import { listAlerts, refreshAlerts, resolveAlert } from "@/lib/db";
 
 export const Route = createFileRoute("/_authenticated/alertas")({
   head: () => ({ meta: [{ title: "Alertas — PharmaSys" }] }),
@@ -24,24 +24,11 @@ function AlertasPage() {
   const qc = useQueryClient();
   const { data = [], isLoading } = useQuery({
     queryKey: ["alerts"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("alerts")
-        .select("id, type, severity, message, created_at, resolved")
-        .eq("resolved", false)
-        .order("severity", { ascending: false })
-        .order("created_at", { ascending: false })
-        .limit(200);
-      if (error) throw error;
-      return data ?? [];
-    },
+    queryFn: () => listAlerts(),
   });
 
   const refresh = useMutation({
-    mutationFn: async () => {
-      const { error } = await supabase.rpc("refresh_alerts");
-      if (error) throw error;
-    },
+    mutationFn: () => refreshAlerts(),
     onSuccess: () => {
       toast.success("Alertas atualizados");
       qc.invalidateQueries({ queryKey: ["alerts"] });
@@ -50,10 +37,7 @@ function AlertasPage() {
   });
 
   const resolve = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("alerts").update({ resolved: true }).eq("id", id);
-      if (error) throw error;
-    },
+    mutationFn: (id: string) => resolveAlert(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["alerts"] }),
   });
 
