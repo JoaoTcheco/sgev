@@ -54,6 +54,117 @@ module.exports = function registerHandlers(ipcMain, { getDb, dialog, shell, app 
     return { ok: true };
   });
 
+  // ===== Admin: gestão de utilizadores =====
+  function logAudit(db, actorId, action, entityId, details) {
+    db.prepare(
+      "INSERT INTO audit_logs (id, user_id, action, entity, entity_id, details) VALUES (?, ?, ?, 'user', ?, ?)",
+    ).run(uid(), actorId ?? null, action, entityId ?? null, details ? JSON.stringify(details) : null);
+  }
+
+  function assertAdmin(db, actorId) {
+    const row = db
+      .prepare("SELECT 1 AS ok FROM user_roles WHERE user_id = ? AND role = 'admin'")
+      .get(actorId);
+    if (!row) throw new Error("Apenas administradores");
+  }
+
+  ipcMain.handle("db:admin.list-users", () => {
+    const db = getDb();
+    const profiles = db
+      .prepare("SELECT id, full_name, email, active, created_at FROM profiles ORDER BY created_at DESC")
+      .all();
+    const roles = db.prepare("SELECT user_id, role FROM user_roles").all();
+    const map = new Map();
+    for (const r of roles) {
+      const list = map.get(r.user_id) ?? [];
+      list.push(r.role);
+      map.set(r.user_id, list);
+    }
+    return profiles.map((p) => ({ ...p, active: !!p.active, roles: map.get(p.id) ?? [] }));
+  });
+
+  ipcMain.handle("db:admin.create-user", (_e, { actor_id, email, password, full_name, role }) => {
+    const db = getDb();
+    assertAdmin(db, actor_id);
+    const exists = db.prepare("SELECT 1 FROM profiles WHERE email = ?").get(email.toLowerCase());
+    if (exists) throw new Error("E-mail já registado");
+    const id = uid();
+    const hash = bcrypt.hashSync(password, 10);
+    db.prepare(
+      "INSERT INTO profiles (id, full_name, email, password_hash) VALUES (?, ?, ?, ?)",
+    ).run(id, full_name, email.toLowerCase(), hash);
+    db.prepare("INSERT INTO user_roles (id, user_id, role) VALUES (?, ?, ?)").run(uid(), id, role);
+    logAudit(db, actor_id, "create", id, { email, role });
+    return { id };
+  });
+
+  ipcMain.handle("db:admin.set-role", (_e, { actor_id, user_id, role }) => {
+    const db = getDb();
+    assertAdmin(db, actor_id);
+    if (user_id === actor_id) throw new Error("Não pode alterar o seu próprio perfil");
+    db.prepare("DELETE FROM user_roles WHERE user_id = ?").run(user_id);
+    db.prepare("INSERT INTO user_roles (id, user_id, role) VALUES (?, ?, ?)").run(uid(), user_id, role);
+    logAudit(db, actor_id, "set_role", user_id, { role });
+    return { ok: true };
+  });
+
+  ipcMain.handle("db:admin.set-active", (_e, { actor_id, user_id, active }) => {
+    const db = getDb();
+    assertAdmin(db, actor_id);
+    if (user_id === actor_id) throw new Error("Não pode desactivar a sua própria conta");
+    db.prepare("UPDATE profiles SET active = ?, updated_at = datetime('now') WHERE id = ?").run(active ? 1 : 0, user_id);
+    logAudit(db, actor_id, active ? "activate" : "deactivate", user_id, null);
+    return { ok: true };
+  });
+
+  ipcMain.handle("db:admin.reset-password", (_e, { actor_id, user_id, password }) => {
+    const db = getDb();
+    assertAdmin(db, actor_id);
+    const hash = bcrypt.hashSync(password, 10);
+    db.prepare("UPDATE profiles SET password_hash = ?, updated_at = datetime('now') WHERE id = ?").run(hash, user_id);
+    logAudit(db, actor_id, "reset_password", user_id, null);
+    return { ok: true };
+  });
+
+  ipcMain.handle("db:admin.update-user", (_e, { actor_id, user_id, full_name, email }) => {
+    const db = getDb();
+    assertAdmin(db, actor_id);
+    const sets = [];
+    const params = [];
+    if (full_name !== undefined) { sets.push("full_name = ?"); params.push(full_name); }
+    if (email !== undefined) { sets.push("email = ?"); params.push(email.toLowerCase()); }
+    if (sets.length === 0) return { ok: true };
+    sets.push("updated_at = datetime('now')");
+    params.push(user_id);
+    db.prepare(`UPDATE profiles SET ${sets.join(", ")} WHERE id = ?`).run(...params);
+    logAudit(db, actor_id, "update", user_id, { full_name, email });
+    return { ok: true };
+  });
+
+  ipcMain.handle("db:admin.delete-user", (_e, { actor_id, user_id }) => {
+    const db = getDb();
+    assertAdmin(db, actor_id);
+    if (user_id === actor_id) throw new Error("Não pode eliminar a sua própria conta");
+    const adminCount = db.prepare("SELECT COUNT(*) AS n FROM user_roles WHERE role = 'admin'").get().n;
+    const isAdmin = db.prepare("SELECT 1 FROM user_roles WHERE user_id = ? AND role = 'admin'").get(user_id);
+    if (isAdmin && adminCount <= 1) throw new Error("Não pode eliminar o último administrador");
+    db.prepare("DELETE FROM profiles WHERE id = ?").run(user_id);
+    logAudit(db, actor_id, "delete", user_id, null);
+    return { ok: true };
+  });
+
+  ipcMain.handle("db:admin.audit-logs", () => {
+    const db = getDb();
+    return db
+      .prepare(
+        `SELECT a.id, a.user_id, a.entity_id, a.action, a.details, a.created_at,
+                p.full_name AS actor_name
+         FROM audit_logs a LEFT JOIN profiles p ON p.id = a.user_id
+         WHERE a.entity = 'user' ORDER BY a.created_at DESC LIMIT 100`,
+      )
+      .all();
+  });
+
   // ===== CRUD genérico (somente leitura/escrita simples; vendas usam RPC abaixo) =====
   ipcMain.handle("db:select", (_e, { sql, params }) => {
     return getDb().prepare(sql).all(...(params ?? []));
