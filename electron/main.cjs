@@ -26,6 +26,8 @@ function createWindow() {
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: false,
+      spellcheck: false,
+      backgroundThrottling: false,
     },
   });
 
