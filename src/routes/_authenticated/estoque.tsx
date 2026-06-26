@@ -42,6 +42,7 @@ type ProductRow = {
   sub_unit_label: string | null;
   sub_unit_price: number | null;
   ideal_stock: number;
+  expiry_alert_days: number;
   batches: { id: string; expiry_date: string; quantity: number }[] | null;
 };
 
@@ -70,7 +71,7 @@ function EstoquePage() {
     queryFn: async () => {
       let q = supabase
         .from("products")
-        .select("id, name, manufacturer, unit, pack_size, min_stock, ideal_stock, sale_price, cost_price, tarja, active, barcode, category_id, active_ingredient, requires_prescription, sub_unit_label, sub_unit_price, batches(id, expiry_date, quantity)")
+        .select("id, name, manufacturer, unit, pack_size, min_stock, ideal_stock, expiry_alert_days, sale_price, cost_price, tarja, active, barcode, category_id, active_ingredient, requires_prescription, sub_unit_label, sub_unit_price, batches(id, expiry_date, quantity)")
         .order("name")
         .limit(200);
       if (search.trim()) {
@@ -130,6 +131,7 @@ function EstoquePage() {
         pack_size: Number(p.pack_size || 1),
         min_stock: Number(p.min_stock || 0),
         ideal_stock: Number(p.ideal_stock || 0),
+        expiry_alert_days: Number(p.expiry_alert_days || 60),
         cost_price: Number(p.cost_price || 0),
         sale_price: Number(p.sale_price || 0),
         tarja: p.tarja || null,
@@ -149,10 +151,12 @@ function EstoquePage() {
         if (error) throw error;
       }
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success("Produto guardado");
       setProductOpen(null);
+      await supabase.rpc("refresh_alerts");
       queryClient.invalidateQueries({ queryKey: ["stock"] });
+      queryClient.invalidateQueries({ queryKey: ["alerts"] });
     },
     onError: (e: Error) => toast.error("Falha", { description: e.message }),
   });
@@ -400,6 +404,7 @@ function ProductDialog({
               pack_size: Number(f.get("pack_size") || 1),
               min_stock: Number(f.get("min_stock") || 0),
               ideal_stock: Number(f.get("ideal_stock") || 0),
+              expiry_alert_days: Number(f.get("expiry_alert_days") || 60),
               cost_price: Number(f.get("cost_price") || 0),
               sale_price: Number(f.get("sale_price") || 0),
               sub_unit_label: String(f.get("sub_unit_label") || ""),
@@ -477,6 +482,11 @@ function ProductDialog({
             <div className="space-y-1">
               <Label htmlFor="ideal_stock">Estoque ideal</Label>
               <Input id="ideal_stock" name="ideal_stock" type="number" min={0} defaultValue={editing?.ideal_stock ?? 0} />
+            </div>
+            <div className="col-span-2 space-y-1">
+              <Label htmlFor="expiry_alert_days">Alertar validade (dias antes)</Label>
+              <Input id="expiry_alert_days" name="expiry_alert_days" type="number" min={1} max={365} defaultValue={editing?.expiry_alert_days ?? 60} />
+              <p className="text-xs text-muted-foreground">Avisos amarelos aparecem quando faltar este nº de dias; críticos a 1/3 desse prazo.</p>
             </div>
             <div className="col-span-2 space-y-1">
               <Label htmlFor="barcode">Código de barras (deixe vazio para gerar)</Label>
