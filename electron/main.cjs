@@ -29,7 +29,7 @@ function createWindow() {
     mainWindow.loadURL(devUrl);
     mainWindow.webContents.openDevTools({ mode: "detach" });
   } else {
-    mainWindow.loadFile(path.join(__dirname, "..", "dist", "index.html"));
+    mainWindow.loadFile(path.join(__dirname, "..", "dist-electron", "index.html"));
   }
 
   mainWindow.webContents.on("render-process-gone", (_e, details) => {
