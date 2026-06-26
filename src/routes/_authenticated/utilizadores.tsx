@@ -339,10 +339,10 @@ function EditUserDialog({ user, updateFn, onClose, onSaved }: {
   );
 }
 
-function ResetPasswordDialog({ user, resetFn, onClose }: { user: UserRow | null; resetFn: ReturnType<typeof useServerFn<typeof adminResetPassword>>; onClose: () => void }) {
+function ResetPasswordDialog({ user, resetFn, onClose }: { user: UserRow | null; resetFn: ResetFn; onClose: () => void }) {
   const [password, setPassword] = useState("");
   const mut = useMutation({
-    mutationFn: () => resetFn({ data: { user_id: user!.id, password } }),
+    mutationFn: () => resetFn({ user_id: user!.id, password }),
     onSuccess: () => { toast.success("Palavra-passe redefinida"); setPassword(""); onClose(); },
     onError: (e: Error) => toast.error("Falha", { description: e.message }),
   });
