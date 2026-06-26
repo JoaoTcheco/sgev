@@ -90,7 +90,7 @@ function EstatisticasPage() {
       const paymentsArr = [...byPayment.entries()].map(([k, total]) => ({ method: PAYMENT_LABEL[k] ?? k, total }));
 
       const grossRevenue = salesRows.reduce((s, x) => s + Number(x.total), 0);
-      const prevRevenue = (prevSales.data ?? []).reduce((s, x) => s + Number(x.total), 0);
+      const prevRevenue = bundle.prevSales.reduce((s, x) => s + Number(x.total), 0);
       const variation = prevRevenue > 0 ? ((grossRevenue - prevRevenue) / prevRevenue) * 100 : null;
       const margin = totalRevenue - totalCost;
       const marginPct = totalRevenue > 0 ? (margin / totalRevenue) * 100 : 0;
