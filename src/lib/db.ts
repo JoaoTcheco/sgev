@@ -306,3 +306,197 @@ export async function addBatchEntry(input: {
   });
   if (error) throw error;
 }
+
+// ===== Estoque (CRUD de produtos) =====
+export type StockProductRow = {
+  id: string;
+  name: string;
+  manufacturer: string | null;
+  unit: string | null;
+  pack_size: number;
+  min_stock: number;
+  ideal_stock: number;
+  sale_price: number;
+  cost_price: number;
+  tarja: "livre" | "amarela" | "vermelha" | "preta" | null;
+  active: boolean;
+  barcode: string | null;
+  category_id: string | null;
+  active_ingredient: string | null;
+  requires_prescription: boolean;
+  sub_unit_label: string | null;
+  sub_unit_price: number | null;
+  batches: { id: string; expiry_date: string; quantity: number }[] | null;
+};
+
+function mapDesktopStock(p: any, batches: any[]): StockProductRow {
+  return {
+    id: p.id,
+    name: p.name,
+    manufacturer: p.manufacturer ?? null,
+    unit: p.unit ?? "cx",
+    pack_size: Number(p.pack_size ?? 1),
+    min_stock: Number(p.min_stock ?? 0),
+    ideal_stock: Number(p.ideal_stock ?? 0),
+    sale_price: Number(p.price ?? 0),
+    cost_price: Number(p.cost_price ?? 0),
+    tarja: (p.tarja ?? null) as StockProductRow["tarja"],
+    active: !!p.active,
+    barcode: p.barcode ?? null,
+    category_id: p.category_id ?? null,
+    active_ingredient: p.active_ingredient ?? null,
+    requires_prescription: !!p.requires_prescription,
+    sub_unit_label: p.sub_unit_label ?? null,
+    sub_unit_price: p.sub_price != null ? Number(p.sub_price) : null,
+    batches: batches.map((b: any) => ({ id: b.id, expiry_date: b.expiry_date, quantity: Number(b.quantity) })),
+  };
+}
+
+export async function listStockProducts(search: string): Promise<StockProductRow[]> {
+  if (isDesktop()) {
+    const term = search.trim();
+    const sql = term
+      ? `SELECT * FROM products WHERE name LIKE ? OR barcode LIKE ? OR manufacturer LIKE ? ORDER BY name LIMIT 200`
+      : `SELECT * FROM products ORDER BY name LIMIT 200`;
+    const params = term ? [`%${term}%`, `%${term}%`, `%${term}%`] : [];
+    const rows = await desktop.select<any>(sql, params);
+    if (rows.length === 0) return [];
+    const ids = rows.map((r) => `'${r.id.replace(/'/g, "''")}'`).join(",");
+    const batches = await desktop.select<any>(
+      `SELECT id, product_id, expiry_date, quantity FROM batches WHERE product_id IN (${ids})`,
+    );
+    const byProd = new Map<string, any[]>();
+    for (const b of batches) {
+      const list = byProd.get(b.product_id) ?? [];
+      list.push(b);
+      byProd.set(b.product_id, list);
+    }
+    return rows.map((r) => mapDesktopStock(r, byProd.get(r.id) ?? []));
+  }
+  let q = supabase
+    .from("products")
+    .select(
+      "id, name, manufacturer, unit, pack_size, min_stock, ideal_stock, sale_price, cost_price, tarja, active, barcode, category_id, active_ingredient, requires_prescription, sub_unit_label, sub_unit_price, batches(id, expiry_date, quantity)",
+    )
+    .order("name")
+    .limit(200);
+  if (search.trim()) {
+    const term = `%${search.trim()}%`;
+    q = q.or(`name.ilike.${term},barcode.ilike.${term},manufacturer.ilike.${term}`);
+  }
+  const { data, error } = await q;
+  if (error) throw error;
+  return (data ?? []) as unknown as StockProductRow[];
+}
+
+export async function listCategoriesMin(): Promise<Array<{ id: string; name: string }>> {
+  if (isDesktop()) {
+    const rows = await desktop.select<any>("SELECT id, name FROM categories ORDER BY name");
+    return rows as Array<{ id: string; name: string }>;
+  }
+  const { data, error } = await supabase.from("categories").select("id, name").order("name");
+  if (error) throw error;
+  return (data ?? []) as Array<{ id: string; name: string }>;
+}
+
+export type ProductInput = {
+  id?: string;
+  name: string;
+  manufacturer: string | null;
+  unit: string;
+  pack_size: number;
+  min_stock: number;
+  ideal_stock: number;
+  cost_price: number;
+  sale_price: number;
+  tarja: StockProductRow["tarja"];
+  active: boolean;
+  barcode: string;
+  category_id: string | null;
+  active_ingredient: string | null;
+  requires_prescription: boolean;
+  sub_unit_label: string | null;
+  sub_unit_price: number | null;
+};
+
+export async function saveProduct(p: ProductInput): Promise<void> {
+  if (isDesktop()) {
+    const values: Record<string, unknown> = {
+      name: p.name,
+      manufacturer: p.manufacturer,
+      unit: p.unit,
+      pack_size: p.pack_size,
+      min_stock: p.min_stock,
+      ideal_stock: p.ideal_stock,
+      cost_price: p.cost_price,
+      price: p.sale_price,
+      sub_price: p.sub_unit_price,
+      sub_unit_label: p.sub_unit_label,
+      tarja: p.tarja,
+      active: p.active ? 1 : 0,
+      barcode: p.barcode,
+      category_id: p.category_id,
+      active_ingredient: p.active_ingredient,
+      requires_prescription: p.requires_prescription ? 1 : 0,
+    };
+    if (p.id) {
+      await desktop.update("products", p.id, values);
+    } else {
+      await desktop.insert("products", values);
+    }
+    return;
+  }
+  const payload = {
+    name: p.name,
+    manufacturer: p.manufacturer,
+    unit: p.unit,
+    pack_size: p.pack_size,
+    min_stock: p.min_stock,
+    ideal_stock: p.ideal_stock,
+    cost_price: p.cost_price,
+    sale_price: p.sale_price,
+    sub_unit_price: p.sub_unit_price,
+    sub_unit_label: p.sub_unit_label,
+    tarja: p.tarja,
+    active: p.active,
+    barcode: p.barcode,
+    category_id: p.category_id,
+    active_ingredient: p.active_ingredient,
+    requires_prescription: p.requires_prescription,
+  };
+  if (p.id) {
+    const { error } = await supabase.from("products").update(payload).eq("id", p.id);
+    if (error) throw error;
+  } else {
+    const { error } = await supabase.from("products").insert(payload);
+    if (error) throw error;
+  }
+}
+
+export async function deleteOrDisableProduct(id: string): Promise<"deleted" | "disabled"> {
+  if (isDesktop()) {
+    try {
+      await desktop.remove("products", id);
+      return "deleted";
+    } catch {
+      await desktop.update("products", id, { active: 0 });
+      return "disabled";
+    }
+  }
+  const { error } = await supabase.from("products").delete().eq("id", id);
+  if (error) {
+    const { error: e2 } = await supabase.from("products").update({ active: false }).eq("id", id);
+    if (e2) throw e2;
+    return "disabled";
+  }
+  return "deleted";
+}
+
+export async function assignProductBarcode(id: string, barcode: string): Promise<void> {
+  if (isDesktop()) {
+    await desktop.update("products", id, { barcode });
+    return;
+  }
+  const { error } = await supabase.from("products").update({ barcode }).eq("id", id);
+  if (error) throw error;
+}
