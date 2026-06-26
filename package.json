@@ -13,7 +13,7 @@
     "format": "prettier --write .",
     "build:spa": "vite build --config vite.spa.config.ts",
     "electron:dev": "PHARMASYS_DEV_URL=http://localhost:8080 electron .",
-    "electron:prebuild:win": "cd node_modules/better-sqlite3 && npx prebuild-install --platform=win32 --arch=x64 --runtime=electron --target=33.4.11",
+    "electron:prebuild:win": "cd node_modules/better-sqlite3 && npx prebuild-install --platform=win32 --arch=x64 --runtime=electron --target=35.7.5",
     "electron:pack:win": "npm run build:spa && npm run electron:prebuild:win && electron-packager . PharmaSys --platform=win32 --arch=x64 --out=/tmp/build --overwrite --asar.unpack=**/*.node --prune=true --ignore='^/src$' --ignore='^/src/' --ignore='^/public$' --ignore='^/public/' --ignore='^/electron-release' --ignore='^/supabase' --ignore='^/electron/spa' --ignore='^/\\.git'"
   },
   "dependencies": {
