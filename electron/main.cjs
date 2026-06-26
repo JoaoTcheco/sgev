@@ -7,6 +7,24 @@ const { registerIpcHandlers } = require('./ipc/handlers.cjs');
 
 let mainWindow = null;
 
+// Windows offline/low-end stability: avoid Chromium services that can freeze
+// on text/password focus (GPU driver, spell checker, autofill/password service).
+app.disableHardwareAcceleration();
+app.commandLine.appendSwitch('disable-gpu');
+app.commandLine.appendSwitch('disable-renderer-backgrounding');
+app.commandLine.appendSwitch('disable-background-timer-throttling');
+app.commandLine.appendSwitch(
+  'disable-features',
+  [
+    'AutofillServerCommunication',
+    'CalculateNativeWinOcclusion',
+    'HardwareMediaKeyHandling',
+    'OptimizationHints',
+    'PasswordManagerOnboardingAndroid',
+    'WinUseBrowserSpellChecker',
+  ].join(','),
+);
+
 function getUserDataDir() {
   const dir = path.join(app.getPath('appData'), 'PharmaSys');
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
@@ -28,6 +46,8 @@ function createWindow() {
       sandbox: false,
       spellcheck: false,
       backgroundThrottling: false,
+      devTools: true,
+      safeDialogs: true,
     },
   });
 
@@ -58,12 +78,13 @@ function createWindow() {
     }
   });
 
-  // Capturar crashes do renderer
+  // Capturar crashes do renderer sem abrir dialogos modais que podem bloquear o login.
+  // O diagnostico fica disponivel em F12 / DevTools.
   mainWindow.webContents.on('render-process-gone', (_e, details) => {
-    dialog.showErrorBox('Renderer falhou', JSON.stringify(details));
+    console.error('[PharmaSys] Renderer falhou:', details);
   });
   mainWindow.webContents.on('unresponsive', () => {
-    dialog.showErrorBox('Janela sem resposta', 'O processo de UI parou de responder. Pressione F12 para abrir DevTools.');
+    console.error('[PharmaSys] Renderer temporariamente sem resposta');
   });
 }
 
@@ -74,7 +95,7 @@ app.whenReady().then(async () => {
     initDatabase(dbPath);
     registerIpcHandlers(ipcMain, { getDb, userDataDir, dbPath, dialog, shell, getWindow: () => mainWindow });
   } catch (err) {
-    dialog.showErrorBox('Erro ao iniciar base de dados', String(err && err.stack || err));
+    console.error('[PharmaSys] Erro ao iniciar base de dados:', err);
     app.quit();
     return;
   }
