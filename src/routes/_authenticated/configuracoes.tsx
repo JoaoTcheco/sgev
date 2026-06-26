@@ -417,12 +417,14 @@ function LabelSettingsCard() {
               </Field>
             </div>
             <div className="flex flex-wrap gap-4">
-              <ToggleField label="Mostrar preço" checked={settings.thermal.showPrice}
-                onChange={(v) => update((s) => ({ ...s, thermal: { ...s.thermal, showPrice: v } }))} />
-              <ToggleField label="Mostrar lote" checked={settings.thermal.showBatch}
-                onChange={(v) => update((s) => ({ ...s, thermal: { ...s.thermal, showBatch: v } }))} />
-              <ToggleField label="Mostrar validade" checked={settings.thermal.showExpiry}
-                onChange={(v) => update((s) => ({ ...s, thermal: { ...s.thermal, showExpiry: v } }))} />
+             <ToggleField label="Mostrar preço" checked={settings.thermal.showPrice}
+               onChange={(v) => update((s) => ({ ...s, thermal: { ...s.thermal, showPrice: v } }))} />
+             <ToggleField label="Mostrar custo" checked={settings.thermal.showCost}
+               onChange={(v) => update((s) => ({ ...s, thermal: { ...s.thermal, showCost: v } }))} />
+             <ToggleField label="Mostrar lote" checked={settings.thermal.showBatch}
+               onChange={(v) => update((s) => ({ ...s, thermal: { ...s.thermal, showBatch: v } }))} />
+             <ToggleField label="Mostrar validade" checked={settings.thermal.showExpiry}
+               onChange={(v) => update((s) => ({ ...s, thermal: { ...s.thermal, showExpiry: v } }))} />
             </div>
             <p className="text-xs text-muted-foreground">
               Dica: na janela de impressão, escolha a impressora térmica e defina margens "Nenhuma" e escala "100%" para alinhar ao rolo.
