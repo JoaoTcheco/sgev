@@ -1,5 +1,8 @@
 {
-  "name": "tanstack_start_ts",
+  "name": "pharmasys",
+  "version": "1.0.0",
+  "description": "Sistema de gestão de vendas e estoque para farmácia (offline, Windows)",
+  "author": "PharmaSys",
   "private": true,
   "sideEffects": false,
   "type": "module",
