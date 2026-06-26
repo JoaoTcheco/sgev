@@ -228,11 +228,11 @@ function UtilizadoresPage() {
       </Card>
 
       <Dialog open={!!resetUser} onOpenChange={(o) => !o && setResetUser(null)}>
-        <ResetPasswordDialog user={resetUser} resetFn={resetFn} onClose={() => setResetUser(null)} />
+        <ResetPasswordDialog user={resetUser} resetFn={fns.reset} onClose={() => setResetUser(null)} />
       </Dialog>
 
       <Dialog open={!!editUser} onOpenChange={(o) => !o && setEditUser(null)}>
-        <EditUserDialog user={editUser} updateFn={updateFn} onClose={() => setEditUser(null)} onSaved={invalidate} />
+        <EditUserDialog user={editUser} updateFn={fns.update} onClose={() => setEditUser(null)} onSaved={invalidate} />
       </Dialog>
 
       <AlertDialog open={!!deleteUser} onOpenChange={(o) => !o && setDeleteUser(null)}>
