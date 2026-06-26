@@ -36,6 +36,7 @@ type ProductRow = {
   tarja: "livre" | "amarela" | "vermelha" | "preta" | null;
   active: boolean;
   barcode: string | null;
+  sub_barcode: string | null;
   category_id: string | null;
   active_ingredient: string | null;
   requires_prescription: boolean;
@@ -71,7 +72,7 @@ function EstoquePage() {
     queryFn: async () => {
       let q = supabase
         .from("products")
-        .select("id, name, manufacturer, unit, pack_size, min_stock, ideal_stock, expiry_alert_days, sale_price, cost_price, tarja, active, barcode, category_id, active_ingredient, requires_prescription, sub_unit_label, sub_unit_price, batches(id, expiry_date, quantity)")
+        .select("id, name, manufacturer, unit, pack_size, min_stock, ideal_stock, expiry_alert_days, sale_price, cost_price, tarja, active, barcode, sub_barcode, category_id, active_ingredient, requires_prescription, sub_unit_label, sub_unit_price, batches(id, expiry_date, quantity)")
         .order("name")
         .limit(200);
       if (search.trim()) {
@@ -137,6 +138,7 @@ function EstoquePage() {
         tarja: p.tarja || null,
         active: p.active ?? true,
         barcode: p.barcode?.trim() || generateBarcode(),
+        sub_barcode: p.sub_barcode?.trim() || null,
         category_id: p.category_id || null,
         active_ingredient: p.active_ingredient || null,
         requires_prescription: p.requires_prescription ?? false,
@@ -233,7 +235,21 @@ function EstoquePage() {
                           <div className="text-xs text-muted-foreground">{p.manufacturer ?? "—"} {p.barcode ? `· ${p.barcode}` : ""}</div>
                         </TableCell>
                         <TableCell>{p.tarja ? <Badge variant="outline">{p.tarja}</Badge> : <span className="text-xs text-muted-foreground">livre</span>}</TableCell>
-                        <TableCell className={`text-right ${low ? "text-destructive font-semibold" : ""}`}>{units}</TableCell>
+                        <TableCell className={`text-right ${low ? "text-destructive font-semibold" : ""}`}>
+                          {(() => {
+                            const ps = Math.max(1, p.pack_size || 1);
+                            if (ps <= 1) return units;
+                            const cx = Math.floor(units / ps);
+                            const rest = units % ps;
+                            const subLbl = p.sub_unit_label || "un";
+                            const cxLbl = p.unit || "cx";
+                            return (
+                              <span title={`${units} ${subLbl}`}>
+                                {cx} {cxLbl}{rest > 0 ? ` + ${rest} ${subLbl}` : ""}
+                              </span>
+                            );
+                          })()}
+                        </TableCell>
                         <TableCell className="text-right">{p.min_stock}</TableCell>
                         <TableCell className="text-right">{formatMZN(p.cost_price)}</TableCell>
                         <TableCell className="text-right">{formatMZN(p.sale_price)}</TableCell>
@@ -395,23 +411,31 @@ function ProductDialog({
           onSubmit={(e) => {
             e.preventDefault();
             const f = new FormData(e.currentTarget);
+            const pack_size = Number(f.get("pack_size") || 1);
+            const sub_unit_label = String(f.get("sub_unit_label") || "").trim();
+            const sub_unit_price_raw = f.get("sub_unit_price");
+            if (pack_size > 1) {
+              if (!sub_unit_label) { toast.error("Defina a sub-unidade (ex: comprimido) — pack > 1"); return; }
+              if (!sub_unit_price_raw || Number(sub_unit_price_raw) <= 0) { toast.error("Preço da sub-unidade obrigatório quando pack > 1"); return; }
+            }
             onSubmit({
               id: editing?.id,
               name: String(f.get("name") || ""),
               manufacturer: String(f.get("manufacturer") || ""),
               active_ingredient: String(f.get("active_ingredient") || ""),
               unit: String(f.get("unit") || "cx"),
-              pack_size: Number(f.get("pack_size") || 1),
+              pack_size,
               min_stock: Number(f.get("min_stock") || 0),
               ideal_stock: Number(f.get("ideal_stock") || 0),
               expiry_alert_days: Number(f.get("expiry_alert_days") || 60),
               cost_price: Number(f.get("cost_price") || 0),
               sale_price: Number(f.get("sale_price") || 0),
-              sub_unit_label: String(f.get("sub_unit_label") || ""),
-              sub_unit_price: f.get("sub_unit_price") ? Number(f.get("sub_unit_price")) : null,
+              sub_unit_label: sub_unit_label || null as unknown as string,
+              sub_unit_price: sub_unit_price_raw ? Number(sub_unit_price_raw) : null,
               tarja: (f.get("tarja") as ProductRow["tarja"]) || null,
               category_id: (f.get("category_id") as string) || null,
               barcode: String(f.get("barcode") || ""),
+              sub_barcode: String(f.get("sub_barcode") || ""),
               requires_prescription: f.get("requires_prescription") === "on",
               active: f.get("active") === "on",
             });
@@ -488,9 +512,13 @@ function ProductDialog({
               <Input id="expiry_alert_days" name="expiry_alert_days" type="number" min={1} max={365} defaultValue={editing?.expiry_alert_days ?? 60} />
               <p className="text-xs text-muted-foreground">Avisos amarelos aparecem quando faltar este nº de dias; críticos a 1/3 desse prazo.</p>
             </div>
-            <div className="col-span-2 space-y-1">
-              <Label htmlFor="barcode">Código de barras (deixe vazio para gerar)</Label>
-              <Input id="barcode" name="barcode" defaultValue={editing?.barcode ?? ""} placeholder="Será gerado automaticamente" />
+            <div className="space-y-1">
+              <Label htmlFor="barcode">Cód. barras (caixa)</Label>
+              <Input id="barcode" name="barcode" defaultValue={editing?.barcode ?? ""} placeholder="Auto" />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="sub_barcode">Cód. barras (sub-unidade)</Label>
+              <Input id="sub_barcode" name="sub_barcode" defaultValue={editing?.sub_barcode ?? ""} placeholder="Opcional — para vender avulso por scan" />
             </div>
             <label className="flex items-center gap-2 text-sm">
               <Switch name="requires_prescription" defaultChecked={editing?.requires_prescription ?? false} /> Requer receita
