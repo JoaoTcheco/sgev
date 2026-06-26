@@ -81,6 +81,12 @@ function registerIpcHandlers(ipcMain, ctx) {
           rpcs.adminSetUserRole(db, userId, a.p_user_id, a.p_role); result = null; break;
         case 'admin_set_user_active':
           rpcs.adminSetUserActive(db, userId, a.p_user_id, a.p_active); result = null; break;
+        case 'admin_update_user':
+          rpcs.adminUpdateUser(db, userId, a.p_user_id, a.p_full_name, a.p_email); result = null; break;
+        case 'admin_delete_user':
+          rpcs.adminDeleteUser(db, userId, a.p_user_id); result = null; break;
+        case 'admin_reset_password':
+          auth.adminResetPassword(db, userId, a.p_user_id, a.p_password); result = null; break;
         case 'has_role':
           result = rpcs.hasRole(db, a._user_id || userId, a._role); break;
         default: throw new Error('RPC desconhecido: ' + name);

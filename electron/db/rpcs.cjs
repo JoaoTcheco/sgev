@@ -269,6 +269,33 @@ function adminSetUserActive(db, callerId, targetUserId, active) {
   db.prepare(`UPDATE profiles SET active = ?, updated_at = ? WHERE id = ?`).run(active ? 1 : 0, nowIso(), targetUserId);
 }
 
+function adminUpdateUser(db, callerId, targetUserId, fullName, email) {
+  if (!isAdmin(db, callerId)) throw new Error('Permissao negada');
+  if (email) {
+    const dup = db.prepare(`SELECT 1 FROM users WHERE email = ? COLLATE NOCASE AND id <> ?`).get(email, targetUserId);
+    if (dup) throw new Error('Email ja em uso');
+    db.prepare(`UPDATE users SET email = ? WHERE id = ?`).run(email, targetUserId);
+  }
+  const patch = []; const vals = [];
+  if (fullName) { patch.push('full_name = ?'); vals.push(fullName); }
+  if (email)    { patch.push('email = ?');     vals.push(email); }
+  if (patch.length) {
+    patch.push('updated_at = ?'); vals.push(nowIso()); vals.push(targetUserId);
+    db.prepare(`UPDATE profiles SET ${patch.join(', ')} WHERE id = ?`).run(...vals);
+  }
+}
+
+function adminDeleteUser(db, callerId, targetUserId) {
+  if (!isAdmin(db, callerId)) throw new Error('Permissao negada');
+  if (callerId === targetUserId) throw new Error('Nao pode eliminar a propria conta');
+  const targetIsAdmin = !!db.prepare(`SELECT 1 FROM user_roles WHERE user_id = ? AND role = 'admin'`).get(targetUserId);
+  if (targetIsAdmin) {
+    const c = db.prepare(`SELECT COUNT(*) AS c FROM user_roles WHERE role = 'admin'`).get().c;
+    if (c <= 1) throw new Error('Nao e possivel eliminar o ultimo administrador');
+  }
+  db.prepare(`DELETE FROM users WHERE id = ?`).run(targetUserId);
+}
+
 module.exports = {
   uuid, nowIso, today,
   hasRole, isAdmin, isStaff,
@@ -277,5 +304,5 @@ module.exports = {
   deleteAccount, adjustAccount,
   processSale,
   refreshAlerts,
-  adminSetUserRole, adminSetUserActive,
+  adminSetUserRole, adminSetUserActive, adminUpdateUser, adminDeleteUser,
 };

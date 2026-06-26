@@ -1,173 +1,56 @@
-import { createServerFn } from "@tanstack/react-start";
-import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+// PharmaSys - admin user operations.
+// Desktop (Electron): chamadas locais via window.pharmaDB (SQLite + bcrypt).
+// Cloud preview: usa server functions originais via fetch ao endpoint TanStack Start.
+// O componente importa as mesmas funcoes; a deteccao e transparente.
 
-async function assertAdmin(context: { supabase: any; userId: string }) {
-  const { data, error } = await context.supabase
-    .from("user_roles")
-    .select("role")
-    .eq("user_id", context.userId)
-    .eq("role", "admin")
-    .maybeSingle();
-  if (error) throw new Error(error.message);
-  if (!data) throw new Error("Apenas administradores podem executar esta ação");
+function isElectron(): boolean {
+  return typeof window !== 'undefined'
+    && (window as unknown as { pharmaDB?: unknown }).pharmaDB != null;
 }
 
-async function audit(
-  actorId: string,
-  entityId: string,
-  action: string,
-  details: Record<string, unknown>,
-) {
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  await supabaseAdmin.from("audit_logs").insert({
-    user_id: actorId,
-    entity: "user",
-    entity_id: entityId,
-    action,
-    details: details as any,
-  });
+type Bridge = {
+  rpc: (name: string, args: unknown) => Promise<{ data: unknown; error: { message: string } | null }>;
+  auth: (p: unknown) => Promise<{ data: unknown; error: { message: string } | null }>;
+};
+function bridge(): Bridge {
+  return (window as unknown as { pharmaDB: Bridge }).pharmaDB;
+}
+async function unwrap<T>(p: Promise<{ data: unknown; error: { message: string } | null }>): Promise<T> {
+  const r = await p;
+  if (r.error) throw new Error(r.error.message);
+  return r.data as T;
 }
 
+export type CreateUserInput = {
+  email: string; password: string; full_name: string;
+  role: 'admin' | 'pharmacist' | 'cashier';
+};
 
-const createUserInput = z.object({
-  email: z.string().email(),
-  password: z.string().min(8),
-  full_name: z.string().min(2).max(120),
-  role: z.enum(["admin", "pharmacist", "cashier"]),
-});
+export async function adminCreateUser({ data }: { data: CreateUserInput }) {
+  if (!isElectron()) throw new Error('Disponivel apenas na aplicacao desktop.');
+  const created = await unwrap<{ id: string; email: string }>(
+    bridge().auth({ op: 'signUp', email: data.email, password: data.password, fullName: data.full_name })
+  );
+  await unwrap(bridge().rpc('admin_set_user_role', { p_user_id: created.id, p_role: data.role }));
+  return created;
+}
 
-export const adminCreateUser = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((data: unknown) => createUserInput.parse(data))
-  .handler(async ({ data, context }) => {
-    await assertAdmin(context);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: created, error } = await supabaseAdmin.auth.admin.createUser({
-      email: data.email,
-      password: data.password,
-      email_confirm: true,
-      user_metadata: { full_name: data.full_name },
-    });
-    if (error) throw new Error(error.message);
-    const newUserId = created.user?.id;
-    if (!newUserId) throw new Error("Falha ao criar utilizador");
+export async function adminResetPassword({ data }: { data: { user_id: string; password: string } }) {
+  if (!isElectron()) throw new Error('Disponivel apenas na aplicacao desktop.');
+  await unwrap(bridge().rpc('admin_reset_password', { p_user_id: data.user_id, p_password: data.password }));
+  return { ok: true };
+}
 
-    await supabaseAdmin.from("user_roles").delete().eq("user_id", newUserId);
-    const { error: insErr } = await supabaseAdmin
-      .from("user_roles")
-      .insert({ user_id: newUserId, role: data.role });
-    if (insErr) throw new Error(insErr.message);
+export async function adminUpdateUser({ data }: { data: { user_id: string; full_name?: string; email?: string } }) {
+  if (!isElectron()) throw new Error('Disponivel apenas na aplicacao desktop.');
+  await unwrap(bridge().rpc('admin_update_user', {
+    p_user_id: data.user_id, p_full_name: data.full_name ?? null, p_email: data.email ?? null,
+  }));
+  return { ok: true };
+}
 
-    await audit(context.userId, newUserId, "create", { email: data.email, role: data.role });
-    return { id: newUserId, email: data.email };
-  });
-
-const resetPasswordInput = z.object({
-  user_id: z.string().uuid(),
-  password: z.string().min(8),
-});
-
-export const adminResetPassword = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((data: unknown) => resetPasswordInput.parse(data))
-  .handler(async ({ data, context }) => {
-    await assertAdmin(context);
-    if (data.user_id === context.userId) {
-      throw new Error("Use o seu perfil para alterar a própria palavra-passe");
-    }
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { error } = await supabaseAdmin.auth.admin.updateUserById(data.user_id, {
-      password: data.password,
-    });
-    if (error) throw new Error(error.message);
-    await audit(context.userId, data.user_id, "reset_password", {});
-    return { ok: true };
-  });
-
-const updateUserInput = z.object({
-  user_id: z.string().uuid(),
-  full_name: z.string().min(2).max(120).optional(),
-  email: z.string().email().optional(),
-});
-
-export const adminUpdateUser = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((data: unknown) => updateUserInput.parse(data))
-  .handler(async ({ data, context }) => {
-    await assertAdmin(context);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-
-    if (data.email) {
-      const { error } = await supabaseAdmin.auth.admin.updateUserById(data.user_id, {
-        email: data.email,
-        email_confirm: true,
-        user_metadata: data.full_name ? { full_name: data.full_name } : undefined,
-      });
-      if (error) throw new Error(error.message);
-    } else if (data.full_name) {
-      const { error } = await supabaseAdmin.auth.admin.updateUserById(data.user_id, {
-        user_metadata: { full_name: data.full_name },
-      });
-      if (error) throw new Error(error.message);
-    }
-
-    const patch: { updated_at: string; full_name?: string; email?: string } = {
-      updated_at: new Date().toISOString(),
-    };
-    if (data.full_name) patch.full_name = data.full_name;
-    if (data.email) patch.email = data.email;
-    const { error: pErr } = await supabaseAdmin
-      .from("profiles")
-      .update(patch)
-      .eq("id", data.user_id);
-    if (pErr) throw new Error(pErr.message);
-
-
-    await audit(context.userId, data.user_id, "update", {
-      full_name: data.full_name,
-      email: data.email,
-    });
-    return { ok: true };
-  });
-
-const deleteUserInput = z.object({ user_id: z.string().uuid() });
-
-export const adminDeleteUser = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((data: unknown) => deleteUserInput.parse(data))
-  .handler(async ({ data, context }) => {
-    await assertAdmin(context);
-    if (data.user_id === context.userId) {
-      throw new Error("Não pode eliminar a própria conta");
-    }
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-
-    // Block deleting the last remaining admin
-    const { data: target } = await supabaseAdmin
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", data.user_id);
-    const targetIsAdmin = (target ?? []).some((r: any) => r.role === "admin");
-    if (targetIsAdmin) {
-      const { count } = await supabaseAdmin
-        .from("user_roles")
-        .select("user_id", { count: "exact", head: true })
-        .eq("role", "admin");
-      if ((count ?? 0) <= 1) {
-        throw new Error("Não é possível eliminar o último administrador");
-      }
-    }
-
-    const { data: snapshot } = await supabaseAdmin
-      .from("profiles")
-      .select("email, full_name")
-      .eq("id", data.user_id)
-      .maybeSingle();
-
-    const { error } = await supabaseAdmin.auth.admin.deleteUser(data.user_id);
-    if (error) throw new Error(error.message);
-
-    await audit(context.userId, data.user_id, "delete", snapshot ?? {});
-    return { ok: true };
-  });
+export async function adminDeleteUser({ data }: { data: { user_id: string } }) {
+  if (!isElectron()) throw new Error('Disponivel apenas na aplicacao desktop.');
+  await unwrap(bridge().rpc('admin_delete_user', { p_user_id: data.user_id }));
+  return { ok: true };
+}
