@@ -656,3 +656,291 @@ export async function getPharmacySettings(): Promise<PharmacySettingsRow | null>
   return (data ?? null) as PharmacySettingsRow | null;
 }
 
+// ===== Histórico / Dashboard / Estatísticas / Contas / Relatórios / Recibo =====
+
+export type SaleHistoryRow = {
+  id: string;
+  receipt_number: string | null;
+  sale_number: number | null;
+  total: number;
+  status: string;
+  created_at: string;
+};
+
+export async function listSalesHistory(limit = 30): Promise<SaleHistoryRow[]> {
+  if (isDesktop()) {
+    const rows = await desktop.select<any>(
+      `SELECT id, receipt_number, total, status, created_at FROM sales ORDER BY created_at DESC LIMIT ?`,
+      [limit],
+    );
+    return rows.map((r) => ({ ...r, sale_number: null, total: Number(r.total) }));
+  }
+  const { data, error } = await supabase
+    .from("sales")
+    .select("id, receipt_number, sale_number, total, status, created_at")
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  if (error) throw error;
+  return (data ?? []) as SaleHistoryRow[];
+}
+
+export async function listStockMovementsHistory(limit = 50) {
+  if (isDesktop()) {
+    const rows = await desktop.select<any>(
+      `SELECT m.id, m.type, m.quantity, m.reason, m.created_at, p.name AS product_name
+       FROM stock_movements m LEFT JOIN products p ON p.id = m.product_id
+       ORDER BY m.created_at DESC LIMIT ?`,
+      [limit],
+    );
+    return rows.map((r) => ({ ...r, products: { name: r.product_name } }));
+  }
+  const { data, error } = await supabase
+    .from("stock_movements")
+    .select("id, type, quantity, reason, created_at, products(name)")
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function listAuditLogsHistory(limit = 50) {
+  if (isDesktop()) {
+    return desktop.select<any>(
+      `SELECT id, entity, action, created_at, details FROM audit_logs ORDER BY created_at DESC LIMIT ?`,
+      [limit],
+    );
+  }
+  const { data, error } = await supabase
+    .from("audit_logs")
+    .select("id, entity, action, created_at, details")
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  if (error) throw error;
+  return data ?? [];
+}
+
+export type DashboardStats = {
+  salesCount: number;
+  totalSales: number;
+  ticketMedio: number;
+  alertsActive: number;
+  alertsCritical: number;
+  productsActive: number;
+};
+
+export async function getDashboardStats(): Promise<DashboardStats> {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const sinceIso = today.toISOString();
+  if (isDesktop()) {
+    const sinceLocal = sinceIso.slice(0, 10) + " 00:00:00";
+    const sales = await desktop.select<any>(
+      `SELECT total FROM sales WHERE status = 'completed' AND created_at >= ?`,
+      [sinceLocal],
+    );
+    const alerts = await desktop.select<any>(`SELECT severity FROM alerts WHERE resolved = 0`);
+    const products = await desktop.select<any>(`SELECT id FROM products WHERE active = 1`);
+    const totalSales = sales.reduce((a, s: any) => a + Number(s.total), 0);
+    return {
+      salesCount: sales.length,
+      totalSales,
+      ticketMedio: sales.length ? totalSales / sales.length : 0,
+      alertsActive: alerts.length,
+      alertsCritical: alerts.filter((a: any) => a.severity === "critical").length,
+      productsActive: products.length,
+    };
+  }
+  const [salesRes, alertsRes, productsRes] = await Promise.all([
+    supabase.from("sales").select("total").eq("status", "completed").gte("created_at", sinceIso),
+    supabase.from("alerts").select("id, severity").eq("resolved", false),
+    supabase.from("products").select("id").eq("active", true),
+  ]);
+  const sales = salesRes.data ?? [];
+  const alerts = alertsRes.data ?? [];
+  const totalSales = sales.reduce((a, s) => a + Number(s.total), 0);
+  return {
+    salesCount: sales.length,
+    totalSales,
+    ticketMedio: sales.length ? totalSales / sales.length : 0,
+    alertsActive: alerts.length,
+    alertsCritical: alerts.filter((a) => a.severity === "critical").length,
+    productsActive: productsRes.data?.length ?? 0,
+  };
+}
+
+export type StatsBundle = {
+  sales: Array<{ id: string; total: number; created_at: string; payment_method: string; user_id: string }>;
+  prevSales: Array<{ total: number }>;
+  items: Array<{ product_id: string; product_name: string; quantity: number; total: number; created_at: string }>;
+  products: Array<{ id: string; cost_price: number; category_id: string | null; pack_size: number }>;
+  categories: Array<{ id: string; name: string }>;
+  profiles: Array<{ id: string; full_name: string | null; email: string | null }>;
+};
+
+export async function getStatsBundle(days: number): Promise<StatsBundle> {
+  const now = Date.now();
+  const since = new Date(now - days * 86400_000).toISOString();
+  const prevFrom = new Date(now - days * 2 * 86400_000).toISOString();
+  if (isDesktop()) {
+    const sinceLocal = since.slice(0, 19).replace("T", " ");
+    const prevFromLocal = prevFrom.slice(0, 19).replace("T", " ");
+    const sales = await desktop.select<any>(
+      `SELECT id, total, created_at, payment_method, user_id FROM sales WHERE status = 'completed' AND created_at >= ?`,
+      [sinceLocal],
+    );
+    const prevSales = await desktop.select<any>(
+      `SELECT total FROM sales WHERE status = 'completed' AND created_at >= ? AND created_at < ?`,
+      [prevFromLocal, sinceLocal],
+    );
+    const items = await desktop.select<any>(
+      `SELECT si.product_id, si.product_name, si.quantity, si.total, s.created_at
+       FROM sale_items si JOIN sales s ON s.id = si.sale_id
+       WHERE s.created_at >= ? LIMIT 10000`,
+      [sinceLocal],
+    );
+    const products = await desktop.select<any>(
+      `SELECT id, cost_price, category_id, pack_size FROM products`,
+    );
+    const categories = await desktop.select<any>(`SELECT id, name FROM categories`);
+    const profiles = await desktop.select<any>(`SELECT id, full_name, email FROM profiles`);
+    return { sales, prevSales, items, products, categories, profiles };
+  }
+  const [sales, prevSales, items, products, categories, profiles] = await Promise.all([
+    supabase
+      .from("sales")
+      .select("id, total, created_at, payment_method, user_id, status")
+      .gte("created_at", since)
+      .eq("status", "completed"),
+    supabase
+      .from("sales")
+      .select("id, total")
+      .gte("created_at", prevFrom)
+      .lt("created_at", since)
+      .eq("status", "completed"),
+    supabase
+      .from("sale_items")
+      .select("product_id, product_name, quantity, unit_price, total, created_at")
+      .gte("created_at", since)
+      .limit(10000),
+    supabase.from("products").select("id, cost_price, category_id, pack_size"),
+    supabase.from("categories").select("id, name"),
+    supabase.from("profiles").select("id, full_name, email"),
+  ]);
+  for (const r of [sales, prevSales, items, products, categories, profiles]) {
+    if (r.error) throw r.error;
+  }
+  return {
+    sales: (sales.data ?? []) as any,
+    prevSales: (prevSales.data ?? []) as any,
+    items: (items.data ?? []) as any,
+    products: (products.data ?? []) as any,
+    categories: (categories.data ?? []) as any,
+    profiles: (profiles.data ?? []) as any,
+  };
+}
+
+export async function listAccounts30d() {
+  const since = new Date(Date.now() - 30 * 86400_000).toISOString();
+  if (isDesktop()) {
+    const sinceLocal = since.slice(0, 19).replace("T", " ");
+    const rows = await desktop.select<any>(
+      `SELECT id, total, payment_method, created_at, status, receipt_number FROM sales
+       WHERE created_at >= ? ORDER BY created_at DESC LIMIT 200`,
+      [sinceLocal],
+    );
+    return rows.map((r) => ({ ...r, sale_number: r.receipt_number, total: Number(r.total) }));
+  }
+  const { data, error } = await supabase
+    .from("sales")
+    .select("id, sale_number, total, payment_method, created_at, status")
+    .gte("created_at", since)
+    .order("created_at", { ascending: false })
+    .limit(200);
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function listReportSales30d() {
+  const since = new Date(Date.now() - 30 * 86400_000).toISOString();
+  if (isDesktop()) {
+    const sinceLocal = since.slice(0, 19).replace("T", " ");
+    return desktop.select<any>(
+      `SELECT si.product_name, si.quantity, si.total, si.unit_price, s.created_at
+       FROM sale_items si JOIN sales s ON s.id = si.sale_id
+       WHERE s.created_at >= ? LIMIT 5000`,
+      [sinceLocal],
+    );
+  }
+  const { data, error } = await supabase
+    .from("sale_items")
+    .select("product_name, quantity, total, unit_price, created_at")
+    .gte("created_at", since)
+    .limit(5000);
+  if (error) throw error;
+  return data ?? [];
+}
+
+export type SaleDetail = {
+  id: string;
+  receipt_number: string | null;
+  created_at: string;
+  subtotal: number;
+  discount: number;
+  total: number;
+  payment_method: string;
+  status: string;
+  user_id: string | null;
+  sale_items: Array<{
+    id: string;
+    product_name: string;
+    quantity: number;
+    unit_price: number;
+    total: number;
+    unit_label: string | null;
+    unit_kind: string | null;
+  }>;
+  operator: { full_name: string | null; email: string | null } | null;
+};
+
+export async function getSaleByRef(ref: string): Promise<SaleDetail | null> {
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(ref);
+  if (isDesktop()) {
+    const sale = await desktop.get<any>(
+      isUuid ? `SELECT * FROM sales WHERE id = ?` : `SELECT * FROM sales WHERE receipt_number = ?`,
+      [ref],
+    );
+    if (!sale) return null;
+    const items = await desktop.select<any>(
+      `SELECT id, product_name, quantity, unit_price, total, unit_label, unit_kind FROM sale_items WHERE sale_id = ?`,
+      [sale.id],
+    );
+    let operator: { full_name: string | null; email: string | null } | null = null;
+    if (sale.user_id) {
+      operator =
+        (await desktop.get<any>(`SELECT full_name, email FROM profiles WHERE id = ?`, [sale.user_id])) ?? null;
+    }
+    return { ...sale, sale_items: items, operator } as SaleDetail;
+  }
+  const base = supabase
+    .from("sales")
+    .select(
+      "id, receipt_number, created_at, subtotal, discount, total, payment_method, status, user_id, sale_items(id, product_name, quantity, unit_price, total, unit_label, unit_kind)",
+    );
+  const { data: sale, error } = isUuid
+    ? await base.eq("id", ref).maybeSingle()
+    : await base.eq("receipt_number", ref).maybeSingle();
+  if (error) throw error;
+  if (!sale) return null;
+  let operator: { full_name: string | null; email: string | null } | null = null;
+  if (sale.user_id) {
+    const { data: prof } = await supabase
+      .from("profiles")
+      .select("full_name, email")
+      .eq("id", sale.user_id)
+      .maybeSingle();
+    operator = prof as any;
+  }
+  return { ...(sale as any), operator } as SaleDetail;
+}
+
+

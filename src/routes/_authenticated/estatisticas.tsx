@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { BarChart3, TrendingUp, TrendingDown, ShoppingCart, Loader2, Percent, Wallet } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { getStatsBundle } from "@/lib/db";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Bar, BarChart, CartesianGrid, Cell, Line, LineChart, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis, Legend } from "recharts";
@@ -22,6 +22,7 @@ const RANGE_LABEL: Record<Range, string> = { "7": "7 dias", "30": "30 dias", "90
 
 const PAYMENT_LABEL: Record<string, string> = {
   cash: "Numerário", debit: "Cartão", credit: "Crédito", pix: "M-Pesa", other: "e-Mola", bank_transfer: "Transferência",
+  mpesa: "M-Pesa", emola: "e-Mola", bank: "Transferência Bancária",
 };
 
 const PIE_COLORS = ["hsl(var(--primary))", "hsl(var(--accent))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", "hsl(var(--chart-4))", "hsl(var(--chart-5))"];
@@ -34,26 +35,12 @@ function EstatisticasPage() {
     queryKey: ["stats", range],
     queryFn: async () => {
       const now = Date.now();
-      const since = new Date(now - days * 86400_000).toISOString();
-      const prevFrom = new Date(now - days * 2 * 86400_000).toISOString();
-      const prevTo = since;
-
-      const [sales, prevSales, items, products, categories, profiles] = await Promise.all([
-        supabase.from("sales").select("id, total, created_at, payment_method, user_id, status").gte("created_at", since).eq("status", "completed"),
-        supabase.from("sales").select("id, total").gte("created_at", prevFrom).lt("created_at", prevTo).eq("status", "completed"),
-        supabase.from("sale_items").select("product_id, product_name, quantity, unit_price, total, created_at").gte("created_at", since).limit(10000),
-        supabase.from("products").select("id, cost_price, category_id, pack_size"),
-        supabase.from("categories").select("id, name"),
-        supabase.from("profiles").select("id, full_name, email"),
-      ]);
-      for (const r of [sales, prevSales, items, products, categories, profiles]) {
-        if (r.error) throw r.error;
-      }
-      const salesRows = sales.data ?? [];
-      const itemsRows = items.data ?? [];
-      const productMap = new Map((products.data ?? []).map((p: any) => [p.id, p]));
-      const categoryMap = new Map((categories.data ?? []).map((c: any) => [c.id, c.name]));
-      const profileMap = new Map((profiles.data ?? []).map((p: any) => [p.id, p.full_name ?? p.email ?? "—"]));
+      const bundle = await getStatsBundle(days);
+      const salesRows = bundle.sales;
+      const itemsRows = bundle.items;
+      const productMap = new Map(bundle.products.map((p) => [p.id, p]));
+      const categoryMap = new Map(bundle.categories.map((c) => [c.id, c.name]));
+      const profileMap = new Map(bundle.profiles.map((p) => [p.id, p.full_name ?? p.email ?? "—"]));
 
       // Daily series
       const byDay = new Map<string, number>();
@@ -103,7 +90,7 @@ function EstatisticasPage() {
       const paymentsArr = [...byPayment.entries()].map(([k, total]) => ({ method: PAYMENT_LABEL[k] ?? k, total }));
 
       const grossRevenue = salesRows.reduce((s, x) => s + Number(x.total), 0);
-      const prevRevenue = (prevSales.data ?? []).reduce((s, x) => s + Number(x.total), 0);
+      const prevRevenue = bundle.prevSales.reduce((s, x) => s + Number(x.total), 0);
       const variation = prevRevenue > 0 ? ((grossRevenue - prevRevenue) / prevRevenue) * 100 : null;
       const margin = totalRevenue - totalCost;
       const marginPct = totalRevenue > 0 ? (margin / totalRevenue) * 100 : 0;
