@@ -26,6 +26,18 @@ export default defineConfig({
         find: /^@\/integrations\/supabase\/client$/,
         replacement: path.resolve(__dirname, "src/integrations/local/client.ts"),
       },
+      {
+        find: /^@\/lib\/admin-users\.functions$/,
+        replacement: path.resolve(__dirname, "src/electron-stubs/admin-users.ts"),
+      },
+      {
+        find: /^@tanstack\/react-start$/,
+        replacement: path.resolve(__dirname, "src/electron-stubs/tanstack-start.ts"),
+      },
+      {
+        find: /^@tanstack\/start-server-core$/,
+        replacement: path.resolve(__dirname, "src/electron-stubs/tanstack-start.ts"),
+      },
     ],
   },
   build: {
