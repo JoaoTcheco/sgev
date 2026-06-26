@@ -1,0 +1,1 @@
+import{j as e}from"./electron-index-OHQ1Uw1g.js";const t=({error:r})=>e.jsxs("div",{className:"p-6 text-sm text-destructive",children:["Erro ao carregar recibo: ",r.message]});export{t as errorComponent};

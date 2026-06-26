@@ -24,9 +24,15 @@ export default defineConfig({
     {
       name: "electron-server-stubs",
       enforce: "pre",
+      resolveId(source) {
+        if (source.endsWith("auth-middleware") || source.endsWith("auth-attacher") || source.endsWith("client.server") || source.includes("/integrations/supabase/auth-middleware") || source.includes("/integrations/supabase/auth-attacher") || source.includes("/integrations/supabase/client.server")) {
+          return "\0electron-stub:" + source;
+        }
+      },
       load(id) {
-        const clean = id.split("?")[0];
-        if (STUBBED.has(clean)) return "export default {}; export const requireSupabaseAuth = undefined; export const attachSupabaseAuth = undefined; export const supabaseAdmin = undefined;";
+        if (id.startsWith("\0electron-stub:")) {
+          return "export default {}; export const requireSupabaseAuth = undefined; export const attachSupabaseAuth = undefined; export const supabaseAdmin = undefined;";
+        }
       },
     },
     TanStackRouterVite({
