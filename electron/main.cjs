@@ -144,5 +144,11 @@ app.on("window-all-closed", () => {
   } catch (e) {
     log.error("Falha no backup automático:", e);
   }
+  try { nitroChild?.kill(); } catch (_) {}
   if (process.platform !== "darwin") app.quit();
 });
+
+app.on("before-quit", () => {
+  try { nitroChild?.kill(); } catch (_) {}
+});
+
