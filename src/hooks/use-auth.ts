@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { isDesktop } from "@/lib/desktop";
+import { getDesktopUser } from "@/hooks/use-desktop-auth";
 
 export type AppRole = "admin" | "pharmacist" | "cashier";
 
@@ -16,6 +18,20 @@ export function useAuthUser() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (isDesktop()) {
+      const sync = () => {
+        const u = getDesktopUser();
+        setUser(u ? ({ id: u.id, email: u.email } as unknown as User) : null);
+        setLoading(false);
+      };
+      sync();
+      window.addEventListener("pharmasys.auth-change", sync);
+      window.addEventListener("storage", sync);
+      return () => {
+        window.removeEventListener("pharmasys.auth-change", sync);
+        window.removeEventListener("storage", sync);
+      };
+    }
     let mounted = true;
     supabase.auth.getUser().then(({ data }) => {
       if (!mounted) return;
@@ -36,10 +52,14 @@ export function useAuthUser() {
 
 export function useUserRoles(userId: string | undefined) {
   return useQuery({
-    queryKey: ["user-roles", userId],
+    queryKey: ["user-roles", userId, isDesktop() ? "desktop" : "web"],
     enabled: !!userId,
     queryFn: async (): Promise<AppRole[]> => {
       if (!userId) return [];
+      if (isDesktop()) {
+        const u = getDesktopUser();
+        return u && u.id === userId ? [u.role as AppRole] : [];
+      }
       const { data, error } = await supabase
         .from("user_roles")
         .select("role")
@@ -52,10 +72,14 @@ export function useUserRoles(userId: string | undefined) {
 
 export function useProfile(userId: string | undefined) {
   return useQuery({
-    queryKey: ["profile", userId],
+    queryKey: ["profile", userId, isDesktop() ? "desktop" : "web"],
     enabled: !!userId,
     queryFn: async (): Promise<Profile | null> => {
       if (!userId) return null;
+      if (isDesktop()) {
+        const u = getDesktopUser();
+        return u && u.id === userId ? { id: u.id, full_name: u.full_name, email: u.email } : null;
+      }
       const { data, error } = await supabase
         .from("profiles")
         .select("id, full_name, email")
