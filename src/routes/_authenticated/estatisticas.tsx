@@ -22,6 +22,7 @@ const RANGE_LABEL: Record<Range, string> = { "7": "7 dias", "30": "30 dias", "90
 
 const PAYMENT_LABEL: Record<string, string> = {
   cash: "Numerário", debit: "Cartão", credit: "Crédito", pix: "M-Pesa", other: "e-Mola", bank_transfer: "Transferência",
+  mpesa: "M-Pesa", emola: "e-Mola", bank: "Transferência Bancária",
 };
 
 const PIE_COLORS = ["hsl(var(--primary))", "hsl(var(--accent))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", "hsl(var(--chart-4))", "hsl(var(--chart-5))"];
