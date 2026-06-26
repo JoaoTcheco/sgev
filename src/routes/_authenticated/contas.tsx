@@ -19,8 +19,11 @@ const LABELS: Record<string, string> = {
   cash: "Numerário",
   debit: "Cartão Débito",
   credit: "Cartão Crédito",
-  pix: "M-Pesa / e-Mola",
-  other: "Outro",
+  pix: "M-Pesa",
+  other: "e-Mola",
+  mpesa: "M-Pesa",
+  emola: "e-Mola",
+  bank: "Transferência Bancária",
 };
 
 function ContasPage() {
