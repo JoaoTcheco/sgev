@@ -154,6 +154,10 @@ function ConfiguracoesPage() {
 
         <LabelSettingsCard />
 
+        <BackupCard />
+
+
+
 
 
         <div className="flex justify-end">
@@ -518,6 +522,46 @@ function ToggleField({ label, checked, onChange }: { label: string; checked: boo
       <Switch checked={checked} onCheckedChange={onChange} />
       {label}
     </label>
+  );
+}
+
+function BackupCard() {
+  const desktop = typeof window !== "undefined" && !!(window as unknown as { pharmasys?: unknown }).pharmasys;
+  const bridge = (window as unknown as { pharmasys?: { backupNow: () => Promise<{ ok: boolean; path?: string }>; restoreBackup: () => Promise<{ ok: boolean }>; openBackupsFolder: () => Promise<{ ok: boolean }> } }).pharmasys;
+
+  async function doBackup() {
+    if (!bridge) return;
+    const r = await bridge.backupNow();
+    if (r.ok) toast.success("Backup guardado", { description: r.path });
+  }
+  async function doRestore() {
+    if (!bridge) return;
+    if (!window.confirm("Tem a certeza? A base de dados actual será substituída e a aplicação reinicia.")) return;
+    await bridge.restoreBackup();
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2"><Save className="h-5 w-5" /> Backup e restauro</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3 text-sm">
+        {!desktop ? (
+          <p className="text-muted-foreground">Disponível apenas na versão desktop (Electron). No browser os dados estão na nuvem.</p>
+        ) : (
+          <>
+            <p className="text-muted-foreground">
+              A base de dados local é guardada automaticamente quando fecha a aplicação. Recomenda-se também backup manual periódico para pen ou disco externo.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <Button onClick={doBackup} variant="default"><Save className="mr-2 h-4 w-4" /> Backup agora</Button>
+              <Button onClick={() => bridge?.openBackupsFolder()} variant="outline">Abrir pasta de backups</Button>
+              <Button onClick={doRestore} variant="destructive">Restaurar de ficheiro…</Button>
+            </div>
+          </>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 

@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Pill, Loader2 } from "lucide-react";
+import { Pill, Loader2, Monitor } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,8 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Toaster } from "@/components/ui/sonner";
+import { isDesktop } from "@/lib/desktop";
+import { useDesktopAuth, desktopSignIn, desktopBootstrap, getDesktopUser } from "@/hooks/use-desktop-auth";
 
 export const Route = createFileRoute("/auth")({
   ssr: false,
@@ -18,15 +20,22 @@ export const Route = createFileRoute("/auth")({
 
 function AuthPage() {
   const navigate = useNavigate();
+  const desktop = isDesktop();
+  const desktopAuth = useDesktopAuth();
   const [loading, setLoading] = useState(false);
   const [checking, setChecking] = useState(true);
 
   useEffect(() => {
+    if (desktop) {
+      if (getDesktopUser()) navigate({ to: "/dashboard", replace: true });
+      else setChecking(false);
+      return;
+    }
     supabase.auth.getUser().then(({ data }) => {
       if (data.user) navigate({ to: "/dashboard", replace: true });
       else setChecking(false);
     });
-  }, [navigate]);
+  }, [navigate, desktop]);
 
   async function handleLogin(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -34,14 +43,20 @@ function AuthPage() {
     const email = String(form.get("email") || "");
     const password = String(form.get("password") || "");
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    setLoading(false);
-    if (error) {
-      toast.error("Falha ao entrar", { description: error.message });
-      return;
+    try {
+      if (desktop) {
+        await desktopSignIn(email, password);
+      } else {
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+      }
+      toast.success("Sessão iniciada");
+      navigate({ to: "/dashboard", replace: true });
+    } catch (err) {
+      toast.error("Falha ao entrar", { description: (err as Error).message });
+    } finally {
+      setLoading(false);
     }
-    toast.success("Sessão iniciada");
-    navigate({ to: "/dashboard", replace: true });
   }
 
   async function handleSignup(e: React.FormEvent<HTMLFormElement>) {
@@ -51,21 +66,23 @@ function AuthPage() {
     const password = String(form.get("password") || "");
     const fullName = String(form.get("full_name") || "");
     setLoading(true);
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: window.location.origin,
-        data: { full_name: fullName },
-      },
-    });
-    setLoading(false);
-    if (error) {
-      toast.error("Falha no registo", { description: error.message });
-      return;
+    try {
+      if (desktop) {
+        await desktopBootstrap({ full_name: fullName, email, password });
+      } else {
+        const { error } = await supabase.auth.signUp({
+          email, password,
+          options: { emailRedirectTo: window.location.origin, data: { full_name: fullName } },
+        });
+        if (error) throw error;
+      }
+      toast.success("Conta criada", { description: "Sessão iniciada com sucesso." });
+      navigate({ to: "/dashboard", replace: true });
+    } catch (err) {
+      toast.error("Falha no registo", { description: (err as Error).message });
+    } finally {
+      setLoading(false);
     }
-    toast.success("Conta criada", { description: "Sessão iniciada com sucesso." });
-    navigate({ to: "/dashboard", replace: true });
   }
 
   if (checking) {
@@ -76,6 +93,10 @@ function AuthPage() {
     );
   }
 
+  // Em desktop, se for o primeiro arranque, força o tab "Registar".
+  const defaultTab = desktop && desktopAuth.bootstrapNeeded ? "signup" : "login";
+  const bootstrapMode = desktop && desktopAuth.bootstrapNeeded === true;
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background via-background to-accent/30 p-4">
       <div className="w-full max-w-md">
@@ -85,18 +106,27 @@ function AuthPage() {
           </div>
           <h1 className="text-2xl font-bold tracking-tight">PharmaSys</h1>
           <p className="text-sm text-muted-foreground">Gestão de vendas e estoque para farmácias</p>
+          {desktop && (
+            <div className="mt-1 flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-[11px] font-medium text-emerald-700">
+              <Monitor className="h-3 w-3" /> Modo desktop — 100% offline
+            </div>
+          )}
         </div>
 
         <Card>
           <CardHeader>
-            <CardTitle>Bem-vindo</CardTitle>
-            <CardDescription>Entre com a sua conta ou registe-se para começar.</CardDescription>
+            <CardTitle>{bootstrapMode ? "Primeiro arranque" : "Bem-vindo"}</CardTitle>
+            <CardDescription>
+              {bootstrapMode
+                ? "Crie a conta de administrador desta farmácia. Esta conta ficará guardada apenas neste computador."
+                : "Entre com a sua conta ou registe-se para começar."}
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue="login">
+            <Tabs defaultValue={defaultTab}>
               <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="login">Entrar</TabsTrigger>
-                <TabsTrigger value="signup">Registar</TabsTrigger>
+                <TabsTrigger value="login" disabled={bootstrapMode}>Entrar</TabsTrigger>
+                <TabsTrigger value="signup">{bootstrapMode ? "Criar admin" : "Registar"}</TabsTrigger>
               </TabsList>
 
               <TabsContent value="login">
@@ -129,11 +159,15 @@ function AuthPage() {
                   <div className="space-y-2">
                     <Label htmlFor="signup-password">Palavra-passe</Label>
                     <Input id="signup-password" name="password" type="password" required minLength={6} autoComplete="new-password" />
-                    <p className="text-xs text-muted-foreground">Mínimo de 6 caracteres. O primeiro utilizador registado torna-se Administrador.</p>
+                    <p className="text-xs text-muted-foreground">
+                      {bootstrapMode
+                        ? "Mínimo 6 caracteres. Anote num local seguro — não há recuperação por email no modo offline."
+                        : "Mínimo de 6 caracteres. O primeiro utilizador registado torna-se Administrador."}
+                    </p>
                   </div>
                   <Button type="submit" className="w-full" disabled={loading}>
                     {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Criar conta
+                    {bootstrapMode ? "Criar administrador" : "Criar conta"}
                   </Button>
                 </form>
               </TabsContent>
