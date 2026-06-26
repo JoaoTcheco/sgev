@@ -5,6 +5,7 @@ export type LabelInput = {
   name: string;
   barcode: string;
   price?: number | null;
+  cost?: number | null;
   batch_number?: string | null;
   expiry_date?: string | null; // YYYY-MM-DD
   qty: number;
@@ -28,6 +29,7 @@ function expand(entries: LabelInput[]) {
       name: e.name,
       barcode: e.barcode,
       price: e.price ?? null,
+      cost: e.cost ?? null,
       lote: e.batch_number ?? null,
       val: e.expiry_date ?? null,
     })),
@@ -54,7 +56,7 @@ function renderA4(
   all: ReturnType<typeof expand>,
   cfg: LabelSettings,
 ) {
-  const { columns, marginMm, gapMm, labelHeightMm, showPrice, showBatch, showExpiry } = cfg.a4;
+  const { columns, marginMm, gapMm, labelHeightMm, showPrice, showBatch, showExpiry, showCost } = cfg.a4;
   const labels = all.map((l) => `
     <div class="label">
       <div class="name">${escapeHtml(l.name)}</div>
@@ -64,7 +66,10 @@ function renderA4(
         ${showBatch && l.lote ? `<span>Lote: ${escapeHtml(l.lote)}</span>` : ""}
         ${showExpiry && l.val ? `<span>Val: ${fmtDate(l.val)}</span>` : ""}
       </div>` : ""}
-      ${showPrice && l.price != null ? `<div class="price">${escapeHtml(formatMZN(l.price))}</div>` : ""}
+      <div class="prices">
+        ${showPrice && l.price != null ? `<span class="price">${escapeHtml(formatMZN(l.price))}</span>` : ""}
+        ${showCost && l.cost != null ? `<span class="cost">Custo: ${escapeHtml(formatMZN(l.cost))}</span>` : ""}
+      </div>
     </div>
   `).join("");
 
@@ -85,7 +90,9 @@ function renderA4(
       .name { font-size: 10px; font-weight: 600; margin-bottom: 1mm; line-height: 1.1; max-height: 2.4em; overflow:hidden; }
       .bc { width: 100%; height: 38%; }
       .meta { display:flex; justify-content:space-between; gap:4px; font-size: 8px; color: #333; margin-top: 1mm; }
-      .price { font-size: 11px; font-weight: 700; margin-top: 1mm; }
+      .prices { display:flex; justify-content:space-between; align-items:baseline; gap:6px; margin-top: 1mm; }
+      .price { font-size: 11px; font-weight: 700; }
+      .cost { font-size: 8px; color:#555; font-weight: 600; }
       @media print { .label { border-color: transparent; } .hint { display:none; } }
     </style></head><body>
     ${printerHint}
@@ -102,7 +109,7 @@ function renderThermal(
   all: ReturnType<typeof expand>,
   cfg: LabelSettings,
 ) {
-  const { widthMm, heightMm, marginMm, barcodeHeightMm, fontSizePt, showPrice, showBatch, showExpiry } = cfg.thermal;
+  const { widthMm, heightMm, marginMm, barcodeHeightMm, fontSizePt, showPrice, showBatch, showExpiry, showCost } = cfg.thermal;
   const labels = all.map((l) => `
     <div class="label">
       <div class="name">${escapeHtml(l.name)}</div>
@@ -112,7 +119,10 @@ function renderThermal(
         ${showBatch && l.lote ? `<span>L:${escapeHtml(l.lote)}</span>` : ""}
         ${showExpiry && l.val ? `<span>V:${fmtDate(l.val)}</span>` : ""}
       </div>` : ""}
-      ${showPrice && l.price != null ? `<div class="price">${escapeHtml(formatMZN(l.price))}</div>` : ""}
+      <div class="prices">
+        ${showPrice && l.price != null ? `<span class="price">${escapeHtml(formatMZN(l.price))}</span>` : ""}
+        ${showCost && l.cost != null ? `<span class="cost">C: ${escapeHtml(formatMZN(l.cost))}</span>` : ""}
+      </div>
     </div>
   `).join("");
 
@@ -138,7 +148,9 @@ function renderThermal(
       .name { font-weight: 700; line-height: 1.1; max-height: 2.4em; overflow: hidden; margin-bottom: 1mm; }
       .bc { width: 100%; height: ${barcodeHeightMm}mm; }
       .meta { display:flex; justify-content:space-between; gap:2mm; margin-top: 0.5mm; font-size: ${Math.max(6, fontSizePt - 1)}pt; }
-      .price { font-weight: 800; margin-top: 0.5mm; }
+      .prices { display:flex; justify-content:space-between; gap:2mm; margin-top: 0.5mm; }
+      .price { font-weight: 800; }
+      .cost { font-weight: 600; font-size: ${Math.max(6, fontSizePt - 1)}pt; color:#444; }
       @media print { .hint { display: none; } }
     </style></head><body>
     ${printerHint}

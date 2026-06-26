@@ -381,12 +381,14 @@ function LabelSettingsCard() {
               </Field>
             </div>
             <div className="flex flex-wrap gap-4">
-              <ToggleField label="Mostrar preço" checked={settings.a4.showPrice}
-                onChange={(v) => update((s) => ({ ...s, a4: { ...s.a4, showPrice: v } }))} />
-              <ToggleField label="Mostrar lote" checked={settings.a4.showBatch}
-                onChange={(v) => update((s) => ({ ...s, a4: { ...s.a4, showBatch: v } }))} />
-              <ToggleField label="Mostrar validade" checked={settings.a4.showExpiry}
-                onChange={(v) => update((s) => ({ ...s, a4: { ...s.a4, showExpiry: v } }))} />
+             <ToggleField label="Mostrar preço" checked={settings.a4.showPrice}
+               onChange={(v) => update((s) => ({ ...s, a4: { ...s.a4, showPrice: v } }))} />
+             <ToggleField label="Mostrar custo" checked={settings.a4.showCost}
+               onChange={(v) => update((s) => ({ ...s, a4: { ...s.a4, showCost: v } }))} />
+             <ToggleField label="Mostrar lote" checked={settings.a4.showBatch}
+               onChange={(v) => update((s) => ({ ...s, a4: { ...s.a4, showBatch: v } }))} />
+             <ToggleField label="Mostrar validade" checked={settings.a4.showExpiry}
+               onChange={(v) => update((s) => ({ ...s, a4: { ...s.a4, showExpiry: v } }))} />
             </div>
           </div>
         ) : (
@@ -415,12 +417,14 @@ function LabelSettingsCard() {
               </Field>
             </div>
             <div className="flex flex-wrap gap-4">
-              <ToggleField label="Mostrar preço" checked={settings.thermal.showPrice}
-                onChange={(v) => update((s) => ({ ...s, thermal: { ...s.thermal, showPrice: v } }))} />
-              <ToggleField label="Mostrar lote" checked={settings.thermal.showBatch}
-                onChange={(v) => update((s) => ({ ...s, thermal: { ...s.thermal, showBatch: v } }))} />
-              <ToggleField label="Mostrar validade" checked={settings.thermal.showExpiry}
-                onChange={(v) => update((s) => ({ ...s, thermal: { ...s.thermal, showExpiry: v } }))} />
+             <ToggleField label="Mostrar preço" checked={settings.thermal.showPrice}
+               onChange={(v) => update((s) => ({ ...s, thermal: { ...s.thermal, showPrice: v } }))} />
+             <ToggleField label="Mostrar custo" checked={settings.thermal.showCost}
+               onChange={(v) => update((s) => ({ ...s, thermal: { ...s.thermal, showCost: v } }))} />
+             <ToggleField label="Mostrar lote" checked={settings.thermal.showBatch}
+               onChange={(v) => update((s) => ({ ...s, thermal: { ...s.thermal, showBatch: v } }))} />
+             <ToggleField label="Mostrar validade" checked={settings.thermal.showExpiry}
+               onChange={(v) => update((s) => ({ ...s, thermal: { ...s.thermal, showExpiry: v } }))} />
             </div>
             <p className="text-xs text-muted-foreground">
               Dica: na janela de impressão, escolha a impressora térmica e defina margens "Nenhuma" e escala "100%" para alinhar ao rolo.
