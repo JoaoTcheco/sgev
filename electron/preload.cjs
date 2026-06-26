@@ -2,9 +2,9 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('pharmaDB', {
-  // Generic invoke: { op: 'select'|'insert'|'update'|'delete'|'rpc', ... }
-  invoke: (payload) => ipcRenderer.invoke('pharma:db', payload),
-  // Backup / restore / app info
+  query: (payload) => ipcRenderer.invoke('pharma:db', payload),
+  auth: (payload) => ipcRenderer.invoke('pharma:auth', payload),
+  rpc: (name, args) => ipcRenderer.invoke('pharma:rpc', { name, args }),
   backupNow: () => ipcRenderer.invoke('pharma:backup-now'),
   restoreBackup: () => ipcRenderer.invoke('pharma:restore'),
   listBackups: () => ipcRenderer.invoke('pharma:list-backups'),
