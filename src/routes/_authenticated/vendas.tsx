@@ -70,7 +70,28 @@ function VendasPage() {
   const [paymentKind, setPaymentKind] = useState<PaymentKind>("cash");
   const [wallet, setWallet] = useState<DigitalWallet>("mpesa");
   const [received, setReceived] = useState<number>(0);
+  const [accountId, setAccountId] = useState<string | null>(null);
   const [lastSale, setLastSale] = useState<{ id: string; receipt_number: string | null; at: Date } | null>(null);
+
+  const { data: accounts = [] } = useQuery({
+    queryKey: ["pdv-accounts"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("financial_accounts")
+        .select("id, name, is_system, active")
+        .eq("active", true)
+        .order("is_system", { ascending: false })
+        .order("name");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  // Default to Caixa once accounts arrive
+  if (!accountId && accounts.length > 0) {
+    const caixa = accounts.find((a: any) => a.is_system) ?? accounts[0];
+    if (caixa) setTimeout(() => setAccountId(caixa.id), 0);
+  }
 
   const { data: products = [], isLoading } = useQuery({
     queryKey: ["pdv-products", search],
