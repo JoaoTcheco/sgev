@@ -13,6 +13,7 @@ export interface LabelSettings {
     gapMm: number;            // gap between labels
     labelHeightMm: number;    // each label height
     showPrice: boolean;
+    showCost: boolean;
     showBatch: boolean;
     showExpiry: boolean;
   };
@@ -25,6 +26,7 @@ export interface LabelSettings {
     barcodeHeightMm: number;
     fontSizePt: number;
     showPrice: boolean;
+    showCost: boolean;
     showBatch: boolean;
     showExpiry: boolean;
   };
@@ -39,6 +41,7 @@ export const DEFAULT_LABEL_SETTINGS: LabelSettings = {
     gapMm: 3,
     labelHeightMm: 30,
     showPrice: true,
+    showCost: false,
     showBatch: true,
     showExpiry: true,
   },
@@ -49,6 +52,7 @@ export const DEFAULT_LABEL_SETTINGS: LabelSettings = {
     barcodeHeightMm: 12,
     fontSizePt: 8,
     showPrice: false,
+    showCost: false,
     showBatch: true,
     showExpiry: true,
   },

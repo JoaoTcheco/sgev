@@ -148,7 +148,9 @@ function renderThermal(
       .name { font-weight: 700; line-height: 1.1; max-height: 2.4em; overflow: hidden; margin-bottom: 1mm; }
       .bc { width: 100%; height: ${barcodeHeightMm}mm; }
       .meta { display:flex; justify-content:space-between; gap:2mm; margin-top: 0.5mm; font-size: ${Math.max(6, fontSizePt - 1)}pt; }
-      .price { font-weight: 800; margin-top: 0.5mm; }
+      .prices { display:flex; justify-content:space-between; gap:2mm; margin-top: 0.5mm; }
+      .price { font-weight: 800; }
+      .cost { font-weight: 600; font-size: ${Math.max(6, fontSizePt - 1)}pt; color:#444; }
       @media print { .hint { display: none; } }
     </style></head><body>
     ${printerHint}
