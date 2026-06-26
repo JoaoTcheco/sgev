@@ -17,33 +17,7 @@ function DashboardPage() {
 
   const { data: stats } = useQuery({
     queryKey: ["dashboard-stats"],
-    queryFn: async () => {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-
-      const [salesRes, alertsRes, productsRes] = await Promise.all([
-        supabase
-          .from("sales")
-          .select("total")
-          .eq("status", "completed")
-          .gte("created_at", today.toISOString()),
-        supabase.from("alerts").select("id, severity").eq("resolved", false),
-        supabase.from("products").select("id").eq("active", true),
-      ]);
-
-      const sales = salesRes.data ?? [];
-      const totalSales = sales.reduce((a, s) => a + Number(s.total), 0);
-      const alerts = alertsRes.data ?? [];
-
-      return {
-        salesCount: sales.length,
-        totalSales,
-        ticketMedio: sales.length ? totalSales / sales.length : 0,
-        alertsActive: alerts.length,
-        alertsCritical: alerts.filter((a) => a.severity === "critical").length,
-        productsActive: productsRes.data?.length ?? 0,
-      };
-    },
+    queryFn: getDashboardStats,
   });
 
   return (
