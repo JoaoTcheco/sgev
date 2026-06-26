@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useServerFn } from "@tanstack/react-start";
+
 import {
   Users, Loader2, UserPlus, KeyRound, ShieldCheck, ShieldOff, Lock, Pencil, Trash2, History,
 } from "lucide-react";
@@ -65,10 +65,10 @@ function UtilizadoresPage() {
 
   const adminCount = data.filter((u) => u.roles.includes("admin")).length;
 
-  const createFn = useServerFn(adminCreateUser);
-  const resetFn = useServerFn(adminResetPassword);
-  const updateFn = useServerFn(adminUpdateUser);
-  const deleteFn = useServerFn(adminDeleteUser);
+  const createFn = adminCreateUser;
+  const resetFn = adminResetPassword;
+  const updateFn = adminUpdateUser;
+  const deleteFn = adminDeleteUser;
 
   const [createOpen, setCreateOpen] = useState(false);
   const [resetUser, setResetUser] = useState<UserRow | null>(null);
