@@ -40,6 +40,29 @@ function createWindow() {
 
   mainWindow.setMenuBarVisibility(false);
   mainWindow.on('closed', () => { mainWindow = null; });
+
+  // Abrir DevTools se PHARMASYS_DEBUG=1 ou se faltar o build SPA
+  if (process.env.PHARMASYS_DEBUG === '1' || !fs.existsSync(indexPath)) {
+    mainWindow.webContents.openDevTools({ mode: 'detach' });
+  }
+
+  // Atalho F12 para abrir/fechar DevTools em produção
+  mainWindow.webContents.on('before-input-event', (_e, input) => {
+    if (input.key === 'F12' && input.type === 'keyDown') {
+      mainWindow.webContents.toggleDevTools();
+    }
+    if ((input.control || input.meta) && input.shift && input.key.toLowerCase() === 'i') {
+      mainWindow.webContents.toggleDevTools();
+    }
+  });
+
+  // Capturar crashes do renderer
+  mainWindow.webContents.on('render-process-gone', (_e, details) => {
+    dialog.showErrorBox('Renderer falhou', JSON.stringify(details));
+  });
+  mainWindow.webContents.on('unresponsive', () => {
+    dialog.showErrorBox('Janela sem resposta', 'O processo de UI parou de responder. Pressione F12 para abrir DevTools.');
+  });
 }
 
 app.whenReady().then(async () => {
