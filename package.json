@@ -16,7 +16,9 @@
     "format": "prettier --write .",
     "electron:dev": "BUILD_TARGET=electron concurrently -k \"vite dev -c vite.electron.config.ts\" \"wait-on http://localhost:5173 && electron .\"",
     "electron:build": "vite build -c vite.electron.config.ts",
-    "dist:win": "vite build -c vite.electron.config.ts && electron-builder --win nsis --x64",
+    "dist:win": "vite build -c vite.electron.config.ts && electron-builder --win nsis msi --x64",
+    "dist:win:nsis": "vite build -c vite.electron.config.ts && electron-builder --win nsis --x64",
+    "dist:win:msi": "vite build -c vite.electron.config.ts && electron-builder --win msi --x64",
     "dist:linux": "vite build -c vite.electron.config.ts && electron-builder --linux AppImage --x64"
   },
   "build": {
