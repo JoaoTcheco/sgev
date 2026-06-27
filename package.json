@@ -31,13 +31,12 @@
     "asarUnpack": ["**/node_modules/better-sqlite3/**/*"],
     "removePackageScripts": true,
     "win": {
-      "target": [{
-        "target": "nsis",
-        "arch": ["x64"]
-      }],
+      "target": [
+        { "target": "nsis", "arch": ["x64"] },
+        { "target": "msi", "arch": ["x64"] }
+      ],
       "icon": "build/icon.png",
-      "signAndEditExecutable": false,
-      "signtoolOptions": null
+      "signAndEditExecutable": false
     },
     "nsis": {
       "oneClick": false,
@@ -47,6 +46,14 @@
       "createStartMenuShortcut": true,
       "shortcutName": "PharmaSys",
       "artifactName": "PharmaSys-Setup-${version}.${ext}"
+    },
+    "msi": {
+      "oneClick": false,
+      "perMachine": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "PharmaSys",
+      "artifactName": "PharmaSys-${version}.${ext}"
     },
     "linux": {
       "target": ["AppImage"],
