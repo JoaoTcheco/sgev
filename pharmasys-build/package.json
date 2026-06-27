@@ -1,0 +1,12 @@
+{
+  "name": "pharmasys",
+  "productName": "PharmaSys",
+  "version": "1.0.1",
+  "description": "Sistema de Gestão de Farmácia — Offline",
+  "main": "electron/main.cjs",
+  "author": "PharmaSys",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "better-sqlite3": "^11.10.0"
+  }
+}
