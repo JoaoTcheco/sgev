@@ -16,26 +16,27 @@
     "format": "prettier --write .",
     "electron:dev": "BUILD_TARGET=electron concurrently -k \"vite dev -c vite.electron.config.ts\" \"wait-on http://localhost:5173 && electron .\"",
     "electron:build": "vite build -c vite.electron.config.ts",
-    "dist:win": "vite build -c vite.electron.config.ts && electron-builder --win nsis --x64",
+    "dist:win": "vite build -c vite.electron.config.ts && electron-builder --win nsis msi --x64",
+    "dist:win:nsis": "vite build -c vite.electron.config.ts && electron-builder --win nsis --x64",
+    "dist:win:msi": "vite build -c vite.electron.config.ts && electron-builder --win msi --x64",
     "dist:linux": "vite build -c vite.electron.config.ts && electron-builder --linux AppImage --x64"
   },
   "build": {
     "appId": "mz.pharmasys.desktop",
     "productName": "PharmaSys",
     "directories": {
-      "output": "/mnt/documents/pharmasys-dist"
+      "output": "dist-electron"
     },
     "files": ["electron/**/*", "dist-spa/**/*", "node_modules/better-sqlite3/**/*", "node_modules/bcryptjs/**/*", "package.json"],
     "asarUnpack": ["**/node_modules/better-sqlite3/**/*"],
     "removePackageScripts": true,
     "win": {
-      "target": [{
-        "target": "nsis",
-        "arch": ["x64"]
-      }],
+      "target": [
+        { "target": "nsis", "arch": ["x64"] },
+        { "target": "msi", "arch": ["x64"] }
+      ],
       "icon": "build/icon.png",
-      "signAndEditExecutable": false,
-      "signtoolOptions": null
+      "signAndEditExecutable": false
     },
     "nsis": {
       "oneClick": false,
@@ -45,6 +46,14 @@
       "createStartMenuShortcut": true,
       "shortcutName": "PharmaSys",
       "artifactName": "PharmaSys-Setup-${version}.${ext}"
+    },
+    "msi": {
+      "oneClick": false,
+      "perMachine": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "PharmaSys",
+      "artifactName": "PharmaSys-${version}.${ext}"
     },
     "linux": {
       "target": ["AppImage"],
