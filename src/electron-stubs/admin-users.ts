@@ -2,11 +2,6 @@
 // All admin user CRUD goes through window.pharmaApi → SQLite.
 import { supabase } from "@/integrations/supabase/client";
 
-declare global {
-  interface Window {
-    pharmaApi?: { invoke: (c: string, p?: unknown) => Promise<{ ok: boolean; data?: unknown; error?: string }> };
-  }
-}
 
 async function call(channel: string, payload?: unknown) {
   const api = window.pharmaApi;
