@@ -5,7 +5,7 @@
 type Filter = { col: string; op: string; val: unknown };
 type Order = { col: string; asc: boolean };
 
-type PharmaApi = {
+export type PharmaApi = {
   invoke: (channel: string, payload?: unknown) => Promise<{ ok: boolean; data?: unknown; error?: string }>;
   print: () => Promise<unknown>;
 };
