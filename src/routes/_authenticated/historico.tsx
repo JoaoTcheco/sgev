@@ -118,13 +118,14 @@ function HistoricoPage() {
           <CardHeader><CardTitle className="flex items-center gap-2"><History className="h-5 w-5" /> Movimentos de estoque</CardTitle></CardHeader>
           <CardContent>
             <Table>
-              <TableHeader><TableRow><TableHead>Produto</TableHead><TableHead>Tipo</TableHead><TableHead className="text-right">Qtd</TableHead><TableHead>Quando</TableHead></TableRow></TableHeader>
+              <TableHeader><TableRow><TableHead>Produto</TableHead><TableHead>Tipo</TableHead><TableHead className="text-right">Qtd</TableHead><TableHead>Txn</TableHead><TableHead>Quando</TableHead></TableRow></TableHeader>
               <TableBody>
                 {data?.moves.map((m: any) => (
                   <TableRow key={m.id}>
                     <TableCell className="text-sm">{m.products?.name ?? "—"}</TableCell>
                     <TableCell><Badge variant={m.type === "in" ? "default" : "secondary"}>{m.type === "in" ? "Entrada" : m.type === "out" ? "Saída" : m.type}</Badge></TableCell>
                     <TableCell className="text-right">{m.quantity}</TableCell>
+                    <TableCell className="font-mono text-[10px] text-muted-foreground">{m.txn_id ? String(m.txn_id).slice(0,8) : "—"}</TableCell>
                     <TableCell className="text-xs text-muted-foreground">{formatDateTime(m.created_at)}</TableCell>
                   </TableRow>
                 ))}
@@ -137,14 +138,15 @@ function HistoricoPage() {
           <CardHeader><CardTitle>Logs de auditoria</CardTitle></CardHeader>
           <CardContent>
             <Table>
-              <TableHeader><TableRow><TableHead>Entidade</TableHead><TableHead>Ação</TableHead><TableHead>Quando</TableHead></TableRow></TableHeader>
+              <TableHeader><TableRow><TableHead>Entidade</TableHead><TableHead>Ação</TableHead><TableHead>Txn</TableHead><TableHead>Quando</TableHead></TableRow></TableHeader>
               <TableBody>
                 {data?.logs.length === 0 ? (
-                  <TableRow><TableCell colSpan={3} className="py-6 text-center text-sm text-muted-foreground">Sem registos.</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={4} className="py-6 text-center text-sm text-muted-foreground">Sem registos.</TableCell></TableRow>
                 ) : data?.logs.map((l: any) => (
                   <TableRow key={l.id}>
                     <TableCell className="text-sm">{l.entity}</TableCell>
                     <TableCell className="text-sm">{l.action}</TableCell>
+                    <TableCell className="font-mono text-[10px] text-muted-foreground">{l.txn_id ? String(l.txn_id).slice(0,8) : "—"}</TableCell>
                     <TableCell className="text-xs text-muted-foreground">{formatDateTime(l.created_at)}</TableCell>
                   </TableRow>
                 ))}
