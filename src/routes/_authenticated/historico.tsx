@@ -14,6 +14,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { formatDateTime, formatMZN, formatDate, mzLocalToISO } from "@/lib/format";
+import { exportTablePDF } from "@/lib/pdf-export";
+import { FileText } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/historico")({
   head: () => ({ meta: [{ title: "Histórico — PharmaSys" }] }),
@@ -97,6 +99,35 @@ function HistoricoPage() {
     a.href = url; a.download = `auditoria-${formatDate(new Date())}.csv`; a.click();
     URL.revokeObjectURL(url);
   }
+
+  function exportPDF() {
+    const rows = auditQuery.data ?? [];
+    if (rows.length === 0) { toast.info("Nada para exportar"); return; }
+    const filterParts: string[] = [];
+    if (fFrom) filterParts.push(`De ${fFrom}`);
+    if (fTo) filterParts.push(`Até ${fTo}`);
+    if (fEntity !== "all") filterParts.push(`Entidade: ${fEntity}`);
+    if (fAction !== "all") filterParts.push(`Ação: ${fAction}`);
+    if (onlyDiv) filterParts.push("Apenas divergentes");
+    exportTablePDF({
+      title: "Auditoria — PharmaSys",
+      filename: `auditoria-${formatDate(new Date())}`,
+      subtitle: filterParts.length ? `Filtros: ${filterParts.join(" · ")}` : "Sem filtros aplicados",
+      head: ["Data", "Utilizador", "Entidade", "Ação", "Entity ID", "Txn", "Detalhes"],
+      body: rows.map((r) => [
+        formatDateTime(r.created_at),
+        r.user_name ?? "",
+        r.entity,
+        r.action,
+        r.entity_id ?? "",
+        r.txn_id ? String(r.txn_id).slice(0, 8) : "",
+        r.details ?? "",
+      ]),
+      footerNote: `${rows.length} registo(s)`,
+    });
+  }
+
+
 
   if (isLoading) return <div className="flex justify-center py-20"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
 
