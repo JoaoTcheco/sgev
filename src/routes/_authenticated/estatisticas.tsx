@@ -4,8 +4,9 @@ import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 import {
   BarChart3, TrendingUp, ShoppingCart, Loader2, Percent, Wallet, Download,
-  Filter, RotateCcw, ArrowUpDown, AlertTriangle, CheckCircle2, Info,
+  Filter, RotateCcw, ArrowUpDown, AlertTriangle, CheckCircle2, Info, FileText,
 } from "lucide-react";
+import { exportTablePDF } from "@/lib/pdf-export";
 
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -444,6 +445,36 @@ function EstatisticaPage() {
     URL.revokeObjectURL(url);
   }
 
+  function exportPDF() {
+    if (!agg) return;
+    const kpiBody: (string | number)[][] = [
+      ["Receita", formatMZN(agg.revenue)],
+      ["Margem", `${formatMZN(agg.margin)} (${agg.marginPct.toFixed(1)}%)`],
+      ["Nº vendas", agg.salesCount],
+      ["Ticket médio", formatMZN(agg.avgTicket)],
+      ["Unidades vendidas", agg.qty],
+      ["Reconciliação", agg.recon.reconciled ? "OK" : `Divergência ${formatMZN(agg.recon.diffGlobal)}`],
+    ];
+    exportTablePDF({
+      title: "Estatística — Resumo",
+      filename: `estatistica-resumo-${formatDate(new Date())}`,
+      subtitle: `Filtros: ${filterSummary}`,
+      head: ["Indicador", "Valor"],
+      body: kpiBody,
+      orientation: "portrait",
+      footerNote: `${agg.salesCount} venda(s)`,
+    });
+    exportTablePDF({
+      title: "Estatística — Produtos",
+      filename: `estatistica-produtos-${formatDate(new Date())}`,
+      subtitle: `Filtros: ${filterSummary}`,
+      head: ["Produto", "Quantidade", "Receita", "Margem", "% Margem"],
+      body: agg.topProducts.map((p) => [p.name, p.qty, formatMZN(p.revenue), formatMZN(p.margin), `${p.marginPct.toFixed(1)}%`]),
+      footerNote: `${agg.topProducts.length} produto(s)`,
+    });
+  }
+
+
   if (baseLoading || isLoading || !agg || !base) {
     return <div className="flex justify-center py-20"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
   }
@@ -461,6 +492,7 @@ function EstatisticaPage() {
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={resetAll}><RotateCcw className="mr-2 h-4 w-4" />Repor</Button>
           <Button variant="outline" size="sm" onClick={exportCSV}><Download className="mr-2 h-4 w-4" />Exportar CSV</Button>
+          <Button variant="outline" size="sm" onClick={exportPDF}><FileText className="mr-2 h-4 w-4" />Exportar PDF</Button>
         </div>
       </div>
 

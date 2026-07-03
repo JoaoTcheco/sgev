@@ -14,6 +14,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { formatDateTime, formatMZN, formatDate, mzLocalToISO } from "@/lib/format";
+import { exportTablePDF } from "@/lib/pdf-export";
+import { FileText } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/historico")({
   head: () => ({ meta: [{ title: "Histórico — PharmaSys" }] }),
@@ -98,6 +100,35 @@ function HistoricoPage() {
     URL.revokeObjectURL(url);
   }
 
+  function exportPDF() {
+    const rows = auditQuery.data ?? [];
+    if (rows.length === 0) { toast.info("Nada para exportar"); return; }
+    const filterParts: string[] = [];
+    if (fFrom) filterParts.push(`De ${fFrom}`);
+    if (fTo) filterParts.push(`Até ${fTo}`);
+    if (fEntity !== "all") filterParts.push(`Entidade: ${fEntity}`);
+    if (fAction !== "all") filterParts.push(`Ação: ${fAction}`);
+    if (onlyDiv) filterParts.push("Apenas divergentes");
+    exportTablePDF({
+      title: "Auditoria — PharmaSys",
+      filename: `auditoria-${formatDate(new Date())}`,
+      subtitle: filterParts.length ? `Filtros: ${filterParts.join(" · ")}` : "Sem filtros aplicados",
+      head: ["Data", "Utilizador", "Entidade", "Ação", "Entity ID", "Txn", "Detalhes"],
+      body: rows.map((r) => [
+        formatDateTime(r.created_at),
+        r.user_name ?? "",
+        r.entity,
+        r.action,
+        r.entity_id ?? "",
+        r.txn_id ? String(r.txn_id).slice(0, 8) : "",
+        r.details ?? "",
+      ]),
+      footerNote: `${rows.length} registo(s)`,
+    });
+  }
+
+
+
   if (isLoading) return <div className="flex justify-center py-20"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
 
   return (
@@ -176,7 +207,10 @@ function HistoricoPage() {
           <CardHeader className="space-y-3">
             <div className="flex flex-row items-center justify-between">
               <CardTitle className="flex items-center gap-2"><Filter className="h-5 w-5" /> Logs de auditoria</CardTitle>
-              <Button size="sm" variant="outline" onClick={exportCSV} disabled={!auditQuery.data?.length}><Download className="mr-2 h-4 w-4" /> CSV</Button>
+              <div className="flex gap-2">
+                <Button size="sm" variant="outline" onClick={exportCSV} disabled={!auditQuery.data?.length}><Download className="mr-2 h-4 w-4" /> CSV</Button>
+                <Button size="sm" variant="outline" onClick={exportPDF} disabled={!auditQuery.data?.length}><FileText className="mr-2 h-4 w-4" /> PDF</Button>
+              </div>
             </div>
             <div className="grid grid-cols-2 gap-2 text-xs md:grid-cols-4">
               <div><Label className="text-[10px]">De</Label><Input type="date" value={fFrom} onChange={(e) => setFFrom(e.target.value)} className="h-8" /></div>
