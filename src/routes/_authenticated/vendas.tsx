@@ -469,11 +469,12 @@ function VendasPage() {
       </Card>
 
       <Dialog open={!!lastSale} onOpenChange={(o) => { if (!o) { setLastSale(null); resetAll(); } }}>
-        <DialogContent className="max-w-[min(96vw,640px)]">
-          <DialogHeader>
+        <DialogContent className="flex max-h-[90vh] max-w-[min(96vw,640px)] flex-col p-0 gap-0">
+          <DialogHeader className="border-b px-4 py-3 sm:px-6">
             <DialogTitle className="flex items-center gap-2"><Receipt className="h-5 w-5" /> Recibo da venda</DialogTitle>
           </DialogHeader>
-          <div id="print-area" className="flex justify-center overflow-auto rounded-md border bg-muted/30 p-3">
+          <div id="print-area" className="flex-1 min-h-0 overflow-auto bg-muted/30 p-3">
+            <div className="flex justify-center">
             {settings && lastSale && (
               <ReceiptBody
                 s={settings}
@@ -490,8 +491,9 @@ function VendasPage() {
                 at={lastSale.at}
               />
             )}
+            </div>
           </div>
-          <DialogFooter className="gap-2">
+          <DialogFooter className="gap-2 border-t bg-background px-4 py-3 sm:px-6">
             <Button variant="outline" onClick={printReceipt}><Printer className="mr-2 h-4 w-4" /> Imprimir</Button>
             <Button onClick={() => { setLastSale(null); resetAll(); }}>Nova venda</Button>
           </DialogFooter>
