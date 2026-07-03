@@ -294,13 +294,13 @@ function processSale({ customer_id, payment_method, discount = 0, items, account
     let subtotal = 0;
     for (const it of items) subtotal += it.quantity * it.unit_price;
     const total = Math.max(0, subtotal - (discount || 0));
-    const receipt = nextReceiptNumber();
+    const { seq, receipt } = nextReceiptNumber();
     const saleId = randomUUID();
 
     db.prepare(
-      `INSERT INTO sales (id, receipt_number, customer_id, user_id, cash_session_id, account_id, subtotal, discount, total, payment_method, status)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'completed')`,
-    ).run(saleId, receipt, customer_id || null, user.id, session.id, acc, subtotal, discount || 0, total, payment_method);
+      `INSERT INTO sales (id, sale_number, receipt_number, customer_id, user_id, cash_session_id, account_id, subtotal, discount, total, payment_method, status)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'completed')`,
+    ).run(saleId, seq, receipt, customer_id || null, user.id, session.id, acc, subtotal, discount || 0, total, payment_method);
 
     for (const it of items) {
       const product = db.prepare("SELECT * FROM products WHERE id = ?").get(it.product_id);
