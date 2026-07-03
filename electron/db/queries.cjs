@@ -365,6 +365,7 @@ function processSale({ customer_id, payment_method, discount = 0, items, account
       acc,
     );
 
+    writeAudit(user.id, "sale.completed", "sales", saleId, { receipt, total, payment_method, account_id: acc });
     refreshAlerts();
     return saleId;
   })();
