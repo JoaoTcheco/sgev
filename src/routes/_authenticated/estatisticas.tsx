@@ -21,7 +21,7 @@ import {
   Bar, BarChart, CartesianGrid, Cell, Line, LineChart, Pie, PieChart,
   ResponsiveContainer, Tooltip, XAxis, YAxis, Legend,
 } from "recharts";
-import { formatMZN, formatDate } from "@/lib/format";
+import { formatMZN, formatDate, mzParts, mzLocalToISO, mzTodayYMD, mzDaysAgoYMD } from "@/lib/format";
 import { RoleGate } from "@/components/role-gate";
 
 export const Route = createFileRoute("/_authenticated/estatisticas")({
@@ -44,15 +44,10 @@ const PIE_COLORS = ["hsl(var(--primary))", "hsl(var(--accent))", "hsl(var(--char
 type Preset = "today" | "7" | "30" | "90" | "ytd" | "custom";
 type SortKey = "revenue_desc" | "revenue_asc" | "qty_desc" | "qty_asc" | "margin_desc" | "margin_asc";
 
-function todayISO() {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-}
-function daysAgoISO(n: number) {
-  const d = new Date();
-  d.setDate(d.getDate() - n);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-}
+// Datas sempre no fuso Africa/Maputo (UTC+2), independentemente do SO.
+const todayISO = () => mzTodayYMD();
+const daysAgoISO = (n: number) => mzDaysAgoYMD(n);
+
 
 function EstatisticaPage() {
   // ---------------- Filter state ----------------
@@ -79,9 +74,10 @@ function EstatisticaPage() {
     else if (p === "30") { setFrom(daysAgoISO(29)); setTo(todayISO()); }
     else if (p === "90") { setFrom(daysAgoISO(89)); setTo(todayISO()); }
     else if (p === "ytd") {
-      const y = new Date().getFullYear();
+      const y = mzParts(new Date()).year;
       setFrom(`${y}-01-01`); setTo(todayISO());
     }
+
   }
   function resetAll() {
     applyPreset("30");
@@ -93,8 +89,10 @@ function EstatisticaPage() {
   }
 
   // ---------------- Data load ----------------
-  const fromISO = useMemo(() => new Date(from + "T00:00:00").toISOString(), [from]);
-  const toISO = useMemo(() => new Date(to + "T23:59:59").toISOString(), [to]);
+  // Limites em ISO/UTC calculados a partir da meia-noite/23:59 de Maputo.
+  const fromISO = useMemo(() => mzLocalToISO(from, 0, 0, 0), [from]);
+  const toISO = useMemo(() => mzLocalToISO(to, 23, 59, 59), [to]);
+
 
   const { data: base, isLoading: baseLoading } = useQuery({
     queryKey: ["estat-base"],
@@ -144,7 +142,7 @@ function EstatisticaPage() {
   // ---------------- Derive available years ----------------
   const availableYears = useMemo(() => {
     const set = new Set<number>();
-    for (const s of data?.sales ?? []) set.add(new Date(s.created_at).getFullYear());
+    for (const s of data?.sales ?? []) set.add(mzParts(s.created_at).year);
     return [...set].sort((a, b) => b - a);
   }, [data]);
 
@@ -165,14 +163,15 @@ function EstatisticaPage() {
 
     const hFrom = Number(hourFrom), hTo = Number(hourTo);
     const inTemporal = (iso: string) => {
-      const d = new Date(iso);
-      if (year !== "all" && d.getFullYear() !== Number(year)) return false;
-      if (month !== "all" && d.getMonth() + 1 !== Number(month)) return false;
-      if (weekday !== "all" && d.getDay() !== Number(weekday)) return false;
-      const h = d.getHours();
-      if (h < hFrom || h > hTo) return false;
+      const p = mzParts(iso); // componentes já no fuso Africa/Maputo
+      if (year !== "all" && p.year !== Number(year)) return false;
+      if (month !== "all" && p.month !== Number(month)) return false;
+      if (weekday !== "all" && p.weekday !== Number(weekday)) return false;
+      if (p.hour < hFrom || p.hour > hTo) return false;
       return true;
     };
+
+
 
     // Filter sales
     const sales = data.sales.filter((s: any) => {
@@ -221,20 +220,19 @@ function EstatisticaPage() {
     const byCategory = new Map<string, number>();
     const byProduct = new Map<string, { qty: number; revenue: number; cost: number; product_id: string }>();
 
-    // sales-level breakdowns
+    // sales-level breakdowns (todas as componentes já no fuso de Moçambique)
     for (const s of filtered.sales) {
-      const d = new Date(s.created_at);
-      const dayKey = d.toISOString().slice(0, 10);
-      byDay.set(dayKey, (byDay.get(dayKey) ?? 0) + Number(s.total));
-      byHour.set(d.getHours(), (byHour.get(d.getHours()) ?? 0) + Number(s.total));
-      byWeekday.set(d.getDay(), (byWeekday.get(d.getDay()) ?? 0) + Number(s.total));
-      const mk = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-      byMonth.set(mk, (byMonth.get(mk) ?? 0) + Number(s.total));
+      const p = mzParts(s.created_at);
+      byDay.set(p.dayKey, (byDay.get(p.dayKey) ?? 0) + Number(s.total));
+      byHour.set(p.hour, (byHour.get(p.hour) ?? 0) + Number(s.total));
+      byWeekday.set(p.weekday, (byWeekday.get(p.weekday) ?? 0) + Number(s.total));
+      byMonth.set(p.monthKey, (byMonth.get(p.monthKey) ?? 0) + Number(s.total));
       byPayment.set(s.payment_method, (byPayment.get(s.payment_method) ?? 0) + Number(s.total));
       const opName = profileMap.get(s.user_id) ?? "—";
       const cur = byOperator.get(opName) ?? { total: 0, count: 0 };
       byOperator.set(opName, { total: cur.total + Number(s.total), count: cur.count + 1 });
     }
+
 
     // item-level breakdowns
     for (const it of filtered.items) {
@@ -283,14 +281,17 @@ function EstatisticaPage() {
     const topProducts = productList.slice(0, N);
     const leastSold = [...productList].sort((a, b) => a.qty - b.qty).slice(0, N);
 
-    // Time series (fill days between from/to)
+    // Série diária (dias de calendário Maputo) entre from e to
     const series: Array<{ date: string; total: number }> = [];
-    const start = new Date(from + "T00:00:00");
-    const end = new Date(to + "T00:00:00");
-    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    const [fy, fm, fdd] = from.split("-").map(Number);
+    const [ty, tm, tdd] = to.split("-").map(Number);
+    const startUTC = Date.UTC(fy, fm - 1, fdd, 12);
+    const endUTC = Date.UTC(ty, tm - 1, tdd, 12);
+    for (let t = startUTC; t <= endUTC; t += 86400000) {
+      const key = mzParts(new Date(t)).dayKey; // YYYY-MM-DD Maputo
       series.push({ date: key.slice(5), total: Math.round((byDay.get(key) ?? 0) * 100) / 100 });
     }
+
 
     const hourly = Array.from({ length: 24 }, (_, h) => ({ hour: `${String(h).padStart(2, "0")}h`, total: byHour.get(h) ?? 0 }));
     const weekly = WEEKDAY.map((n, i) => ({ day: n, total: byWeekday.get(i) ?? 0 }));
