@@ -88,8 +88,10 @@ function EstatisticaPage() {
   }
 
   // ---------------- Data load ----------------
-  const fromISO = useMemo(() => new Date(from + "T00:00:00").toISOString(), [from]);
-  const toISO = useMemo(() => new Date(to + "T23:59:59").toISOString(), [to]);
+  // Limites em ISO/UTC calculados a partir da meia-noite/23:59 de Maputo.
+  const fromISO = useMemo(() => mzLocalToISO(from, 0, 0, 0), [from]);
+  const toISO = useMemo(() => mzLocalToISO(to, 23, 59, 59), [to]);
+
 
   const { data: base, isLoading: baseLoading } = useQuery({
     queryKey: ["estat-base"],
