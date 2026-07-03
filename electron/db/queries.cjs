@@ -353,6 +353,7 @@ function reconcile() {
 function processSale({ customer_id, payment_method, discount = 0, items, account_id }) {
   const db = getDb();
   const user = requireUser();
+  const txn = randomUUID();
 
   return db.transaction(() => {
     const session = db
@@ -380,6 +381,9 @@ function processSale({ customer_id, payment_method, discount = 0, items, account
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'completed')`,
     ).run(saleId, seq, receipt, customer_id || null, user.id, session.id, acc, subtotal, discount || 0, total, payment_method);
 
+    const touchedBatches = new Set();
+    let itemsTotal = 0;
+
     for (const it of items) {
       const product = db.prepare("SELECT * FROM products WHERE id = ?").get(it.product_id);
       if (!product) throw new Error("Produto não encontrado");
@@ -402,7 +406,6 @@ function processSale({ customer_id, payment_method, discount = 0, items, account
         );
       }
 
-      // FEFO with open-box priority for sub sales
       const batches = db
         .prepare(
           `SELECT * FROM batches WHERE product_id = ? AND quantity > 0 AND expiry_date >= ?
@@ -420,32 +423,49 @@ function processSale({ customer_id, payment_method, discount = 0, items, account
 
         const dispQty = unitKind === "sub" ? take : Math.ceil(take / pack);
         const lineTotal = dispQty * unitPrice;
+        itemsTotal += lineTotal;
         db.prepare(
-          `INSERT INTO sale_items (id, sale_id, product_id, batch_id, product_name, quantity, unit_price, total, unit_kind, unit_label)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        ).run(randomUUID(), saleId, it.product_id, b.id, product.name, dispQty, unitPrice, lineTotal, unitKind, unitLabel);
+          `INSERT INTO sale_items (id, sale_id, product_id, batch_id, product_name, quantity, unit_price, total, unit_kind, unit_label, txn_id)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        ).run(randomUUID(), saleId, it.product_id, b.id, product.name, dispQty, unitPrice, lineTotal, unitKind, unitLabel, txn);
 
         db.prepare(
-          `INSERT INTO stock_movements (id, batch_id, product_id, type, quantity, reason, user_id, reference_id)
-           VALUES (?, ?, ?, 'out', ?, 'Venda', ?, ?)`,
-        ).run(randomUUID(), b.id, it.product_id, take, user.id, saleId);
+          `INSERT INTO stock_movements (id, batch_id, product_id, type, quantity, reason, user_id, reference_id, txn_id)
+           VALUES (?, ?, ?, 'out', ?, 'Venda', ?, ?, ?)`,
+        ).run(randomUUID(), b.id, it.product_id, take, user.id, saleId, txn);
 
+        touchedBatches.add(b.id);
         remaining -= take;
       }
     }
 
+    // Reconcile subtotal to what really was billed line-by-line (FEFO rounding)
+    db.prepare("UPDATE sales SET subtotal = ?, total = ? WHERE id = ?").run(
+      itemsTotal,
+      Math.max(0, itemsTotal - (discount || 0)),
+      saleId,
+    );
+    const finalTotal = Math.max(0, itemsTotal - (discount || 0));
+
     db.prepare(
-      `INSERT INTO account_movements (id, account_id, type, amount, reason, sale_id, user_id)
-       VALUES (?, ?, 'credit', ?, ?, ?, ?)`,
-    ).run(randomUUID(), acc, total, "Venda " + receipt, saleId, user.id);
+      `INSERT INTO account_movements (id, account_id, type, amount, reason, sale_id, user_id, txn_id)
+       VALUES (?, ?, 'credit', ?, ?, ?, ?, ?)`,
+    ).run(randomUUID(), acc, finalTotal, "Venda " + receipt, saleId, user.id, txn);
     db.prepare("UPDATE financial_accounts SET balance = balance + ?, updated_at = datetime('now') WHERE id = ?").run(
-      total,
+      finalTotal,
       acc,
     );
 
-    writeAudit(user.id, "sale.completed", "sales", saleId, { receipt, total, payment_method, account_id: acc });
+    writeAudit(user.id, "sale.completed", "sales", saleId,
+      { txn, receipt, total: finalTotal, payment_method, account_id: acc, items_count: items.length }, txn);
+
+    // Post-transaction integrity assertions — abort txn if any drift
+    assertSaleIntegrity(saleId);
+    assertAccountIntegrity(acc);
+    for (const bId of touchedBatches) assertBatchIntegrity(bId);
+
     refreshAlerts();
-    return saleId;
+    return { sale_id: saleId, txn_id: txn, receipt };
   })();
 }
 
@@ -453,19 +473,22 @@ function addBatchEntry({ product_id, supplier_id, batch_number, expiry_date, qua
   const db = getDb();
   const user = requireStaff();
   if (new Date(expiry_date) < new Date(new Date().toISOString().slice(0, 10))) throw new Error("Validade no passado");
+  const txn = randomUUID();
   return db.transaction(() => {
     const id = randomUUID();
     db.prepare(
-      `INSERT INTO batches (id, product_id, supplier_id, batch_number, expiry_date, quantity, cost_price)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
-    ).run(id, product_id, supplier_id || null, batch_number, expiry_date, quantity, cost_price || 0);
+      `INSERT INTO batches (id, product_id, supplier_id, batch_number, expiry_date, quantity, cost_price, txn_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    ).run(id, product_id, supplier_id || null, batch_number, expiry_date, quantity, cost_price || 0, txn);
     db.prepare(
-      `INSERT INTO stock_movements (id, batch_id, product_id, type, quantity, reason, user_id)
-       VALUES (?, ?, ?, 'in', ?, 'Entrada de estoque', ?)`,
-    ).run(randomUUID(), id, product_id, quantity, user.id);
-    writeAudit(user.id, "stock.entry", "batches", id, { product_id, supplier_id, batch_number, quantity, expiry_date });
+      `INSERT INTO stock_movements (id, batch_id, product_id, type, quantity, reason, user_id, txn_id)
+       VALUES (?, ?, ?, 'in', ?, 'Entrada de estoque', ?, ?)`,
+    ).run(randomUUID(), id, product_id, quantity, user.id, txn);
+    writeAudit(user.id, "stock.entry", "batches", id,
+      { txn, product_id, supplier_id, batch_number, quantity, expiry_date }, txn);
+    assertBatchIntegrity(id);
     refreshAlerts();
-    return id;
+    return { batch_id: id, txn_id: txn };
   })();
 }
 
