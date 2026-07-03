@@ -141,7 +141,7 @@ function EstatisticaPage() {
   // ---------------- Derive available years ----------------
   const availableYears = useMemo(() => {
     const set = new Set<number>();
-    for (const s of data?.sales ?? []) set.add(new Date(s.created_at).getFullYear());
+    for (const s of data?.sales ?? []) set.add(mzParts(s.created_at).year);
     return [...set].sort((a, b) => b - a);
   }, [data]);
 
@@ -162,14 +162,15 @@ function EstatisticaPage() {
 
     const hFrom = Number(hourFrom), hTo = Number(hourTo);
     const inTemporal = (iso: string) => {
-      const d = new Date(iso);
-      if (year !== "all" && d.getFullYear() !== Number(year)) return false;
-      if (month !== "all" && d.getMonth() + 1 !== Number(month)) return false;
-      if (weekday !== "all" && d.getDay() !== Number(weekday)) return false;
-      const h = d.getHours();
-      if (h < hFrom || h > hTo) return false;
+      const p = mzParts(iso); // componentes já no fuso Africa/Maputo
+      if (year !== "all" && p.year !== Number(year)) return false;
+      if (month !== "all" && p.month !== Number(month)) return false;
+      if (weekday !== "all" && p.weekday !== Number(weekday)) return false;
+      if (p.hour < hFrom || p.hour > hTo) return false;
       return true;
     };
+
+
 
     // Filter sales
     const sales = data.sales.filter((s: any) => {
