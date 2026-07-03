@@ -7,8 +7,6 @@ import {
   Filter, RotateCcw, ArrowUpDown, AlertTriangle, CheckCircle2, Info, FileText,
 } from "lucide-react";
 import { exportTablePDF } from "@/lib/pdf-export";
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const _padImport = null;
 
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
