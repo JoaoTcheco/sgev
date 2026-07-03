@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { formatDateTime } from "@/lib/format";
+import { useAuthUser, useUserRoles, highestRole } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/_authenticated/alertas")({
   head: () => ({ meta: [{ title: "Alertas — PharmaSys" }] }),
@@ -32,6 +33,10 @@ const SEV_RANK: Record<string, number> = { critical: 3, warning: 2, info: 1 };
 function AlertasPage() {
   const qc = useQueryClient();
   const [tab, setTab] = useState<"all" | "low_stock" | "near_expiry" | "expired">("all");
+  const { user } = useAuthUser();
+  const { data: roles = [] } = useUserRoles(user?.id);
+  // Funcionários (cashier) só visualizam — sem resolver, sem recalcular.
+  const canManage = highestRole(roles) !== "cashier";
 
   const { data = [], isLoading } = useQuery<Alert[]>({
     queryKey: ["alerts"],
@@ -109,10 +114,12 @@ function AlertasPage() {
               Limiares definidos por produto em <Link to="/estoque" className="underline">Estoque</Link>: estoque mínimo e dias de aviso de validade. Vendas de lotes vencidos são bloqueadas automaticamente.
             </p>
           </div>
-          <Button variant="outline" onClick={() => refresh.mutate()} disabled={refresh.isPending}>
-            {refresh.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
-            Recalcular
-          </Button>
+          {canManage && (
+            <Button variant="outline" onClick={() => refresh.mutate()} disabled={refresh.isPending}>
+              {refresh.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
+              Recalcular
+            </Button>
+          )}
         </CardHeader>
         <CardContent>
           <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)}>
@@ -139,7 +146,7 @@ function AlertasPage() {
                         <TableHead className="w-40">Tipo</TableHead>
                         <TableHead>Mensagem</TableHead>
                         <TableHead className="w-48">Criado</TableHead>
-                        <TableHead className="w-40 text-right">Ações</TableHead>
+                        {canManage && <TableHead className="w-40 text-right">Ações</TableHead>}
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -153,18 +160,20 @@ function AlertasPage() {
                           </TableCell>
                           <TableCell className="text-sm">{a.message}</TableCell>
                           <TableCell className="text-xs text-muted-foreground">{formatDateTime(a.created_at)}</TableCell>
-                          <TableCell className="text-right">
-                            <div className="flex justify-end gap-1">
-                              {a.product_id && (
-                                <Button asChild size="sm" variant="ghost" title="Ver no estoque">
-                                  <Link to="/estoque"><Package className="mr-1 h-3 w-3" /> Estoque</Link>
+                          {canManage && (
+                            <TableCell className="text-right">
+                              <div className="flex justify-end gap-1">
+                                {a.product_id && (
+                                  <Button asChild size="sm" variant="ghost" title="Ver no estoque">
+                                    <Link to="/estoque"><Package className="mr-1 h-3 w-3" /> Estoque</Link>
+                                  </Button>
+                                )}
+                                <Button size="sm" variant="ghost" onClick={() => resolve.mutate(a.id)}>
+                                  <Check className="mr-1 h-3 w-3" /> Resolver
                                 </Button>
-                              )}
-                              <Button size="sm" variant="ghost" onClick={() => resolve.mutate(a.id)}>
-                                <Check className="mr-1 h-3 w-3" /> Resolver
-                              </Button>
-                            </div>
-                          </TableCell>
+                              </div>
+                            </TableCell>
+                          )}
                         </TableRow>
                       ))}
                     </TableBody>
