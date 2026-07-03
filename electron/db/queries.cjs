@@ -261,7 +261,15 @@ function nextReceiptNumber() {
   db.prepare("INSERT OR IGNORE INTO receipt_seq(year, last_value) VALUES (?, 0)").run(year);
   db.prepare("UPDATE receipt_seq SET last_value = last_value + 1 WHERE year = ?").run(year);
   const v = db.prepare("SELECT last_value FROM receipt_seq WHERE year = ?").get(year).last_value;
-  return `REC-${year}-${String(v).padStart(6, "0")}`;
+  return { seq: v, receipt: `REC-${year}-${String(v).padStart(6, "0")}` };
+}
+
+function writeAudit(user_id, action, entity, entity_id, details) {
+  getDb()
+    .prepare(
+      "INSERT INTO audit_logs (id, user_id, action, entity, entity_id, details) VALUES (?, ?, ?, ?, ?, ?)",
+    )
+    .run(randomUUID(), user_id || null, action, entity || null, entity_id || null, details ? JSON.stringify(details) : null);
 }
 
 function processSale({ customer_id, payment_method, discount = 0, items, account_id }) {
