@@ -406,6 +406,29 @@ function EstatisticaPage() {
     return parts.join(" · ");
   }, [from, to, hourFrom, hourTo, year, month, weekday, categoryId, productSearch, payment, accountId, operatorId, base]);
 
+  // ---------------- Notificação de inconsistência por filtro ----------------
+  // Toast quando a combinação de filtros expõe uma divergência contabilística
+  // (venda sem movimento, crédito órfão, ou totais diferentes). Chave estável
+  // para não repetir o aviso para o mesmo cenário.
+  useEffect(() => {
+    if (!agg) return;
+    const r = agg.recon;
+    const key = `${filterSummary}|${r.reconciled ? "ok" : "bad"}|${r.diffGlobal.toFixed(2)}|${r.salesMissingCount}|${r.orphanCreditCount}`;
+    if (key === lastNotifiedKey.current) return;
+    lastNotifiedKey.current = key;
+    if (r.reconciled) return;
+    const parts: string[] = [];
+    if (Math.abs(r.diffGlobal) >= 0.01) parts.push(`diferença ${formatMZN(r.diffGlobal)}`);
+    if (r.salesMissingCount > 0) parts.push(`${r.salesMissingCount} venda(s) sem movimento`);
+    if (r.orphanCreditCount > 0) parts.push(`${r.orphanCreditCount} crédito(s) órfão(s)`);
+    toast.warning("Inconsistência detectada nos filtros actuais", {
+      description: `${parts.join(" · ")} — ${filterSummary}`,
+      duration: 6000,
+    });
+  }, [agg, filterSummary]);
+
+
+
   function exportCSV() {
     if (!agg) return;
     const rows: string[] = [`# Filtros: ${filterSummary}`, "Produto;Quantidade;Receita;Margem;% Margem"];
