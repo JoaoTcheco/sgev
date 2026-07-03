@@ -385,6 +385,7 @@ function addBatchEntry({ product_id, supplier_id, batch_number, expiry_date, qua
       `INSERT INTO stock_movements (id, batch_id, product_id, type, quantity, reason, user_id)
        VALUES (?, ?, ?, 'in', ?, 'Entrada de estoque', ?)`,
     ).run(randomUUID(), id, product_id, quantity, user.id);
+    writeAudit(user.id, "stock.entry", "batches", id, { product_id, supplier_id, batch_number, quantity, expiry_date });
     refreshAlerts();
     return id;
   })();
