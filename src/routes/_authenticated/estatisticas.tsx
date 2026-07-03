@@ -353,27 +353,9 @@ function EstatisticaPage() {
     };
   }, [filtered, base, sort, topN, from, to]);
 
-  // ---------------- Notificação de inconsistência por filtro ----------------
-  // Dispara um toast quando a combinação de filtros actual expõe uma divergência
-  // contabilística (venda sem movimento, crédito órfão, ou totais diferentes).
-  // Usa uma chave estável para não repetir o aviso para o mesmo cenário.
   const lastNotifiedKey = useRef<string>("");
-  useEffect(() => {
-    if (!agg) return;
-    const r = agg.recon;
-    const key = `${filterSummary}|${r.reconciled ? "ok" : "bad"}|${r.diffGlobal.toFixed(2)}|${r.salesMissingCount}|${r.orphanCreditCount}`;
-    if (key === lastNotifiedKey.current) return;
-    lastNotifiedKey.current = key;
-    if (r.reconciled) return; // só notifica quando há problema
-    const parts: string[] = [];
-    if (Math.abs(r.diffGlobal) >= 0.01) parts.push(`diferença ${formatMZN(r.diffGlobal)}`);
-    if (r.salesMissingCount > 0) parts.push(`${r.salesMissingCount} venda(s) sem movimento`);
-    if (r.orphanCreditCount > 0) parts.push(`${r.orphanCreditCount} crédito(s) órfão(s)`);
-    toast.warning("Inconsistência detectada nos filtros actuais", {
-      description: `${parts.join(" · ")} — ${filterSummary}`,
-      duration: 6000,
-    });
-  }, [agg, filterSummary]);
+
+
 
 
 
