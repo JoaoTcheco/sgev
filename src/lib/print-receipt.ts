@@ -109,8 +109,8 @@ export function printReceiptWindow(input: PrintReceiptInput) {
       ${change != null ? `<div class="row bold"><span>Troco</span><span>${escapeHtml(formatMZN(change))}</span></div>` : ""}
 
       <div class="dashed"></div>
-      <div style="padding:2px 0;">
-        <svg id="bc" style="width:100%;"></svg>
+      <div style="padding:2px 0;text-align:center;">
+        <svg id="bc" style="display:block;margin:0 auto;max-width:100%;height:auto;"></svg>
         <div class="center bold" style="letter-spacing:2px;margin-top:2px;">${escapeHtml(ref)}</div>
         <div class="center xs">Leia o código de barras para validar este recibo</div>
       </div>
