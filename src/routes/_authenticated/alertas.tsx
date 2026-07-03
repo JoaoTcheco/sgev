@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { formatDateTime } from "@/lib/format";
+import { useAuthUser, useUserRoles, highestRole } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/_authenticated/alertas")({
   head: () => ({ meta: [{ title: "Alertas — PharmaSys" }] }),
@@ -32,6 +33,10 @@ const SEV_RANK: Record<string, number> = { critical: 3, warning: 2, info: 1 };
 function AlertasPage() {
   const qc = useQueryClient();
   const [tab, setTab] = useState<"all" | "low_stock" | "near_expiry" | "expired">("all");
+  const { data: user } = useAuthUser();
+  const { data: roles = [] } = useUserRoles(user?.id);
+  // Funcionários (cashier) só visualizam — sem resolver, sem recalcular.
+  const canManage = highestRole(roles) !== "cashier";
 
   const { data = [], isLoading } = useQuery<Alert[]>({
     queryKey: ["alerts"],
