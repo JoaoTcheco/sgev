@@ -1,10 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
-import { History, Loader2 } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { CheckCircle2, History, Loader2, ShieldCheck, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import { formatDateTime, formatMZN } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/historico")({
@@ -17,13 +19,17 @@ type SaleRow = {
   total: number; status: string; created_at: string;
 };
 
+type ReconcileIssue = { kind: string; id: string; name?: string; receipt?: string; batch_number?: string; stored?: number; computed?: number; diff?: number };
+type ReconcileResult = { checked_at: string; ok: boolean; issues: ReconcileIssue[] };
+
 function HistoricoPage() {
+  const qc = useQueryClient();
   const { data, isLoading } = useQuery({
     queryKey: ["history"],
     queryFn: async () => {
       const [moves, logs, sales] = await Promise.all([
-        supabase.from("stock_movements").select("id, type, quantity, reason, created_at, products(name)").order("created_at", { ascending: false }).limit(50),
-        supabase.from("audit_logs").select("id, entity, action, created_at, details").order("created_at", { ascending: false }).limit(50),
+        supabase.from("stock_movements").select("id, type, quantity, reason, created_at, txn_id, products(name)").order("created_at", { ascending: false }).limit(50),
+        supabase.from("audit_logs").select("id, entity, action, created_at, details, txn_id").order("created_at", { ascending: false }).limit(50),
         supabase.from("sales").select("id, receipt_number, sale_number, total, status, created_at").order("created_at", { ascending: false }).limit(30),
       ]);
       if (moves.error) throw moves.error;
@@ -32,6 +38,22 @@ function HistoricoPage() {
       return { moves: moves.data ?? [], logs: logs.data ?? [], sales: (sales.data ?? []) as SaleRow[] };
     },
   });
+
+  const reconcile = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.rpc("reconcile");
+      if (error) throw error;
+      return data as ReconcileResult;
+    },
+    onSuccess: (r) => {
+      qc.setQueryData(["reconcile-last"], r);
+      if (r.ok) toast.success("Reconciliação OK — sem divergências");
+      else toast.error(`Reconciliação encontrou ${r.issues.length} divergência(s)`);
+    },
+    onError: (e: Error) => toast.error("Falha na reconciliação", { description: e.message }),
+  });
+  const lastRecon = qc.getQueryData<ReconcileResult>(["reconcile-last"]);
+
 
   if (isLoading) return <div className="flex justify-center py-20"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
 
