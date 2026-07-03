@@ -352,9 +352,54 @@ function EstatisticaPage() {
   }, [filtered, base, sort, topN, from, to]);
 
 
+  // ---------------- Filter validation & summary ----------------
+  const validation = useMemo(() => {
+    const errors: string[] = [];
+    const warnings: string[] = [];
+    if (new Date(from) > new Date(to)) errors.push("A data inicial é posterior à data final.");
+    if (Number(hourFrom) > Number(hourTo)) errors.push("A hora inicial é posterior à hora final.");
+    if (year !== "all" && from && to) {
+      const y = Number(year);
+      const fy = new Date(from).getFullYear(), ty = new Date(to).getFullYear();
+      if (y < fy || y > ty) warnings.push(`Ano ${y} está fora do intervalo ${fy}–${ty}.`);
+    }
+    if (month !== "all" && year !== "all" && from && to) {
+      const target = new Date(Number(year), Number(month) - 1, 1);
+      const monthEnd = new Date(Number(year), Number(month), 0);
+      if (monthEnd < new Date(from) || target > new Date(to)) {
+        warnings.push(`Combinação ${MONTHS[Number(month) - 1]}/${year} está fora do intervalo seleccionado.`);
+      }
+    }
+    if (filtered && filtered.sales.length === 0) warnings.push("Nenhuma venda encontrada — considere alargar os filtros.");
+    return { errors, warnings, ok: errors.length === 0 };
+  }, [from, to, hourFrom, hourTo, year, month, filtered]);
+
+  const filterSummary = useMemo(() => {
+    const parts: string[] = [`${formatDate(from)} a ${formatDate(to)}`];
+    parts.push(`horas ${hourFrom}h–${hourTo}h`);
+    if (year !== "all") parts.push(`ano ${year}`);
+    if (month !== "all") parts.push(`mês ${MONTHS[Number(month) - 1]}`);
+    if (weekday !== "all") parts.push(`${WEEKDAY[Number(weekday)]}`);
+    if (categoryId !== "all") {
+      const c: any = (base?.categories ?? []).find((x: any) => x.id === categoryId);
+      if (c) parts.push(`categoria ${c.name}`);
+    }
+    if (productSearch) parts.push(`produto contém "${productSearch}"`);
+    if (payment !== "all") parts.push(`pagamento ${PAYMENT_LABEL[payment]}`);
+    if (accountId !== "all") {
+      const a: any = (base?.accounts ?? []).find((x: any) => x.id === accountId);
+      if (a) parts.push(`conta ${a.name}`);
+    }
+    if (operatorId !== "all") {
+      const p: any = (base?.profiles ?? []).find((x: any) => x.id === operatorId);
+      if (p) parts.push(`operador ${p.full_name ?? p.email}`);
+    }
+    return parts.join(" · ");
+  }, [from, to, hourFrom, hourTo, year, month, weekday, categoryId, productSearch, payment, accountId, operatorId, base]);
+
   function exportCSV() {
     if (!agg) return;
-    const rows: string[] = ["Produto;Quantidade;Receita;Margem;% Margem"];
+    const rows: string[] = [`# Filtros: ${filterSummary}`, "Produto;Quantidade;Receita;Margem;% Margem"];
     for (const p of agg.topProducts) {
       rows.push(`${p.name};${p.qty};${p.revenue.toFixed(2)};${p.margin.toFixed(2)};${p.marginPct.toFixed(1)}%`);
     }
@@ -370,6 +415,7 @@ function EstatisticaPage() {
   if (baseLoading || isLoading || !agg || !base) {
     return <div className="flex justify-center py-20"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
   }
+
 
   return (
     <div className="space-y-4">
