@@ -513,6 +513,7 @@ function adjustAccount({ account_id, type, amount, reason }) {
         account_id,
       );
     }
+    writeAudit(user.id, "account." + type, "financial_accounts", account_id, { amount: amount ?? acc.balance, reason });
     return id;
   })();
 }
