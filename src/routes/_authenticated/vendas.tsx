@@ -220,7 +220,26 @@ function VendasPage() {
     onError: (e: Error) => toast.error("Falha ao finalizar", { description: e.message }),
   });
 
-  function printReceipt() { window.print(); }
+  function printReceipt() {
+    if (!settings || !lastSale) return;
+    try {
+      printReceiptWindow({
+        settings,
+        items: cart.map((i) => ({ name: i.name, quantity: i.quantity, unit_label: i.unit_label, unit_price: i.unit_price })),
+        subtotal,
+        discount,
+        total,
+        paymentLabel,
+        received: paymentKind === "cash" ? received : null,
+        change: paymentKind === "cash" ? change : null,
+        ref: lastSale.receipt_number ?? lastSale.id,
+        operatorName: profile?.full_name ?? user?.email ?? null,
+        at: new Date(lastSale.at),
+      });
+    } catch (e) {
+      toast.error("Falha ao imprimir", { description: (e as Error).message });
+    }
+  }
 
   return (
     <div className="space-y-4">
