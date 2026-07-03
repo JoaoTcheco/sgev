@@ -18,6 +18,7 @@ import { formatMZN, formatDateTime } from "@/lib/format";
 import { Barcode } from "@/components/barcode";
 import { useLabelSettings, DEFAULT_LABEL_SETTINGS, type LabelMode } from "@/hooks/use-label-settings";
 import { printLabels } from "@/lib/print-labels";
+import { printTestReceipt } from "@/lib/print-receipt";
 import { Printer, RotateCcw } from "lucide-react";
 
 
