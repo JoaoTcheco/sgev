@@ -10,7 +10,7 @@ import {
   History,
   Wallet,
   Truck,
-  FileText,
+  
   LogOut,
   Pill,
   Settings,
@@ -54,8 +54,8 @@ const OPERATIONAL: Item[] = [
 const MANAGEMENT: Item[] = [
   { title: "Contas", url: "/contas", icon: Wallet, roles: ["admin", "pharmacist"] },
   { title: "Fornecedores", url: "/fornecedores", icon: Truck, roles: ["admin", "pharmacist"] },
-  { title: "Relatórios", url: "/relatorios", icon: FileText, roles: ["admin"] },
 ];
+
 
 const ADMIN: Item[] = [
   { title: "Utilizadores", url: "/utilizadores", icon: Users, roles: ["admin"] },
