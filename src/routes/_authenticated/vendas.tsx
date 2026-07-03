@@ -196,9 +196,16 @@ function VendasPage() {
         p_account_id: accountId,
       });
       if (error) throw error;
-      const saleId = data as string;
-      const { data: sale } = await supabase.from("sales").select("receipt_number").eq("id", saleId).maybeSingle();
-      return { saleId, receipt_number: (sale?.receipt_number as string | null) ?? null };
+      // process_sale may return either a legacy sale id (string) or the new
+      // { sale_id, txn_id, receipt } payload with per-transaction traceability.
+      const payload = data as string | { sale_id: string; txn_id?: string; receipt?: string };
+      const saleId = typeof payload === "string" ? payload : payload.sale_id;
+      let receipt_number = typeof payload === "object" ? payload.receipt ?? null : null;
+      if (!receipt_number) {
+        const { data: sale } = await supabase.from("sales").select("receipt_number").eq("id", saleId).maybeSingle();
+        receipt_number = (sale?.receipt_number as string | null) ?? null;
+      }
+      return { saleId, receipt_number };
     },
     onSuccess: ({ saleId, receipt_number }) => {
       toast.success("Venda finalizada", { description: receipt_number ? `Recibo ${receipt_number}` : undefined });
