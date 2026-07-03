@@ -16,6 +16,7 @@ import { formatMZN, formatDateTime } from "@/lib/format";
 import { usePharmacySettings } from "@/hooks/use-settings";
 import { useAuthUser, useProfile } from "@/hooks/use-auth";
 import { ReceiptBody } from "@/routes/_authenticated/configuracoes";
+import { printReceiptWindow } from "@/lib/print-receipt";
 import { useOpenCashSession } from "@/hooks/use-cash-session";
 import { useBarcodeScanner } from "@/hooks/use-barcode-scanner";
 import { Link } from "@tanstack/react-router";
@@ -219,7 +220,26 @@ function VendasPage() {
     onError: (e: Error) => toast.error("Falha ao finalizar", { description: e.message }),
   });
 
-  function printReceipt() { window.print(); }
+  function printReceipt() {
+    if (!settings || !lastSale) return;
+    try {
+      printReceiptWindow({
+        settings,
+        items: cart.map((i) => ({ name: i.name, quantity: i.quantity, unit_label: i.unit_label, unit_price: i.unit_price })),
+        subtotal,
+        discount,
+        total,
+        paymentLabel,
+        received: paymentKind === "cash" ? received : null,
+        change: paymentKind === "cash" ? change : null,
+        ref: lastSale.receipt_number ?? lastSale.id,
+        operatorName: profile?.full_name ?? user?.email ?? null,
+        at: new Date(lastSale.at),
+      });
+    } catch (e) {
+      toast.error("Falha ao imprimir", { description: (e as Error).message });
+    }
+  }
 
   return (
     <div className="space-y-4">
@@ -449,11 +469,12 @@ function VendasPage() {
       </Card>
 
       <Dialog open={!!lastSale} onOpenChange={(o) => { if (!o) { setLastSale(null); resetAll(); } }}>
-        <DialogContent className="max-w-[min(96vw,640px)]">
-          <DialogHeader>
+        <DialogContent className="flex max-h-[90vh] max-w-[min(96vw,640px)] flex-col p-0 gap-0">
+          <DialogHeader className="border-b px-4 py-3 sm:px-6">
             <DialogTitle className="flex items-center gap-2"><Receipt className="h-5 w-5" /> Recibo da venda</DialogTitle>
           </DialogHeader>
-          <div id="print-area" className="flex justify-center overflow-auto rounded-md border bg-muted/30 p-3">
+          <div id="print-area" className="flex-1 min-h-0 overflow-auto bg-muted/30 p-3">
+            <div className="flex justify-center">
             {settings && lastSale && (
               <ReceiptBody
                 s={settings}
@@ -470,8 +491,9 @@ function VendasPage() {
                 at={lastSale.at}
               />
             )}
+            </div>
           </div>
-          <DialogFooter className="gap-2">
+          <DialogFooter className="gap-2 border-t bg-background px-4 py-3 sm:px-6">
             <Button variant="outline" onClick={printReceipt}><Printer className="mr-2 h-4 w-4" /> Imprimir</Button>
             <Button onClick={() => { setLastSale(null); resetAll(); }}>Nova venda</Button>
           </DialogFooter>
