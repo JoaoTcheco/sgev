@@ -264,12 +264,90 @@ function nextReceiptNumber() {
   return { seq: v, receipt: `REC-${year}-${String(v).padStart(6, "0")}` };
 }
 
-function writeAudit(user_id, action, entity, entity_id, details) {
+function writeAudit(user_id, action, entity, entity_id, details, txn_id) {
   getDb()
     .prepare(
-      "INSERT INTO audit_logs (id, user_id, action, entity, entity_id, details) VALUES (?, ?, ?, ?, ?, ?)",
+      "INSERT INTO audit_logs (id, user_id, action, entity, entity_id, details, txn_id) VALUES (?, ?, ?, ?, ?, ?, ?)",
     )
-    .run(randomUUID(), user_id || null, action, entity || null, entity_id || null, details ? JSON.stringify(details) : null);
+    .run(randomUUID(), user_id || null, action, entity || null, entity_id || null, details ? JSON.stringify(details) : null, txn_id || null);
+}
+
+// ---------- Post-transaction integrity ----------
+function assertAccountIntegrity(account_id) {
+  const db = getDb();
+  const acc = db.prepare("SELECT balance FROM financial_accounts WHERE id = ?").get(account_id);
+  const agg = db
+    .prepare(
+      `SELECT COALESCE(SUM(CASE type
+          WHEN 'credit' THEN amount
+          WHEN 'debit'  THEN -amount
+          WHEN 'reset'  THEN -amount
+          ELSE 0 END), 0) AS s FROM account_movements WHERE account_id = ?`,
+    )
+    .get(account_id).s;
+  if (Math.abs((acc?.balance ?? 0) - agg) > 0.005) {
+    throw new Error(
+      `Integridade violada: saldo da conta (${acc?.balance}) diverge dos movimentos (${agg}).`,
+    );
+  }
+}
+function assertBatchIntegrity(batch_id) {
+  const db = getDb();
+  const b = db.prepare("SELECT quantity FROM batches WHERE id = ?").get(batch_id);
+  if (!b) return;
+  const agg = db
+    .prepare(
+      `SELECT COALESCE(SUM(CASE type WHEN 'in' THEN quantity WHEN 'out' THEN -quantity WHEN 'adjust' THEN quantity ELSE 0 END), 0) AS s
+       FROM stock_movements WHERE batch_id = ?`,
+    )
+    .get(batch_id).s;
+  if (b.quantity !== agg) {
+    throw new Error(
+      `Integridade violada: qtd do lote (${b.quantity}) diverge dos movimentos (${agg}).`,
+    );
+  }
+}
+function assertSaleIntegrity(sale_id) {
+  const db = getDb();
+  const s = db.prepare("SELECT subtotal, discount, total FROM sales WHERE id = ?").get(sale_id);
+  const items = db.prepare("SELECT COALESCE(SUM(total), 0) AS s FROM sale_items WHERE sale_id = ?").get(sale_id).s;
+  if (Math.abs(s.subtotal - items) > 0.005) {
+    throw new Error(`Integridade violada: subtotal da venda (${s.subtotal}) diverge dos itens (${items}).`);
+  }
+  if (Math.abs(s.total - Math.max(0, s.subtotal - (s.discount || 0))) > 0.005) {
+    throw new Error(`Integridade violada: total da venda inconsistente com subtotal - desconto.`);
+  }
+}
+
+function reconcile() {
+  const db = getDb();
+  const issues = [];
+  for (const a of db.prepare("SELECT id, name, balance FROM financial_accounts").all()) {
+    const agg = db
+      .prepare(
+        `SELECT COALESCE(SUM(CASE type WHEN 'credit' THEN amount WHEN 'debit' THEN -amount WHEN 'reset' THEN -amount ELSE 0 END),0) AS s FROM account_movements WHERE account_id = ?`,
+      )
+      .get(a.id).s;
+    if (Math.abs(a.balance - agg) > 0.005)
+      issues.push({ kind: "account", id: a.id, name: a.name, stored: a.balance, computed: agg, diff: a.balance - agg });
+  }
+  for (const b of db.prepare("SELECT id, product_id, batch_number, quantity FROM batches").all()) {
+    const agg = db
+      .prepare(
+        `SELECT COALESCE(SUM(CASE type WHEN 'in' THEN quantity WHEN 'out' THEN -quantity WHEN 'adjust' THEN quantity ELSE 0 END),0) AS s FROM stock_movements WHERE batch_id = ?`,
+      )
+      .get(b.id).s;
+    if (b.quantity !== agg)
+      issues.push({ kind: "batch", id: b.id, batch_number: b.batch_number, stored: b.quantity, computed: agg, diff: b.quantity - agg });
+  }
+  for (const s of db.prepare("SELECT id, receipt_number, subtotal, discount, total FROM sales").all()) {
+    const items = db.prepare("SELECT COALESCE(SUM(total),0) AS s FROM sale_items WHERE sale_id = ?").get(s.id).s;
+    if (Math.abs(s.subtotal - items) > 0.005)
+      issues.push({ kind: "sale.subtotal", id: s.id, receipt: s.receipt_number, stored: s.subtotal, computed: items });
+    if (Math.abs(s.total - Math.max(0, s.subtotal - (s.discount || 0))) > 0.005)
+      issues.push({ kind: "sale.total", id: s.id, receipt: s.receipt_number, stored: s.total });
+  }
+  return { checked_at: new Date().toISOString(), ok: issues.length === 0, issues };
 }
 
 function processSale({ customer_id, payment_method, discount = 0, items, account_id }) {
