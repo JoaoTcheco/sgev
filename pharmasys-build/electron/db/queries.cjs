@@ -261,7 +261,15 @@ function nextReceiptNumber() {
   db.prepare("INSERT OR IGNORE INTO receipt_seq(year, last_value) VALUES (?, 0)").run(year);
   db.prepare("UPDATE receipt_seq SET last_value = last_value + 1 WHERE year = ?").run(year);
   const v = db.prepare("SELECT last_value FROM receipt_seq WHERE year = ?").get(year).last_value;
-  return `REC-${year}-${String(v).padStart(6, "0")}`;
+  return { seq: v, receipt: `REC-${year}-${String(v).padStart(6, "0")}` };
+}
+
+function writeAudit(user_id, action, entity, entity_id, details) {
+  getDb()
+    .prepare(
+      "INSERT INTO audit_logs (id, user_id, action, entity, entity_id, details) VALUES (?, ?, ?, ?, ?, ?)",
+    )
+    .run(randomUUID(), user_id || null, action, entity || null, entity_id || null, details ? JSON.stringify(details) : null);
 }
 
 function processSale({ customer_id, payment_method, discount = 0, items, account_id }) {
@@ -286,13 +294,13 @@ function processSale({ customer_id, payment_method, discount = 0, items, account
     let subtotal = 0;
     for (const it of items) subtotal += it.quantity * it.unit_price;
     const total = Math.max(0, subtotal - (discount || 0));
-    const receipt = nextReceiptNumber();
+    const { seq, receipt } = nextReceiptNumber();
     const saleId = randomUUID();
 
     db.prepare(
-      `INSERT INTO sales (id, receipt_number, customer_id, user_id, cash_session_id, account_id, subtotal, discount, total, payment_method, status)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'completed')`,
-    ).run(saleId, receipt, customer_id || null, user.id, session.id, acc, subtotal, discount || 0, total, payment_method);
+      `INSERT INTO sales (id, sale_number, receipt_number, customer_id, user_id, cash_session_id, account_id, subtotal, discount, total, payment_method, status)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'completed')`,
+    ).run(saleId, seq, receipt, customer_id || null, user.id, session.id, acc, subtotal, discount || 0, total, payment_method);
 
     for (const it of items) {
       const product = db.prepare("SELECT * FROM products WHERE id = ?").get(it.product_id);
@@ -357,6 +365,7 @@ function processSale({ customer_id, payment_method, discount = 0, items, account
       acc,
     );
 
+    writeAudit(user.id, "sale.completed", "sales", saleId, { receipt, total, payment_method, account_id: acc });
     refreshAlerts();
     return saleId;
   })();
@@ -376,6 +385,7 @@ function addBatchEntry({ product_id, supplier_id, batch_number, expiry_date, qua
       `INSERT INTO stock_movements (id, batch_id, product_id, type, quantity, reason, user_id)
        VALUES (?, ?, ?, 'in', ?, 'Entrada de estoque', ?)`,
     ).run(randomUUID(), id, product_id, quantity, user.id);
+    writeAudit(user.id, "stock.entry", "batches", id, { product_id, supplier_id, batch_number, quantity, expiry_date });
     refreshAlerts();
     return id;
   })();
@@ -503,6 +513,7 @@ function adjustAccount({ account_id, type, amount, reason }) {
         account_id,
       );
     }
+    writeAudit(user.id, "account." + type, "financial_accounts", account_id, { amount: amount ?? acc.balance, reason });
     return id;
   })();
 }

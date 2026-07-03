@@ -43,8 +43,8 @@ CREATE TABLE IF NOT EXISTS categories (
 
 CREATE TABLE IF NOT EXISTS suppliers (
   id TEXT PRIMARY KEY,
-  name TEXT NOT NULL,
-  nuit TEXT,
+  legal_name TEXT NOT NULL,
+  tax_id TEXT,
   contact_name TEXT,
   phone TEXT,
   email TEXT,
@@ -107,11 +107,12 @@ CREATE INDEX IF NOT EXISTS idx_batches_expiry ON batches(expiry_date);
 CREATE TABLE IF NOT EXISTS financial_accounts (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
-  type TEXT NOT NULL,
+  type TEXT NOT NULL DEFAULT 'other',
   balance REAL NOT NULL DEFAULT 0,
   is_system INTEGER NOT NULL DEFAULT 0,
   active INTEGER NOT NULL DEFAULT 1,
   notes TEXT,
+  created_by TEXT REFERENCES users(id),
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
@@ -132,6 +133,7 @@ CREATE INDEX IF NOT EXISTS idx_cash_sessions_user ON cash_sessions(user_id, stat
 
 CREATE TABLE IF NOT EXISTS sales (
   id TEXT PRIMARY KEY,
+  sale_number INTEGER NOT NULL DEFAULT 0,
   receipt_number TEXT UNIQUE NOT NULL,
   customer_id TEXT REFERENCES customers(id) ON DELETE SET NULL,
   user_id TEXT NOT NULL REFERENCES users(id),
