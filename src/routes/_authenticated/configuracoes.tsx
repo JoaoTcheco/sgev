@@ -165,13 +165,29 @@ function ConfiguracoesPage() {
       </div>
 
       <Card className="self-start">
-        <CardHeader><CardTitle>Pré-visualização do recibo</CardTitle></CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0">
+          <CardTitle>Pré-visualização do recibo</CardTitle>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => {
+              try {
+                printTestReceipt(form, null);
+              } catch (e) {
+                toast.error("Falha ao imprimir", { description: (e as Error).message });
+              }
+            }}
+          >
+            <Printer className="mr-2 h-4 w-4" /> Imprimir teste
+          </Button>
+        </CardHeader>
         <CardContent>
           <div className="flex justify-center rounded-lg bg-muted/40 p-4">
             <ReceiptPreview s={form} />
           </div>
         </CardContent>
       </Card>
+
     </div>
   );
 }
