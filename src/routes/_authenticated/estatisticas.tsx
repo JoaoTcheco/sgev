@@ -939,3 +939,15 @@ function Kpi({ icon, label, value }: { icon: React.ReactNode; label: string; val
     </Card>
   );
 }
+
+function ReconStat({ label, value, accent }: { label: string; value: string; accent?: "ok" | "warn" }) {
+  const color =
+    accent === "ok" ? "text-emerald-600" : accent === "warn" ? "text-amber-700" : "text-foreground";
+  return (
+    <div className="rounded-md border p-3">
+      <div className="text-xs text-muted-foreground">{label}</div>
+      <div className={`text-lg font-semibold ${color}`}>{value}</div>
+    </div>
+  );
+}
+
