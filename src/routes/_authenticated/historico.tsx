@@ -61,6 +61,33 @@ function HistoricoPage() {
   return (
     <div className="space-y-4">
       <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0">
+          <CardTitle className="flex items-center gap-2"><ShieldCheck className="h-5 w-5" /> Reconciliação e integridade</CardTitle>
+          <Button size="sm" variant="secondary" onClick={() => reconcile.mutate()} disabled={reconcile.isPending}>
+            {reconcile.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Verificar agora"}
+          </Button>
+        </CardHeader>
+        <CardContent className="space-y-3 text-sm">
+          {!lastRecon && <p className="text-muted-foreground">Corre uma verificação para confirmar que saldos, lotes e totais de venda batem certo com os movimentos gravados.</p>}
+          {lastRecon?.ok && (
+            <div className="flex items-center gap-2 text-emerald-600"><CheckCircle2 className="h-4 w-4" /> Tudo íntegro — verificado em {formatDateTime(lastRecon.checked_at)}.</div>
+          )}
+          {lastRecon && !lastRecon.ok && (
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-destructive"><AlertTriangle className="h-4 w-4" /> {lastRecon.issues.length} divergência(s) — {formatDateTime(lastRecon.checked_at)}</div>
+              <ul className="ml-4 list-disc space-y-1 text-xs">
+                {lastRecon.issues.slice(0, 10).map((i, idx) => (
+                  <li key={idx}>
+                    <b>{i.kind}</b> {i.name ?? i.receipt ?? i.batch_number ?? i.id}: gravado {i.stored} vs calculado {i.computed}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
         <CardHeader><CardTitle className="flex items-center gap-2"><History className="h-5 w-5" /> Vendas recentes</CardTitle></CardHeader>
         <CardContent>
           <Table>
