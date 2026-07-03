@@ -780,4 +780,6 @@ module.exports = {
   adminDeleteUser,
   changeOwnPassword,
   reconcile,
+  txnDetail,
+  auditExport,
 };
