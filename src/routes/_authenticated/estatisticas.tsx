@@ -3,8 +3,9 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   BarChart3, TrendingUp, ShoppingCart, Loader2, Percent, Wallet, Download,
-  Filter, RotateCcw, ArrowUpDown,
+  Filter, RotateCcw, ArrowUpDown, AlertTriangle, CheckCircle2, Info,
 } from "lucide-react";
+
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,7 +14,9 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+
 import {
   Bar, BarChart, CartesianGrid, Cell, Line, LineChart, Pie, PieChart,
   ResponsiveContainer, Tooltip, XAxis, YAxis, Legend,
@@ -124,8 +127,9 @@ function EstatisticaPage() {
           .select("sale_id, product_id, product_name, quantity, unit_price, total, created_at")
           .gte("created_at", fromISO).lte("created_at", toISO).limit(50000),
         supabase.from("account_movements")
-          .select("id, account_id, type, amount, created_at")
+          .select("id, account_id, type, amount, created_at, sale_id")
           .gte("created_at", fromISO).lte("created_at", toISO).limit(50000),
+
 
       ]);
       for (const r of [sales, items, accMoves]) if (r.error) throw r.error;
@@ -299,6 +303,36 @@ function EstatisticaPage() {
       .map(([name, v]) => ({ name, credit: v.credit, debit: v.debit, net: v.credit - v.debit, count: v.count }))
       .sort((a, b) => b.count - a.count);
 
+    // ---------------- Accounting reconciliation ----------------
+    // For each filtered sale we expect exactly one credit account_movement linked via sale_id.
+    // We cross-check global totals + per-payment method + per-account.
+    const saleIdSet2 = new Set(filtered.sales.map((s: any) => s.id));
+    const salesTotal = filtered.sales.reduce((s: number, x: any) => s + Number(x.total), 0);
+    const linkedMoves = filtered.accMoves.filter(
+      (m: any) => m.type === "credit" && m.sale_id && saleIdSet2.has(m.sale_id),
+    );
+    const linkedTotal = linkedMoves.reduce((s: number, m: any) => s + Number(m.amount), 0);
+    const linkedSaleIds = new Set(linkedMoves.map((m: any) => m.sale_id));
+    const salesMissingMovement = filtered.sales.filter((s: any) => !linkedSaleIds.has(s.id));
+    const orphanCredits = filtered.accMoves.filter(
+      (m: any) => m.type === "credit" && (!m.sale_id || !saleIdSet2.has(m.sale_id)),
+    );
+    // Per-payment reconciliation
+    const salesByPay = new Map<string, number>();
+    for (const s of filtered.sales) salesByPay.set(s.payment_method, (salesByPay.get(s.payment_method) ?? 0) + Number(s.total));
+    const movesByPay = new Map<string, number>();
+    for (const m of linkedMoves) {
+      const s: any = filtered.sales.find((x: any) => x.id === m.sale_id);
+      if (!s) continue;
+      movesByPay.set(s.payment_method, (movesByPay.get(s.payment_method) ?? 0) + Number(m.amount));
+    }
+    const reconcilePayments = [...new Set([...salesByPay.keys(), ...movesByPay.keys()])].map((k) => {
+      const s = salesByPay.get(k) ?? 0, mv = movesByPay.get(k) ?? 0;
+      return { method: PAYMENT_LABEL[k] ?? k, sales: s, movements: mv, diff: mv - s };
+    });
+    const diffGlobal = linkedTotal - salesTotal;
+    const reconciled = Math.abs(diffGlobal) < 0.01 && salesMissingMovement.length === 0 && orphanCredits.length === 0;
+
     return {
       revenue, cost, margin: revenue - cost,
       marginPct: revenue > 0 ? ((revenue - cost) / revenue) * 100 : 0,
@@ -307,12 +341,65 @@ function EstatisticaPage() {
       topProducts, leastSold,
       series, hourly, weekly, monthly,
       categoriesArr, operatorsArr, paymentsArr, accountsArr,
+      recon: {
+        salesTotal, linkedTotal, diffGlobal, reconciled,
+        salesMissingCount: salesMissingMovement.length,
+        orphanCreditCount: orphanCredits.length,
+        orphanCreditTotal: orphanCredits.reduce((s: number, m: any) => s + Number(m.amount), 0),
+        perPayment: reconcilePayments,
+      },
     };
   }, [filtered, base, sort, topN, from, to]);
 
+
+  // ---------------- Filter validation & summary ----------------
+  const validation = useMemo(() => {
+    const errors: string[] = [];
+    const warnings: string[] = [];
+    if (new Date(from) > new Date(to)) errors.push("A data inicial é posterior à data final.");
+    if (Number(hourFrom) > Number(hourTo)) errors.push("A hora inicial é posterior à hora final.");
+    if (year !== "all" && from && to) {
+      const y = Number(year);
+      const fy = new Date(from).getFullYear(), ty = new Date(to).getFullYear();
+      if (y < fy || y > ty) warnings.push(`Ano ${y} está fora do intervalo ${fy}–${ty}.`);
+    }
+    if (month !== "all" && year !== "all" && from && to) {
+      const target = new Date(Number(year), Number(month) - 1, 1);
+      const monthEnd = new Date(Number(year), Number(month), 0);
+      if (monthEnd < new Date(from) || target > new Date(to)) {
+        warnings.push(`Combinação ${MONTHS[Number(month) - 1]}/${year} está fora do intervalo seleccionado.`);
+      }
+    }
+    if (filtered && filtered.sales.length === 0) warnings.push("Nenhuma venda encontrada — considere alargar os filtros.");
+    return { errors, warnings, ok: errors.length === 0 };
+  }, [from, to, hourFrom, hourTo, year, month, filtered]);
+
+  const filterSummary = useMemo(() => {
+    const parts: string[] = [`${formatDate(from)} a ${formatDate(to)}`];
+    parts.push(`horas ${hourFrom}h–${hourTo}h`);
+    if (year !== "all") parts.push(`ano ${year}`);
+    if (month !== "all") parts.push(`mês ${MONTHS[Number(month) - 1]}`);
+    if (weekday !== "all") parts.push(`${WEEKDAY[Number(weekday)]}`);
+    if (categoryId !== "all") {
+      const c: any = (base?.categories ?? []).find((x: any) => x.id === categoryId);
+      if (c) parts.push(`categoria ${c.name}`);
+    }
+    if (productSearch) parts.push(`produto contém "${productSearch}"`);
+    if (payment !== "all") parts.push(`pagamento ${PAYMENT_LABEL[payment]}`);
+    if (accountId !== "all") {
+      const a: any = (base?.accounts ?? []).find((x: any) => x.id === accountId);
+      if (a) parts.push(`conta ${a.name}`);
+    }
+    if (operatorId !== "all") {
+      const p: any = (base?.profiles ?? []).find((x: any) => x.id === operatorId);
+      if (p) parts.push(`operador ${p.full_name ?? p.email}`);
+    }
+    return parts.join(" · ");
+  }, [from, to, hourFrom, hourTo, year, month, weekday, categoryId, productSearch, payment, accountId, operatorId, base]);
+
   function exportCSV() {
     if (!agg) return;
-    const rows: string[] = ["Produto;Quantidade;Receita;Margem;% Margem"];
+    const rows: string[] = [`# Filtros: ${filterSummary}`, "Produto;Quantidade;Receita;Margem;% Margem"];
     for (const p of agg.topProducts) {
       rows.push(`${p.name};${p.qty};${p.revenue.toFixed(2)};${p.margin.toFixed(2)};${p.marginPct.toFixed(1)}%`);
     }
@@ -328,6 +415,7 @@ function EstatisticaPage() {
   if (baseLoading || isLoading || !agg || !base) {
     return <div className="flex justify-center py-20"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
   }
+
 
   return (
     <div className="space-y-4">
@@ -512,6 +600,112 @@ function EstatisticaPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* ---------------- Validation ---------------- */}
+      {validation.errors.length > 0 && (
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Filtros inválidos</AlertTitle>
+          <AlertDescription>
+            <ul className="ml-4 list-disc">
+              {validation.errors.map((e) => <li key={e}>{e}</li>)}
+            </ul>
+          </AlertDescription>
+        </Alert>
+      )}
+      {validation.errors.length === 0 && validation.warnings.length > 0 && (
+        <Alert>
+          <Info className="h-4 w-4" />
+          <AlertTitle>Aviso</AlertTitle>
+          <AlertDescription>
+            <ul className="ml-4 list-disc">
+              {validation.warnings.map((w) => <li key={w}>{w}</li>)}
+            </ul>
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* ---------------- Filter summary ---------------- */}
+      <Card>
+        <CardContent className="flex flex-col gap-1 py-3 text-sm">
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <Info className="h-4 w-4" /> Resumo dos filtros aplicados
+          </div>
+          <p className="font-medium">{filterSummary}</p>
+          <p className="text-xs text-muted-foreground">
+            {agg.salesCount} venda(s) · {agg.qty} unidade(s) · receita {formatMZN(agg.revenue)} · ordenado por{" "}
+            {sort.replace("_", " ")} · top {topN}
+          </p>
+        </CardContent>
+      </Card>
+
+      {/* ---------------- Accounting consistency ---------------- */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center gap-2 text-base">
+            {agg.recon.reconciled ? (
+              <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+            ) : (
+              <AlertTriangle className="h-4 w-4 text-amber-600" />
+            )}
+            Consistência com contabilidade
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+            <ReconStat label="Receita vendas" value={formatMZN(agg.recon.salesTotal)} />
+            <ReconStat label="Créditos nas contas" value={formatMZN(agg.recon.linkedTotal)} />
+            <ReconStat
+              label="Diferença"
+              value={formatMZN(agg.recon.diffGlobal)}
+              accent={Math.abs(agg.recon.diffGlobal) < 0.01 ? "ok" : "warn"}
+            />
+            <ReconStat
+              label="Vendas sem movimento"
+              value={String(agg.recon.salesMissingCount)}
+              accent={agg.recon.salesMissingCount === 0 ? "ok" : "warn"}
+            />
+          </div>
+          {agg.recon.orphanCreditCount > 0 && (
+            <p className="text-xs text-amber-700">
+              {agg.recon.orphanCreditCount} crédito(s) sem venda associada — total {formatMZN(agg.recon.orphanCreditTotal)}.
+            </p>
+          )}
+          {agg.recon.perPayment.length > 0 && (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Método</TableHead>
+                  <TableHead className="text-right">Vendas</TableHead>
+                  <TableHead className="text-right">Movimentos</TableHead>
+                  <TableHead className="text-right">Diferença</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {agg.recon.perPayment.map((r) => (
+                  <TableRow key={r.method}>
+                    <TableCell className="font-medium">{r.method}</TableCell>
+                    <TableCell className="text-right">{formatMZN(r.sales)}</TableCell>
+                    <TableCell className="text-right">{formatMZN(r.movements)}</TableCell>
+                    <TableCell
+                      className={`text-right font-semibold ${
+                        Math.abs(r.diff) < 0.01 ? "text-emerald-600" : "text-amber-700"
+                      }`}
+                    >
+                      {formatMZN(r.diff)}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+          <p className="text-xs text-muted-foreground">
+            Cada venda concluída deve gerar um crédito na conta escolhida. Divergências indicam vendas fora do caixa,
+            créditos manuais ou falhas de sincronização — corrija em Contas / Histórico.
+          </p>
+        </CardContent>
+      </Card>
+
 
       {/* ---------------- KPIs ---------------- */}
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
@@ -745,3 +939,15 @@ function Kpi({ icon, label, value }: { icon: React.ReactNode; label: string; val
     </Card>
   );
 }
+
+function ReconStat({ label, value, accent }: { label: string; value: string; accent?: "ok" | "warn" }) {
+  const color =
+    accent === "ok" ? "text-emerald-600" : accent === "warn" ? "text-amber-700" : "text-foreground";
+  return (
+    <div className="rounded-md border p-3">
+      <div className="text-xs text-muted-foreground">{label}</div>
+      <div className={`text-lg font-semibold ${color}`}>{value}</div>
+    </div>
+  );
+}
+
