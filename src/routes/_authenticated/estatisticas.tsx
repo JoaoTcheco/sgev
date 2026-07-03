@@ -445,6 +445,36 @@ function EstatisticaPage() {
     URL.revokeObjectURL(url);
   }
 
+  function exportPDF() {
+    if (!agg) return;
+    const kpiBody: (string | number)[][] = [
+      ["Receita", formatMZN(agg.revenue)],
+      ["Margem", `${formatMZN(agg.margin)} (${agg.marginPct.toFixed(1)}%)`],
+      ["Nº vendas", agg.salesCount],
+      ["Ticket médio", formatMZN(agg.avgTicket)],
+      ["Unidades vendidas", agg.qty],
+      ["Reconciliação", agg.recon.reconciled ? "OK" : `Divergência ${formatMZN(agg.recon.diffGlobal)}`],
+    ];
+    exportTablePDF({
+      title: "Estatística — Resumo",
+      filename: `estatistica-resumo-${formatDate(new Date())}`,
+      subtitle: `Filtros: ${filterSummary}`,
+      head: ["Indicador", "Valor"],
+      body: kpiBody,
+      orientation: "portrait",
+      footerNote: `${agg.salesCount} venda(s)`,
+    });
+    exportTablePDF({
+      title: "Estatística — Produtos",
+      filename: `estatistica-produtos-${formatDate(new Date())}`,
+      subtitle: `Filtros: ${filterSummary}`,
+      head: ["Produto", "Quantidade", "Receita", "Margem", "% Margem"],
+      body: agg.topProducts.map((p) => [p.name, p.qty, formatMZN(p.revenue), formatMZN(p.margin), `${p.marginPct.toFixed(1)}%`]),
+      footerNote: `${agg.topProducts.length} produto(s)`,
+    });
+  }
+
+
   if (baseLoading || isLoading || !agg || !base) {
     return <div className="flex justify-center py-20"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
   }
