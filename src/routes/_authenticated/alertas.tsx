@@ -33,7 +33,7 @@ const SEV_RANK: Record<string, number> = { critical: 3, warning: 2, info: 1 };
 function AlertasPage() {
   const qc = useQueryClient();
   const [tab, setTab] = useState<"all" | "low_stock" | "near_expiry" | "expired">("all");
-  const { data: user } = useAuthUser();
+  const { user } = useAuthUser();
   const { data: roles = [] } = useUserRoles(user?.id);
   // Funcionários (cashier) só visualizam — sem resolver, sem recalcular.
   const canManage = highestRole(roles) !== "cashier";
