@@ -303,6 +303,36 @@ function EstatisticaPage() {
       .map(([name, v]) => ({ name, credit: v.credit, debit: v.debit, net: v.credit - v.debit, count: v.count }))
       .sort((a, b) => b.count - a.count);
 
+    // ---------------- Accounting reconciliation ----------------
+    // For each filtered sale we expect exactly one credit account_movement linked via sale_id.
+    // We cross-check global totals + per-payment method + per-account.
+    const saleIdSet2 = new Set(filtered.sales.map((s: any) => s.id));
+    const salesTotal = filtered.sales.reduce((s: number, x: any) => s + Number(x.total), 0);
+    const linkedMoves = filtered.accMoves.filter(
+      (m: any) => m.type === "credit" && m.sale_id && saleIdSet2.has(m.sale_id),
+    );
+    const linkedTotal = linkedMoves.reduce((s: number, m: any) => s + Number(m.amount), 0);
+    const linkedSaleIds = new Set(linkedMoves.map((m: any) => m.sale_id));
+    const salesMissingMovement = filtered.sales.filter((s: any) => !linkedSaleIds.has(s.id));
+    const orphanCredits = filtered.accMoves.filter(
+      (m: any) => m.type === "credit" && (!m.sale_id || !saleIdSet2.has(m.sale_id)),
+    );
+    // Per-payment reconciliation
+    const salesByPay = new Map<string, number>();
+    for (const s of filtered.sales) salesByPay.set(s.payment_method, (salesByPay.get(s.payment_method) ?? 0) + Number(s.total));
+    const movesByPay = new Map<string, number>();
+    for (const m of linkedMoves) {
+      const s: any = filtered.sales.find((x: any) => x.id === m.sale_id);
+      if (!s) continue;
+      movesByPay.set(s.payment_method, (movesByPay.get(s.payment_method) ?? 0) + Number(m.amount));
+    }
+    const reconcilePayments = [...new Set([...salesByPay.keys(), ...movesByPay.keys()])].map((k) => {
+      const s = salesByPay.get(k) ?? 0, mv = movesByPay.get(k) ?? 0;
+      return { method: PAYMENT_LABEL[k] ?? k, sales: s, movements: mv, diff: mv - s };
+    });
+    const diffGlobal = linkedTotal - salesTotal;
+    const reconciled = Math.abs(diffGlobal) < 0.01 && salesMissingMovement.length === 0 && orphanCredits.length === 0;
+
     return {
       revenue, cost, margin: revenue - cost,
       marginPct: revenue > 0 ? ((revenue - cost) / revenue) * 100 : 0,
@@ -311,8 +341,16 @@ function EstatisticaPage() {
       topProducts, leastSold,
       series, hourly, weekly, monthly,
       categoriesArr, operatorsArr, paymentsArr, accountsArr,
+      recon: {
+        salesTotal, linkedTotal, diffGlobal, reconciled,
+        salesMissingCount: salesMissingMovement.length,
+        orphanCreditCount: orphanCredits.length,
+        orphanCreditTotal: orphanCredits.reduce((s: number, m: any) => s + Number(m.amount), 0),
+        perPayment: reconcilePayments,
+      },
     };
   }, [filtered, base, sort, topN, from, to]);
+
 
   function exportCSV() {
     if (!agg) return;
