@@ -594,12 +594,13 @@ function adjustAccount({ account_id, type, amount, reason }) {
   if (!["credit", "debit", "reset"].includes(type)) throw new Error("Tipo inválido");
   const acc = db.prepare("SELECT * FROM financial_accounts WHERE id = ?").get(account_id);
   if (!acc) throw new Error("Conta não encontrada");
+  const txn = randomUUID();
   return db.transaction(() => {
     const id = randomUUID();
     if (type === "reset") {
       db.prepare(
-        "INSERT INTO account_movements (id, account_id, type, amount, reason, user_id) VALUES (?, ?, 'reset', ?, ?, ?)",
-      ).run(id, account_id, acc.balance, reason || "Zerar conta", user.id);
+        "INSERT INTO account_movements (id, account_id, type, amount, reason, user_id, txn_id) VALUES (?, ?, 'reset', ?, ?, ?, ?)",
+      ).run(id, account_id, acc.balance, reason || "Zerar conta", user.id, txn);
       db.prepare("UPDATE financial_accounts SET balance = 0, updated_at = datetime('now') WHERE id = ?").run(
         account_id,
       );
@@ -607,15 +608,17 @@ function adjustAccount({ account_id, type, amount, reason }) {
       if (!(amount > 0)) throw new Error("Valor deve ser maior que zero");
       const delta = type === "credit" ? amount : -amount;
       db.prepare(
-        "INSERT INTO account_movements (id, account_id, type, amount, reason, user_id) VALUES (?, ?, ?, ?, ?, ?)",
-      ).run(id, account_id, type, amount, reason || null, user.id);
+        "INSERT INTO account_movements (id, account_id, type, amount, reason, user_id, txn_id) VALUES (?, ?, ?, ?, ?, ?, ?)",
+      ).run(id, account_id, type, amount, reason || null, user.id, txn);
       db.prepare("UPDATE financial_accounts SET balance = balance + ?, updated_at = datetime('now') WHERE id = ?").run(
         delta,
         account_id,
       );
     }
-    writeAudit(user.id, "account." + type, "financial_accounts", account_id, { amount: amount ?? acc.balance, reason });
-    return id;
+    writeAudit(user.id, "account." + type, "financial_accounts", account_id,
+      { txn, amount: amount ?? acc.balance, reason }, txn);
+    assertAccountIntegrity(account_id);
+    return { movement_id: id, txn_id: txn };
   })();
 }
 
