@@ -350,6 +350,81 @@ function reconcile() {
   return { checked_at: new Date().toISOString(), ok: issues.length === 0, issues };
 }
 
+function txnDetail({ txn_id }) {
+  if (!txn_id) throw new Error("txn_id obrigatório");
+  const db = getDb();
+  const sale = db
+    .prepare(
+      `SELECT s.*, u.full_name AS user_name, fa.name AS account_name
+       FROM sales s
+       LEFT JOIN users u ON u.id = s.user_id
+       LEFT JOIN financial_accounts fa ON fa.id = s.account_id
+       WHERE s.txn_id = ? LIMIT 1`,
+    )
+    .get(txn_id);
+  const items = db
+    .prepare(
+      `SELECT si.*, b.batch_number, b.expiry_date
+       FROM sale_items si LEFT JOIN batches b ON b.id = si.batch_id
+       WHERE si.txn_id = ?`,
+    )
+    .all(txn_id);
+  const movements = db
+    .prepare(
+      `SELECT sm.*, p.name AS product_name, b.batch_number
+       FROM stock_movements sm
+       LEFT JOIN products p ON p.id = sm.product_id
+       LEFT JOIN batches b ON b.id = sm.batch_id
+       WHERE sm.txn_id = ? ORDER BY sm.created_at`,
+    )
+    .all(txn_id);
+  const accountMoves = db
+    .prepare(
+      `SELECT am.*, fa.name AS account_name
+       FROM account_movements am LEFT JOIN financial_accounts fa ON fa.id = am.account_id
+       WHERE am.txn_id = ? ORDER BY am.created_at`,
+    )
+    .all(txn_id);
+  const batchesCreated = db
+    .prepare(
+      `SELECT b.*, p.name AS product_name, sup.legal_name AS supplier_name
+       FROM batches b
+       LEFT JOIN products p ON p.id = b.product_id
+       LEFT JOIN suppliers sup ON sup.id = b.supplier_id
+       WHERE b.txn_id = ?`,
+    )
+    .all(txn_id);
+  const logs = db
+    .prepare(
+      `SELECT al.*, u.full_name AS user_name FROM audit_logs al
+       LEFT JOIN users u ON u.id = al.user_id
+       WHERE al.txn_id = ? ORDER BY al.created_at`,
+    )
+    .all(txn_id);
+  return { txn_id, sale, items, movements, account_movements: accountMoves, batches: batchesCreated, logs };
+}
+
+function auditExport({ from, to, entity, action, only_divergent } = {}) {
+  const db = getDb();
+  const where = [];
+  const params = [];
+  if (from) { where.push("al.created_at >= ?"); params.push(from); }
+  if (to) { where.push("al.created_at <= ?"); params.push(to); }
+  if (entity) { where.push("al.entity = ?"); params.push(entity); }
+  if (action) { where.push("al.action = ?"); params.push(action); }
+  const sql = `SELECT al.id, al.created_at, al.entity, al.action, al.entity_id, al.txn_id, al.details, u.full_name AS user_name
+               FROM audit_logs al LEFT JOIN users u ON u.id = al.user_id
+               ${where.length ? "WHERE " + where.join(" AND ") : ""}
+               ORDER BY al.created_at DESC LIMIT 10000`;
+  let rows = db.prepare(sql).all(...params);
+  if (only_divergent) {
+    const rec = reconcile();
+    const bad = new Set(rec.issues.map((i) => String(i.id)));
+    rows = rows.filter((r) => r.entity_id && bad.has(String(r.entity_id)));
+  }
+  return rows;
+}
+
 function processSale({ customer_id, payment_method, discount = 0, items, account_id }) {
   const db = getDb();
   const user = requireUser();
@@ -705,4 +780,6 @@ module.exports = {
   adminDeleteUser,
   changeOwnPassword,
   reconcile,
+  txnDetail,
+  auditExport,
 };
