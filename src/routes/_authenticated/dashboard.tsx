@@ -162,7 +162,8 @@ function DashboardPage() {
         return d >= now && d <= in60;
       }).length;
 
-      const lowStockCount = alerts.filter((a) => a.type === "low_stock" || a.type === "out_of_stock").length;
+      const lowStockCount = alerts.filter((a) => a.type === "low_stock").length;
+      const expiryAlerts = alerts.filter((a) => a.type === "near_expiry" || a.type === "expired").length;
       const criticalAlerts = alerts.filter((a) => a.severity === "critical").length;
 
       const ticketMedioToday = salesToday.length ? totalToday / salesToday.length : 0;
