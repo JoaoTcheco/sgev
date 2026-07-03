@@ -207,7 +207,10 @@ function HistoricoPage() {
           <CardHeader className="space-y-3">
             <div className="flex flex-row items-center justify-between">
               <CardTitle className="flex items-center gap-2"><Filter className="h-5 w-5" /> Logs de auditoria</CardTitle>
-              <Button size="sm" variant="outline" onClick={exportCSV} disabled={!auditQuery.data?.length}><Download className="mr-2 h-4 w-4" /> CSV</Button>
+              <div className="flex gap-2">
+                <Button size="sm" variant="outline" onClick={exportCSV} disabled={!auditQuery.data?.length}><Download className="mr-2 h-4 w-4" /> CSV</Button>
+                <Button size="sm" variant="outline" onClick={exportPDF} disabled={!auditQuery.data?.length}><FileText className="mr-2 h-4 w-4" /> PDF</Button>
+              </div>
             </div>
             <div className="grid grid-cols-2 gap-2 text-xs md:grid-cols-4">
               <div><Label className="text-[10px]">De</Label><Input type="date" value={fFrom} onChange={(e) => setFFrom(e.target.value)} className="h-8" /></div>
