@@ -3,8 +3,9 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   BarChart3, TrendingUp, ShoppingCart, Loader2, Percent, Wallet, Download,
-  Filter, RotateCcw, ArrowUpDown,
+  Filter, RotateCcw, ArrowUpDown, AlertTriangle, CheckCircle2, Info,
 } from "lucide-react";
+
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,7 +14,9 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+
 import {
   Bar, BarChart, CartesianGrid, Cell, Line, LineChart, Pie, PieChart,
   ResponsiveContainer, Tooltip, XAxis, YAxis, Legend,
@@ -124,8 +127,9 @@ function EstatisticaPage() {
           .select("sale_id, product_id, product_name, quantity, unit_price, total, created_at")
           .gte("created_at", fromISO).lte("created_at", toISO).limit(50000),
         supabase.from("account_movements")
-          .select("id, account_id, type, amount, created_at")
+          .select("id, account_id, type, amount, created_at, sale_id")
           .gte("created_at", fromISO).lte("created_at", toISO).limit(50000),
+
 
       ]);
       for (const r of [sales, items, accMoves]) if (r.error) throw r.error;
