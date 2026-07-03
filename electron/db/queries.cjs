@@ -264,17 +264,96 @@ function nextReceiptNumber() {
   return { seq: v, receipt: `REC-${year}-${String(v).padStart(6, "0")}` };
 }
 
-function writeAudit(user_id, action, entity, entity_id, details) {
+function writeAudit(user_id, action, entity, entity_id, details, txn_id) {
   getDb()
     .prepare(
-      "INSERT INTO audit_logs (id, user_id, action, entity, entity_id, details) VALUES (?, ?, ?, ?, ?, ?)",
+      "INSERT INTO audit_logs (id, user_id, action, entity, entity_id, details, txn_id) VALUES (?, ?, ?, ?, ?, ?, ?)",
     )
-    .run(randomUUID(), user_id || null, action, entity || null, entity_id || null, details ? JSON.stringify(details) : null);
+    .run(randomUUID(), user_id || null, action, entity || null, entity_id || null, details ? JSON.stringify(details) : null, txn_id || null);
+}
+
+// ---------- Post-transaction integrity ----------
+function assertAccountIntegrity(account_id) {
+  const db = getDb();
+  const acc = db.prepare("SELECT balance FROM financial_accounts WHERE id = ?").get(account_id);
+  const agg = db
+    .prepare(
+      `SELECT COALESCE(SUM(CASE type
+          WHEN 'credit' THEN amount
+          WHEN 'debit'  THEN -amount
+          WHEN 'reset'  THEN -amount
+          ELSE 0 END), 0) AS s FROM account_movements WHERE account_id = ?`,
+    )
+    .get(account_id).s;
+  if (Math.abs((acc?.balance ?? 0) - agg) > 0.005) {
+    throw new Error(
+      `Integridade violada: saldo da conta (${acc?.balance}) diverge dos movimentos (${agg}).`,
+    );
+  }
+}
+function assertBatchIntegrity(batch_id) {
+  const db = getDb();
+  const b = db.prepare("SELECT quantity FROM batches WHERE id = ?").get(batch_id);
+  if (!b) return;
+  const agg = db
+    .prepare(
+      `SELECT COALESCE(SUM(CASE type WHEN 'in' THEN quantity WHEN 'out' THEN -quantity WHEN 'adjust' THEN quantity ELSE 0 END), 0) AS s
+       FROM stock_movements WHERE batch_id = ?`,
+    )
+    .get(batch_id).s;
+  if (b.quantity !== agg) {
+    throw new Error(
+      `Integridade violada: qtd do lote (${b.quantity}) diverge dos movimentos (${agg}).`,
+    );
+  }
+}
+function assertSaleIntegrity(sale_id) {
+  const db = getDb();
+  const s = db.prepare("SELECT subtotal, discount, total FROM sales WHERE id = ?").get(sale_id);
+  const items = db.prepare("SELECT COALESCE(SUM(total), 0) AS s FROM sale_items WHERE sale_id = ?").get(sale_id).s;
+  if (Math.abs(s.subtotal - items) > 0.005) {
+    throw new Error(`Integridade violada: subtotal da venda (${s.subtotal}) diverge dos itens (${items}).`);
+  }
+  if (Math.abs(s.total - Math.max(0, s.subtotal - (s.discount || 0))) > 0.005) {
+    throw new Error(`Integridade violada: total da venda inconsistente com subtotal - desconto.`);
+  }
+}
+
+function reconcile() {
+  const db = getDb();
+  const issues = [];
+  for (const a of db.prepare("SELECT id, name, balance FROM financial_accounts").all()) {
+    const agg = db
+      .prepare(
+        `SELECT COALESCE(SUM(CASE type WHEN 'credit' THEN amount WHEN 'debit' THEN -amount WHEN 'reset' THEN -amount ELSE 0 END),0) AS s FROM account_movements WHERE account_id = ?`,
+      )
+      .get(a.id).s;
+    if (Math.abs(a.balance - agg) > 0.005)
+      issues.push({ kind: "account", id: a.id, name: a.name, stored: a.balance, computed: agg, diff: a.balance - agg });
+  }
+  for (const b of db.prepare("SELECT id, product_id, batch_number, quantity FROM batches").all()) {
+    const agg = db
+      .prepare(
+        `SELECT COALESCE(SUM(CASE type WHEN 'in' THEN quantity WHEN 'out' THEN -quantity WHEN 'adjust' THEN quantity ELSE 0 END),0) AS s FROM stock_movements WHERE batch_id = ?`,
+      )
+      .get(b.id).s;
+    if (b.quantity !== agg)
+      issues.push({ kind: "batch", id: b.id, batch_number: b.batch_number, stored: b.quantity, computed: agg, diff: b.quantity - agg });
+  }
+  for (const s of db.prepare("SELECT id, receipt_number, subtotal, discount, total FROM sales").all()) {
+    const items = db.prepare("SELECT COALESCE(SUM(total),0) AS s FROM sale_items WHERE sale_id = ?").get(s.id).s;
+    if (Math.abs(s.subtotal - items) > 0.005)
+      issues.push({ kind: "sale.subtotal", id: s.id, receipt: s.receipt_number, stored: s.subtotal, computed: items });
+    if (Math.abs(s.total - Math.max(0, s.subtotal - (s.discount || 0))) > 0.005)
+      issues.push({ kind: "sale.total", id: s.id, receipt: s.receipt_number, stored: s.total });
+  }
+  return { checked_at: new Date().toISOString(), ok: issues.length === 0, issues };
 }
 
 function processSale({ customer_id, payment_method, discount = 0, items, account_id }) {
   const db = getDb();
   const user = requireUser();
+  const txn = randomUUID();
 
   return db.transaction(() => {
     const session = db
@@ -302,6 +381,9 @@ function processSale({ customer_id, payment_method, discount = 0, items, account
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'completed')`,
     ).run(saleId, seq, receipt, customer_id || null, user.id, session.id, acc, subtotal, discount || 0, total, payment_method);
 
+    const touchedBatches = new Set();
+    let itemsTotal = 0;
+
     for (const it of items) {
       const product = db.prepare("SELECT * FROM products WHERE id = ?").get(it.product_id);
       if (!product) throw new Error("Produto não encontrado");
@@ -324,7 +406,6 @@ function processSale({ customer_id, payment_method, discount = 0, items, account
         );
       }
 
-      // FEFO with open-box priority for sub sales
       const batches = db
         .prepare(
           `SELECT * FROM batches WHERE product_id = ? AND quantity > 0 AND expiry_date >= ?
@@ -342,32 +423,49 @@ function processSale({ customer_id, payment_method, discount = 0, items, account
 
         const dispQty = unitKind === "sub" ? take : Math.ceil(take / pack);
         const lineTotal = dispQty * unitPrice;
+        itemsTotal += lineTotal;
         db.prepare(
-          `INSERT INTO sale_items (id, sale_id, product_id, batch_id, product_name, quantity, unit_price, total, unit_kind, unit_label)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        ).run(randomUUID(), saleId, it.product_id, b.id, product.name, dispQty, unitPrice, lineTotal, unitKind, unitLabel);
+          `INSERT INTO sale_items (id, sale_id, product_id, batch_id, product_name, quantity, unit_price, total, unit_kind, unit_label, txn_id)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        ).run(randomUUID(), saleId, it.product_id, b.id, product.name, dispQty, unitPrice, lineTotal, unitKind, unitLabel, txn);
 
         db.prepare(
-          `INSERT INTO stock_movements (id, batch_id, product_id, type, quantity, reason, user_id, reference_id)
-           VALUES (?, ?, ?, 'out', ?, 'Venda', ?, ?)`,
-        ).run(randomUUID(), b.id, it.product_id, take, user.id, saleId);
+          `INSERT INTO stock_movements (id, batch_id, product_id, type, quantity, reason, user_id, reference_id, txn_id)
+           VALUES (?, ?, ?, 'out', ?, 'Venda', ?, ?, ?)`,
+        ).run(randomUUID(), b.id, it.product_id, take, user.id, saleId, txn);
 
+        touchedBatches.add(b.id);
         remaining -= take;
       }
     }
 
+    // Reconcile subtotal to what really was billed line-by-line (FEFO rounding)
+    db.prepare("UPDATE sales SET subtotal = ?, total = ? WHERE id = ?").run(
+      itemsTotal,
+      Math.max(0, itemsTotal - (discount || 0)),
+      saleId,
+    );
+    const finalTotal = Math.max(0, itemsTotal - (discount || 0));
+
     db.prepare(
-      `INSERT INTO account_movements (id, account_id, type, amount, reason, sale_id, user_id)
-       VALUES (?, ?, 'credit', ?, ?, ?, ?)`,
-    ).run(randomUUID(), acc, total, "Venda " + receipt, saleId, user.id);
+      `INSERT INTO account_movements (id, account_id, type, amount, reason, sale_id, user_id, txn_id)
+       VALUES (?, ?, 'credit', ?, ?, ?, ?, ?)`,
+    ).run(randomUUID(), acc, finalTotal, "Venda " + receipt, saleId, user.id, txn);
     db.prepare("UPDATE financial_accounts SET balance = balance + ?, updated_at = datetime('now') WHERE id = ?").run(
-      total,
+      finalTotal,
       acc,
     );
 
-    writeAudit(user.id, "sale.completed", "sales", saleId, { receipt, total, payment_method, account_id: acc });
+    writeAudit(user.id, "sale.completed", "sales", saleId,
+      { txn, receipt, total: finalTotal, payment_method, account_id: acc, items_count: items.length }, txn);
+
+    // Post-transaction integrity assertions — abort txn if any drift
+    assertSaleIntegrity(saleId);
+    assertAccountIntegrity(acc);
+    for (const bId of touchedBatches) assertBatchIntegrity(bId);
+
     refreshAlerts();
-    return saleId;
+    return { sale_id: saleId, txn_id: txn, receipt };
   })();
 }
 
@@ -375,19 +473,22 @@ function addBatchEntry({ product_id, supplier_id, batch_number, expiry_date, qua
   const db = getDb();
   const user = requireStaff();
   if (new Date(expiry_date) < new Date(new Date().toISOString().slice(0, 10))) throw new Error("Validade no passado");
+  const txn = randomUUID();
   return db.transaction(() => {
     const id = randomUUID();
     db.prepare(
-      `INSERT INTO batches (id, product_id, supplier_id, batch_number, expiry_date, quantity, cost_price)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
-    ).run(id, product_id, supplier_id || null, batch_number, expiry_date, quantity, cost_price || 0);
+      `INSERT INTO batches (id, product_id, supplier_id, batch_number, expiry_date, quantity, cost_price, txn_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    ).run(id, product_id, supplier_id || null, batch_number, expiry_date, quantity, cost_price || 0, txn);
     db.prepare(
-      `INSERT INTO stock_movements (id, batch_id, product_id, type, quantity, reason, user_id)
-       VALUES (?, ?, ?, 'in', ?, 'Entrada de estoque', ?)`,
-    ).run(randomUUID(), id, product_id, quantity, user.id);
-    writeAudit(user.id, "stock.entry", "batches", id, { product_id, supplier_id, batch_number, quantity, expiry_date });
+      `INSERT INTO stock_movements (id, batch_id, product_id, type, quantity, reason, user_id, txn_id)
+       VALUES (?, ?, ?, 'in', ?, 'Entrada de estoque', ?, ?)`,
+    ).run(randomUUID(), id, product_id, quantity, user.id, txn);
+    writeAudit(user.id, "stock.entry", "batches", id,
+      { txn, product_id, supplier_id, batch_number, quantity, expiry_date }, txn);
+    assertBatchIntegrity(id);
     refreshAlerts();
-    return id;
+    return { batch_id: id, txn_id: txn };
   })();
 }
 
@@ -493,12 +594,13 @@ function adjustAccount({ account_id, type, amount, reason }) {
   if (!["credit", "debit", "reset"].includes(type)) throw new Error("Tipo inválido");
   const acc = db.prepare("SELECT * FROM financial_accounts WHERE id = ?").get(account_id);
   if (!acc) throw new Error("Conta não encontrada");
+  const txn = randomUUID();
   return db.transaction(() => {
     const id = randomUUID();
     if (type === "reset") {
       db.prepare(
-        "INSERT INTO account_movements (id, account_id, type, amount, reason, user_id) VALUES (?, ?, 'reset', ?, ?, ?)",
-      ).run(id, account_id, acc.balance, reason || "Zerar conta", user.id);
+        "INSERT INTO account_movements (id, account_id, type, amount, reason, user_id, txn_id) VALUES (?, ?, 'reset', ?, ?, ?, ?)",
+      ).run(id, account_id, acc.balance, reason || "Zerar conta", user.id, txn);
       db.prepare("UPDATE financial_accounts SET balance = 0, updated_at = datetime('now') WHERE id = ?").run(
         account_id,
       );
@@ -506,15 +608,17 @@ function adjustAccount({ account_id, type, amount, reason }) {
       if (!(amount > 0)) throw new Error("Valor deve ser maior que zero");
       const delta = type === "credit" ? amount : -amount;
       db.prepare(
-        "INSERT INTO account_movements (id, account_id, type, amount, reason, user_id) VALUES (?, ?, ?, ?, ?, ?)",
-      ).run(id, account_id, type, amount, reason || null, user.id);
+        "INSERT INTO account_movements (id, account_id, type, amount, reason, user_id, txn_id) VALUES (?, ?, ?, ?, ?, ?, ?)",
+      ).run(id, account_id, type, amount, reason || null, user.id, txn);
       db.prepare("UPDATE financial_accounts SET balance = balance + ?, updated_at = datetime('now') WHERE id = ?").run(
         delta,
         account_id,
       );
     }
-    writeAudit(user.id, "account." + type, "financial_accounts", account_id, { amount: amount ?? acc.balance, reason });
-    return id;
+    writeAudit(user.id, "account." + type, "financial_accounts", account_id,
+      { txn, amount: amount ?? acc.balance, reason }, txn);
+    assertAccountIntegrity(account_id);
+    return { movement_id: id, txn_id: txn };
   })();
 }
 
@@ -600,4 +704,5 @@ module.exports = {
   adminUpdateUser,
   adminDeleteUser,
   changeOwnPassword,
+  reconcile,
 };

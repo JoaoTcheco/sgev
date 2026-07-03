@@ -53,6 +53,13 @@ function migrate() {
   if (!has("sales", "sale_number")) {
     db.exec(`ALTER TABLE sales ADD COLUMN sale_number INTEGER NOT NULL DEFAULT 0;`);
   }
+  // Per-transaction traceability: a single txn_id links every side effect of one op.
+  for (const t of ["stock_movements", "account_movements", "audit_logs", "sale_items", "batches"]) {
+    if (!has(t, "txn_id")) db.exec(`ALTER TABLE ${t} ADD COLUMN txn_id TEXT;`);
+  }
+  for (const [t, col] of [["stock_movements", "txn_id"], ["account_movements", "txn_id"], ["audit_logs", "txn_id"]]) {
+    db.exec(`CREATE INDEX IF NOT EXISTS idx_${t}_${col} ON ${t}(${col});`);
+  }
 }
 
 function seed() {

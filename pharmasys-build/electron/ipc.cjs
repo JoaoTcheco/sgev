@@ -25,6 +25,7 @@ function registerIpc(ipcMain) {
     "rpc.close_cash_session": q.closeCashSession,
     "rpc.adjust_account": q.adjustAccount,
     "rpc.delete_account": q.deleteAccount,
+    "rpc.reconcile": q.reconcile,
     "admin.list_users": q.adminListUsers,
     "admin.create_user": q.adminCreateUser,
     "admin.update_user": q.adminUpdateUser,
