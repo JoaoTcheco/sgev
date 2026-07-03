@@ -44,29 +44,6 @@ function AuthPage() {
     navigate({ to: "/dashboard", replace: true });
   }
 
-  async function handleSignup(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const form = new FormData(e.currentTarget);
-    const email = String(form.get("email") || "");
-    const password = String(form.get("password") || "");
-    const fullName = String(form.get("full_name") || "");
-    setLoading(true);
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: window.location.origin,
-        data: { full_name: fullName },
-      },
-    });
-    setLoading(false);
-    if (error) {
-      toast.error("Falha no registo", { description: error.message });
-      return;
-    }
-    toast.success("Conta criada", { description: "Sessão iniciada com sucesso." });
-    navigate({ to: "/dashboard", replace: true });
-  }
 
   if (checking) {
     return (
