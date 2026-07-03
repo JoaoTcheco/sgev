@@ -133,6 +133,7 @@ CREATE INDEX IF NOT EXISTS idx_cash_sessions_user ON cash_sessions(user_id, stat
 
 CREATE TABLE IF NOT EXISTS sales (
   id TEXT PRIMARY KEY,
+  sale_number INTEGER NOT NULL DEFAULT 0,
   receipt_number TEXT UNIQUE NOT NULL,
   customer_id TEXT REFERENCES customers(id) ON DELETE SET NULL,
   user_id TEXT NOT NULL REFERENCES users(id),
