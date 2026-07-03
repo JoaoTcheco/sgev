@@ -180,6 +180,7 @@ function DashboardPage() {
         alertsActive: alerts.length,
         criticalAlerts,
         lowStockCount,
+        expiryAlerts,
         expiringSoon,
         productsActive: products.length,
         customersCount: customersRes.count ?? 0,
