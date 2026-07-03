@@ -99,7 +99,8 @@ CREATE TABLE IF NOT EXISTS batches (
   cost_price REAL NOT NULL DEFAULT 0,
   notes TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
-  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+  updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+  txn_id TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_batches_product ON batches(product_id);
 CREATE INDEX IF NOT EXISTS idx_batches_expiry ON batches(expiry_date);
@@ -161,7 +162,8 @@ CREATE TABLE IF NOT EXISTS sale_items (
   total REAL NOT NULL,
   unit_kind TEXT NOT NULL DEFAULT 'pack',
   unit_label TEXT,
-  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  txn_id TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_sale_items_sale ON sale_items(sale_id);
 
@@ -174,7 +176,8 @@ CREATE TABLE IF NOT EXISTS stock_movements (
   reason TEXT,
   user_id TEXT REFERENCES users(id),
   reference_id TEXT,
-  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  txn_id TEXT
 );
 
 CREATE TABLE IF NOT EXISTS account_movements (
@@ -185,7 +188,8 @@ CREATE TABLE IF NOT EXISTS account_movements (
   reason TEXT,
   sale_id TEXT REFERENCES sales(id) ON DELETE SET NULL,
   user_id TEXT REFERENCES users(id),
-  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  txn_id TEXT
 );
 
 CREATE TABLE IF NOT EXISTS alerts (
@@ -207,10 +211,15 @@ CREATE TABLE IF NOT EXISTS audit_logs (
   entity TEXT,
   entity_id TEXT,
   details TEXT,
-  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  txn_id TEXT
 );
 
 CREATE TABLE IF NOT EXISTS receipt_seq (
   year INTEGER PRIMARY KEY,
   last_value INTEGER NOT NULL DEFAULT 0
 );
+
+CREATE INDEX IF NOT EXISTS idx_stock_movements_txn ON stock_movements(txn_id);
+CREATE INDEX IF NOT EXISTS idx_account_movements_txn ON account_movements(txn_id);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_txn ON audit_logs(txn_id);
