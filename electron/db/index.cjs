@@ -24,9 +24,35 @@ function initDb() {
 
   const schema = fs.readFileSync(path.join(__dirname, "schema.sql"), "utf-8");
   db.exec(schema);
+  migrate();
 
   seed();
   return db;
+}
+
+// Lightweight migrations for DBs created by older builds.
+function migrate() {
+  const cols = (t) => db.prepare(`PRAGMA table_info(${t})`).all().map((c) => c.name);
+  const has = (t, c) => cols(t).includes(c);
+
+  // suppliers: rename legacy "name"/"nuit" → legal_name/tax_id
+  if (has("suppliers", "name") && !has("suppliers", "legal_name")) {
+    db.exec(`ALTER TABLE suppliers RENAME COLUMN name TO legal_name;`);
+  }
+  if (has("suppliers", "nuit") && !has("suppliers", "tax_id")) {
+    db.exec(`ALTER TABLE suppliers RENAME COLUMN nuit TO tax_id;`);
+  }
+  if (!has("suppliers", "legal_name")) {
+    db.exec(`ALTER TABLE suppliers ADD COLUMN legal_name TEXT NOT NULL DEFAULT '';`);
+  }
+  if (!has("suppliers", "tax_id")) db.exec(`ALTER TABLE suppliers ADD COLUMN tax_id TEXT;`);
+
+  if (!has("financial_accounts", "created_by")) {
+    db.exec(`ALTER TABLE financial_accounts ADD COLUMN created_by TEXT REFERENCES users(id);`);
+  }
+  if (!has("sales", "sale_number")) {
+    db.exec(`ALTER TABLE sales ADD COLUMN sale_number INTEGER NOT NULL DEFAULT 0;`);
+  }
 }
 
 function seed() {
