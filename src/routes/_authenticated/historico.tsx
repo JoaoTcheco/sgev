@@ -13,7 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { formatDateTime, formatMZN, formatDate } from "@/lib/format";
+import { formatDateTime, formatMZN, formatDate, mzLocalToISO } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/historico")({
   head: () => ({ meta: [{ title: "Histórico — PharmaSys" }] }),
@@ -54,8 +54,9 @@ function HistoricoPage() {
     queryKey: ["audit", fFrom, fTo, fEntity, fAction, onlyDiv],
     queryFn: async () => {
       const { data, error } = await rpc<Array<{ id: string; created_at: string; entity: string; action: string; entity_id: string | null; txn_id: string | null; details: string | null; user_name: string | null }>>("audit_export", {
-        from: fFrom || undefined,
-        to: fTo ? new Date(fTo + "T23:59:59").toISOString() : undefined,
+        // Limites convertidos do fuso Africa/Maputo (UTC+2) para ISO/UTC.
+        from: fFrom ? mzLocalToISO(fFrom, 0, 0, 0) : undefined,
+        to: fTo ? mzLocalToISO(fTo, 23, 59, 59) : undefined,
         entity: fEntity === "all" ? undefined : fEntity,
         action: fAction === "all" ? undefined : fAction,
         only_divergent: onlyDiv,
