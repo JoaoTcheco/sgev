@@ -492,6 +492,7 @@ function EstatisticaPage() {
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={resetAll}><RotateCcw className="mr-2 h-4 w-4" />Repor</Button>
           <Button variant="outline" size="sm" onClick={exportCSV}><Download className="mr-2 h-4 w-4" />Exportar CSV</Button>
+          <Button variant="outline" size="sm" onClick={exportPDF}><FileText className="mr-2 h-4 w-4" />Exportar PDF</Button>
         </div>
       </div>
 
