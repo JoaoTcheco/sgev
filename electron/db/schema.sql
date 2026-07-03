@@ -43,8 +43,8 @@ CREATE TABLE IF NOT EXISTS categories (
 
 CREATE TABLE IF NOT EXISTS suppliers (
   id TEXT PRIMARY KEY,
-  name TEXT NOT NULL,
-  nuit TEXT,
+  legal_name TEXT NOT NULL,
+  tax_id TEXT,
   contact_name TEXT,
   phone TEXT,
   email TEXT,
