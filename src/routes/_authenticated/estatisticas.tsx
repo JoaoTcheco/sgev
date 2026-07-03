@@ -4,8 +4,11 @@ import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 import {
   BarChart3, TrendingUp, ShoppingCart, Loader2, Percent, Wallet, Download,
-  Filter, RotateCcw, ArrowUpDown, AlertTriangle, CheckCircle2, Info,
+  Filter, RotateCcw, ArrowUpDown, AlertTriangle, CheckCircle2, Info, FileText,
 } from "lucide-react";
+import { exportTablePDF } from "@/lib/pdf-export";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const _padImport = null;
 
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
