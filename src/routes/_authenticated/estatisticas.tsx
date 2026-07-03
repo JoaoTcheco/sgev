@@ -21,7 +21,7 @@ import {
   Bar, BarChart, CartesianGrid, Cell, Line, LineChart, Pie, PieChart,
   ResponsiveContainer, Tooltip, XAxis, YAxis, Legend,
 } from "recharts";
-import { formatMZN, formatDate } from "@/lib/format";
+import { formatMZN, formatDate, mzParts, mzLocalToISO, mzTodayYMD, mzDaysAgoYMD } from "@/lib/format";
 import { RoleGate } from "@/components/role-gate";
 
 export const Route = createFileRoute("/_authenticated/estatisticas")({
@@ -44,15 +44,10 @@ const PIE_COLORS = ["hsl(var(--primary))", "hsl(var(--accent))", "hsl(var(--char
 type Preset = "today" | "7" | "30" | "90" | "ytd" | "custom";
 type SortKey = "revenue_desc" | "revenue_asc" | "qty_desc" | "qty_asc" | "margin_desc" | "margin_asc";
 
-function todayISO() {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-}
-function daysAgoISO(n: number) {
-  const d = new Date();
-  d.setDate(d.getDate() - n);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-}
+// Datas sempre no fuso Africa/Maputo (UTC+2), independentemente do SO.
+const todayISO = () => mzTodayYMD();
+const daysAgoISO = (n: number) => mzDaysAgoYMD(n);
+
 
 function EstatisticaPage() {
   // ---------------- Filter state ----------------
