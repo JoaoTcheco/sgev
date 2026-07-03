@@ -124,8 +124,9 @@ function EstatisticaPage() {
           .select("sale_id, product_id, product_name, quantity, unit_price, total, created_at")
           .gte("created_at", fromISO).lte("created_at", toISO).limit(50000),
         supabase.from("account_movements")
-          .select("id, account_id, type, amount, created_at, reference")
+          .select("id, account_id, type, amount, created_at")
           .gte("created_at", fromISO).lte("created_at", toISO).limit(50000),
+
       ]);
       for (const r of [sales, items, accMoves]) if (r.error) throw r.error;
       return {
