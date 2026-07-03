@@ -41,7 +41,8 @@ function HistoricoPage() {
 
   const reconcile = useMutation({
     mutationFn: async () => {
-      const { data, error } = await supabase.rpc("reconcile");
+      // reconcile is a local (Electron IPC) RPC not present in Supabase types.
+      const { data, error } = await (supabase.rpc as unknown as (n: string) => Promise<{ data: unknown; error: { message: string } | null }>)("reconcile");
       if (error) throw error;
       return data as ReconcileResult;
     },
