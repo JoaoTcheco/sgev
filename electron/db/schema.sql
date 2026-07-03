@@ -107,11 +107,12 @@ CREATE INDEX IF NOT EXISTS idx_batches_expiry ON batches(expiry_date);
 CREATE TABLE IF NOT EXISTS financial_accounts (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
-  type TEXT NOT NULL,
+  type TEXT NOT NULL DEFAULT 'other',
   balance REAL NOT NULL DEFAULT 0,
   is_system INTEGER NOT NULL DEFAULT 0,
   active INTEGER NOT NULL DEFAULT 1,
   notes TEXT,
+  created_by TEXT REFERENCES users(id),
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
