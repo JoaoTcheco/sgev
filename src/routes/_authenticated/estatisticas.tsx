@@ -74,9 +74,10 @@ function EstatisticaPage() {
     else if (p === "30") { setFrom(daysAgoISO(29)); setTo(todayISO()); }
     else if (p === "90") { setFrom(daysAgoISO(89)); setTo(todayISO()); }
     else if (p === "ytd") {
-      const y = new Date().getFullYear();
+      const y = mzParts(new Date()).year;
       setFrom(`${y}-01-01`); setTo(todayISO());
     }
+
   }
   function resetAll() {
     applyPreset("30");
