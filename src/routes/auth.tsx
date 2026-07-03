@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 import { Toaster } from "@/components/ui/sonner";
 
 export const Route = createFileRoute("/auth")({
@@ -44,29 +44,6 @@ function AuthPage() {
     navigate({ to: "/dashboard", replace: true });
   }
 
-  async function handleSignup(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const form = new FormData(e.currentTarget);
-    const email = String(form.get("email") || "");
-    const password = String(form.get("password") || "");
-    const fullName = String(form.get("full_name") || "");
-    setLoading(true);
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: window.location.origin,
-        data: { full_name: fullName },
-      },
-    });
-    setLoading(false);
-    if (error) {
-      toast.error("Falha no registo", { description: error.message });
-      return;
-    }
-    toast.success("Conta criada", { description: "Sessão iniciada com sucesso." });
-    navigate({ to: "/dashboard", replace: true });
-  }
 
   if (checking) {
     return (
@@ -93,51 +70,20 @@ function AuthPage() {
             <CardDescription>Entre com a sua conta ou registe-se para começar.</CardDescription>
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue="login">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="login">Entrar</TabsTrigger>
-                <TabsTrigger value="signup">Registar</TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="login">
-                <form onSubmit={handleLogin} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="login-email">E-mail</Label>
-                    <Input id="login-email" name="email" type="email" required autoComplete="email" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="login-password">Palavra-passe</Label>
-                    <Input id="login-password" name="password" type="password" required autoComplete="current-password" />
-                  </div>
-                  <Button type="submit" className="w-full" disabled={loading}>
-                    {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Entrar
-                  </Button>
-                </form>
-              </TabsContent>
-
-              <TabsContent value="signup">
-                <form onSubmit={handleSignup} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-name">Nome completo</Label>
-                    <Input id="signup-name" name="full_name" type="text" required autoComplete="name" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-email">E-mail</Label>
-                    <Input id="signup-email" name="email" type="email" required autoComplete="email" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-password">Palavra-passe</Label>
-                    <Input id="signup-password" name="password" type="password" required minLength={6} autoComplete="new-password" />
-                    <p className="text-xs text-muted-foreground">Mínimo de 6 caracteres. O primeiro utilizador registado torna-se Administrador.</p>
-                  </div>
-                  <Button type="submit" className="w-full" disabled={loading}>
-                    {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Criar conta
-                  </Button>
-                </form>
-              </TabsContent>
-            </Tabs>
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="login-email">E-mail</Label>
+                <Input id="login-email" name="email" type="email" required autoComplete="email" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="login-password">Palavra-passe</Label>
+                <Input id="login-password" name="password" type="password" required autoComplete="current-password" />
+              </div>
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Entrar
+              </Button>
+            </form>
           </CardContent>
         </Card>
       </div>
