@@ -67,7 +67,7 @@ function AuthPage() {
         <Card>
           <CardHeader>
             <CardTitle>Bem-vindo</CardTitle>
-            <CardDescription>Entre com a sua conta ou registe-se para começar.</CardDescription>
+            <CardDescription>Entre com a sua conta para continuar.</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleLogin} className="space-y-4">
