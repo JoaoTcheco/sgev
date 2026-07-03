@@ -704,4 +704,5 @@ module.exports = {
   adminUpdateUser,
   adminDeleteUser,
   changeOwnPassword,
+  reconcile,
 };
