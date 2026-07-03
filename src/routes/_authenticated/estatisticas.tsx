@@ -601,6 +601,112 @@ function EstatisticaPage() {
         </CardContent>
       </Card>
 
+      {/* ---------------- Validation ---------------- */}
+      {validation.errors.length > 0 && (
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Filtros inválidos</AlertTitle>
+          <AlertDescription>
+            <ul className="ml-4 list-disc">
+              {validation.errors.map((e) => <li key={e}>{e}</li>)}
+            </ul>
+          </AlertDescription>
+        </Alert>
+      )}
+      {validation.errors.length === 0 && validation.warnings.length > 0 && (
+        <Alert>
+          <Info className="h-4 w-4" />
+          <AlertTitle>Aviso</AlertTitle>
+          <AlertDescription>
+            <ul className="ml-4 list-disc">
+              {validation.warnings.map((w) => <li key={w}>{w}</li>)}
+            </ul>
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* ---------------- Filter summary ---------------- */}
+      <Card>
+        <CardContent className="flex flex-col gap-1 py-3 text-sm">
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <Info className="h-4 w-4" /> Resumo dos filtros aplicados
+          </div>
+          <p className="font-medium">{filterSummary}</p>
+          <p className="text-xs text-muted-foreground">
+            {agg.salesCount} venda(s) · {agg.qty} unidade(s) · receita {formatMZN(agg.revenue)} · ordenado por{" "}
+            {sort.replace("_", " ")} · top {topN}
+          </p>
+        </CardContent>
+      </Card>
+
+      {/* ---------------- Accounting consistency ---------------- */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center gap-2 text-base">
+            {agg.recon.reconciled ? (
+              <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+            ) : (
+              <AlertTriangle className="h-4 w-4 text-amber-600" />
+            )}
+            Consistência com contabilidade
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+            <ReconStat label="Receita vendas" value={formatMZN(agg.recon.salesTotal)} />
+            <ReconStat label="Créditos nas contas" value={formatMZN(agg.recon.linkedTotal)} />
+            <ReconStat
+              label="Diferença"
+              value={formatMZN(agg.recon.diffGlobal)}
+              accent={Math.abs(agg.recon.diffGlobal) < 0.01 ? "ok" : "warn"}
+            />
+            <ReconStat
+              label="Vendas sem movimento"
+              value={String(agg.recon.salesMissingCount)}
+              accent={agg.recon.salesMissingCount === 0 ? "ok" : "warn"}
+            />
+          </div>
+          {agg.recon.orphanCreditCount > 0 && (
+            <p className="text-xs text-amber-700">
+              {agg.recon.orphanCreditCount} crédito(s) sem venda associada — total {formatMZN(agg.recon.orphanCreditTotal)}.
+            </p>
+          )}
+          {agg.recon.perPayment.length > 0 && (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Método</TableHead>
+                  <TableHead className="text-right">Vendas</TableHead>
+                  <TableHead className="text-right">Movimentos</TableHead>
+                  <TableHead className="text-right">Diferença</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {agg.recon.perPayment.map((r) => (
+                  <TableRow key={r.method}>
+                    <TableCell className="font-medium">{r.method}</TableCell>
+                    <TableCell className="text-right">{formatMZN(r.sales)}</TableCell>
+                    <TableCell className="text-right">{formatMZN(r.movements)}</TableCell>
+                    <TableCell
+                      className={`text-right font-semibold ${
+                        Math.abs(r.diff) < 0.01 ? "text-emerald-600" : "text-amber-700"
+                      }`}
+                    >
+                      {formatMZN(r.diff)}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+          <p className="text-xs text-muted-foreground">
+            Cada venda concluída deve gerar um crédito na conta escolhida. Divergências indicam vendas fora do caixa,
+            créditos manuais ou falhas de sincronização — corrija em Contas / Histórico.
+          </p>
+        </CardContent>
+      </Card>
+
+
       {/* ---------------- KPIs ---------------- */}
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
         <Kpi icon={<TrendingUp className="h-4 w-4 text-primary" />} label="Receita" value={formatMZN(agg.revenue)} />
