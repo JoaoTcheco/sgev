@@ -1,17 +1,25 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, TrendingUp, TrendingDown, Percent, Package as PackageIcon } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Search, TrendingUp, TrendingDown, Percent, Package as PackageIcon, Download, Palette, RotateCcw } from "lucide-react";
 import { formatMZN } from "@/lib/format";
 import { RoleGate } from "@/components/role-gate";
+import { toast } from "sonner";
+
+type Thresholds = { good: number; ok: number; low: number };
+const DEFAULT_THRESHOLDS: Thresholds = { good: 30, ok: 15, low: 0 };
+const THRESHOLDS_KEY = "pharmasys.margin.thresholds";
+
 
 export const Route = createFileRoute("/_authenticated/margens")({
   head: () => ({ meta: [{ title: "Margens & Custos — PharmaSys" }] }),
@@ -42,16 +50,29 @@ function margin(sale: number, cost: number) {
   return { pct: (abs / sale) * 100, abs };
 }
 
-function marginBadge(pct: number) {
-  if (pct >= 30) return "bg-emerald-600 hover:bg-emerald-700";
-  if (pct >= 15) return "bg-amber-500 hover:bg-amber-600";
-  if (pct >= 0) return "bg-orange-500 hover:bg-orange-600";
+function marginBadge(pct: number, t: Thresholds) {
+  if (pct >= t.good) return "bg-emerald-600 hover:bg-emerald-700";
+  if (pct >= t.ok) return "bg-amber-500 hover:bg-amber-600";
+  if (pct >= t.low) return "bg-orange-500 hover:bg-orange-600";
   return "bg-red-600 hover:bg-red-700";
 }
+
 
 function MargensPage() {
   const [search, setSearch] = useState("");
   const [supplierFilter, setSupplierFilter] = useState<string>("all");
+  const [thresholds, setThresholds] = useState<Thresholds>(DEFAULT_THRESHOLDS);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(THRESHOLDS_KEY);
+      if (raw) setThresholds({ ...DEFAULT_THRESHOLDS, ...JSON.parse(raw) });
+    } catch {}
+  }, []);
+  useEffect(() => {
+    try { localStorage.setItem(THRESHOLDS_KEY, JSON.stringify(thresholds)); } catch {}
+  }, [thresholds]);
+
 
   const { data: batches = [] } = useQuery({
     queryKey: ["margens-batches"],
@@ -189,14 +210,75 @@ function MargensPage() {
     [products],
   );
 
+  function exportCsv() {
+    if (filtered.length === 0) { toast.error("Nada para exportar"); return; }
+    const header = ["Produto","Fabricante","Fornecedores","Custo médio","Último custo","Custo mín","Custo máx","Preço venda","Lucro/un","Margem %","Estoque"];
+    const esc = (v: unknown) => {
+      const s = String(v ?? "");
+      return /[",;\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    const lines = [header.join(";")];
+    for (const p of filtered) {
+      const m = margin(p.sale_price, p.avgCost);
+      lines.push([
+        p.name, p.manufacturer ?? "", p.suppliers.size,
+        p.avgCost.toFixed(2), p.lastCost.toFixed(2), p.minCost.toFixed(2), p.maxCost.toFixed(2),
+        p.sale_price.toFixed(2), m.abs.toFixed(2), m.pct.toFixed(2), p.totalQty,
+      ].map(esc).join(";"));
+    }
+    const blob = new Blob(["\uFEFF" + lines.join("\n")], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `margens-${new Date().toISOString().slice(0,10)}.csv`;
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+    toast.success(`${filtered.length} produto(s) exportado(s)`);
+  }
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Margens & Custos</h1>
-        <p className="text-muted-foreground">
-          Compare o que pagou aos fornecedores com o preço de venda. Encontre margens fracas e o melhor fornecedor por produto.
-        </p>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Margens & Custos</h1>
+          <p className="text-muted-foreground">
+            Compare o que pagou aos fornecedores com o preço de venda. Encontre margens fracas e o melhor fornecedor por produto.
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="sm"><Palette className="mr-2 h-4 w-4" />Cores</Button>
+            </PopoverTrigger>
+            <PopoverContent align="end" className="w-72 space-y-3">
+              <div>
+                <p className="text-sm font-medium">Limiares de margem</p>
+                <p className="text-xs text-muted-foreground">Personalize as cores dos badges (%)</p>
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                <div className="space-y-1">
+                  <Label className="flex items-center gap-1 text-xs"><span className="h-2 w-2 rounded-full bg-emerald-600" />Boa ≥</Label>
+                  <Input type="number" value={thresholds.good} onChange={(e) => setThresholds({ ...thresholds, good: Number(e.target.value) || 0 })} />
+                </div>
+                <div className="space-y-1">
+                  <Label className="flex items-center gap-1 text-xs"><span className="h-2 w-2 rounded-full bg-amber-500" />Ok ≥</Label>
+                  <Input type="number" value={thresholds.ok} onChange={(e) => setThresholds({ ...thresholds, ok: Number(e.target.value) || 0 })} />
+                </div>
+                <div className="space-y-1">
+                  <Label className="flex items-center gap-1 text-xs"><span className="h-2 w-2 rounded-full bg-orange-500" />Fraca ≥</Label>
+                  <Input type="number" value={thresholds.low} onChange={(e) => setThresholds({ ...thresholds, low: Number(e.target.value) || 0 })} />
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">Abaixo de <b>{thresholds.low}%</b> = vermelho (negativa)</p>
+              <Button variant="ghost" size="sm" className="w-full" onClick={() => setThresholds(DEFAULT_THRESHOLDS)}>
+                <RotateCcw className="mr-2 h-3.5 w-3.5" />Repor padrão
+              </Button>
+            </PopoverContent>
+          </Popover>
+          <Button size="sm" onClick={exportCsv}><Download className="mr-2 h-4 w-4" />Exportar CSV</Button>
+        </div>
       </div>
+
 
       {/* KPIs */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -333,7 +415,7 @@ function MargensPage() {
                           {formatMZN(m.abs)}
                         </TableCell>
                         <TableCell className="text-right">
-                          <Badge className={marginBadge(m.pct)}>{m.pct.toFixed(1)}%</Badge>
+                          <Badge className={marginBadge(m.pct, thresholds)}>{m.pct.toFixed(1)}%</Badge>
                         </TableCell>
                         <TableCell className="text-right tabular-nums">{p.totalQty}</TableCell>
                       </TableRow>
@@ -366,7 +448,7 @@ function MargensPage() {
                         <p className="truncate font-medium">{p.name}</p>
                         <p className="text-xs text-muted-foreground">Venda {formatMZN(p.sale_price)}</p>
                       </div>
-                      <Badge className={marginBadge(margin(p.sale_price, bestCost).pct)}>
+                      <Badge className={marginBadge(margin(p.sale_price, bestCost).pct, thresholds)}>
                         Melhor: {margin(p.sale_price, bestCost).pct.toFixed(1)}%
                       </Badge>
                     </div>
