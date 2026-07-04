@@ -142,7 +142,7 @@ function MargensPage() {
     }
 
     const list = Array.from(map.values()).map((p) => {
-      p.avgCost = p.costs.length ? p.costs.reduce((a, b) => a + b, 0) / p.costs.length : 0;
+      p.avgCost = p.costs.length ? p.costs.reduce((a: number, b: number) => a + b, 0) / p.costs.length : 0;
       if (!isFinite(p.minCost)) p.minCost = 0;
       return p;
     });
