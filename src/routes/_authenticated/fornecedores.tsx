@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { Badge } from "@/components/ui/badge";
 
 import { RoleGate } from "@/components/role-gate";
+import { invalidateAfterSupplierChange } from "@/lib/invalidate";
 
 export const Route = createFileRoute("/_authenticated/fornecedores")({
   head: () => ({ meta: [{ title: "Fornecedores — PharmaSys" }] }),

@@ -20,6 +20,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { RoleGate } from "@/components/role-gate";
 import { useAuthUser, useUserRoles, highestRole } from "@/hooks/use-auth";
 import { formatMZN, formatDateTime } from "@/lib/format";
+import { invalidateAfterAccountChange } from "@/lib/invalidate";
 
 export const Route = createFileRoute("/_authenticated/contas")({
   head: () => ({ meta: [{ title: "Contas — PharmaSys" }] }),
@@ -122,7 +123,7 @@ function ContasPage() {
     },
     onSuccess: () => {
       toast.success(editing ? "Conta actualizada" : "Conta criada");
-      qc.invalidateQueries({ queryKey: ["financial-accounts"] });
+      invalidateAfterAccountChange(qc);
       setCreateOpen(false); setEditing(null);
       setForm({ name: "", notes: "", active: true });
     },
@@ -136,7 +137,7 @@ function ContasPage() {
     },
     onSuccess: () => {
       toast.success("Conta eliminada");
-      qc.invalidateQueries({ queryKey: ["financial-accounts"] });
+      invalidateAfterAccountChange(qc);
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -154,8 +155,7 @@ function ContasPage() {
     },
     onSuccess: () => {
       toast.success("Ajuste aplicado");
-      qc.invalidateQueries({ queryKey: ["financial-accounts"] });
-      qc.invalidateQueries({ queryKey: ["account-movements"] });
+      invalidateAfterAccountChange(qc);
       setAdjustFor(null); setAdjAmount(0); setAdjReason(""); setAdjType("debit");
     },
     onError: (e: Error) => toast.error(e.message),
