@@ -18,6 +18,7 @@ import { formatMZN, formatDate } from "@/lib/format";
 import { useAuthUser, useUserRoles, highestRole } from "@/hooks/use-auth";
 import { Barcode } from "@/components/barcode";
 import { RoleGate } from "@/components/role-gate";
+import { invalidateAfterProductChange } from "@/lib/invalidate";
 
 export const Route = createFileRoute("/_authenticated/estoque")({
   head: () => ({ meta: [{ title: "Estoque — PharmaSys" }] }),
@@ -118,7 +119,7 @@ function EstoquePage() {
     onSuccess: () => {
       toast.success("Lote registado");
       setBatchOpen(null);
-      queryClient.invalidateQueries({ queryKey: ["stock"] });
+      invalidateAfterProductChange(queryClient);
     },
     onError: (e: Error) => toast.error("Falha", { description: e.message }),
   });
@@ -157,8 +158,7 @@ function EstoquePage() {
       toast.success("Produto guardado");
       setProductOpen(null);
       await supabase.rpc("refresh_alerts");
-      queryClient.invalidateQueries({ queryKey: ["stock"] });
-      queryClient.invalidateQueries({ queryKey: ["alerts"] });
+      invalidateAfterProductChange(queryClient);
     },
     onError: (e: Error) => toast.error("Falha", { description: e.message }),
   });
