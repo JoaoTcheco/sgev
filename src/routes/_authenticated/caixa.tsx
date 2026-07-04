@@ -74,7 +74,7 @@ function CaixaPage() {
       const { error } = await supabase.rpc("open_cash_session", { p_opening: Number(openAmt) || 0 });
       if (error) throw error;
     },
-    onSuccess: () => { toast.success("Turno aberto"); setOpenAmt("0"); qc.invalidateQueries({ queryKey: ["my-cash-sessions"] }); },
+    onSuccess: () => { toast.success("Turno aberto"); setOpenAmt("0"); invalidateAfterCashSession(qc); },
     onError: (e: Error) => toast.error("Falha", { description: e.message }),
   });
 
@@ -88,7 +88,7 @@ function CaixaPage() {
     onSuccess: () => {
       toast.success("Turno fechado");
       setCloseOpen(false); setCounted(""); setNotes("");
-      qc.invalidateQueries({ queryKey: ["my-cash-sessions"] });
+      invalidateAfterCashSession(qc);
     },
     onError: (e: Error) => toast.error("Falha ao fechar", { description: e.message }),
   });
