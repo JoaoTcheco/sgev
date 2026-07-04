@@ -108,14 +108,14 @@ function MargensPage() {
         sale_price: Number(p.sale_price),
         pack_size: Math.max(1, p.pack_size),
         unit: p.unit,
-        costs: [],
+        costs: [] as number[],
         lastCost: 0,
         lastCostAt: "",
         minCost: Infinity,
         maxCost: 0,
         avgCost: 0,
         totalQty: 0,
-        suppliers: new Map(),
+        suppliers: new Map<string, { id: string; name: string; qty: number; totalCost: number; lastCost: number; lastAt: string; minCost: number; maxCost: number }>(),
       };
       cur.costs.push(cost);
       cur.totalQty += Number(b.quantity);
