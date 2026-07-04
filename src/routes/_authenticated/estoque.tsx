@@ -177,7 +177,7 @@ function EstoquePage() {
     onSuccess: (r) => {
       toast.success(r === "deleted" ? "Produto eliminado" : "Produto desativado (possui histórico)");
       setDeleteOpen(null);
-      queryClient.invalidateQueries({ queryKey: ["stock"] });
+      invalidateAfterProductChange(queryClient);
     },
     onError: (e: Error) => toast.error("Falha", { description: e.message }),
   });
@@ -382,7 +382,7 @@ function EstoquePage() {
           const { error } = await supabase.from("products").update({ barcode: code }).eq("id", barcodeOpen.id);
           if (error) { toast.error("Falha", { description: error.message }); return; }
           toast.success("Código atribuído");
-          queryClient.invalidateQueries({ queryKey: ["stock"] });
+          invalidateAfterProductChange(queryClient);
           setBarcodeOpen({ ...barcodeOpen, barcode: code });
         }}
       />
