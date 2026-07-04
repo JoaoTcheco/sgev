@@ -61,6 +61,18 @@ function marginBadge(pct: number, t: Thresholds) {
 function MargensPage() {
   const [search, setSearch] = useState("");
   const [supplierFilter, setSupplierFilter] = useState<string>("all");
+  const [thresholds, setThresholds] = useState<Thresholds>(DEFAULT_THRESHOLDS);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(THRESHOLDS_KEY);
+      if (raw) setThresholds({ ...DEFAULT_THRESHOLDS, ...JSON.parse(raw) });
+    } catch {}
+  }, []);
+  useEffect(() => {
+    try { localStorage.setItem(THRESHOLDS_KEY, JSON.stringify(thresholds)); } catch {}
+  }, [thresholds]);
+
 
   const { data: batches = [] } = useQuery({
     queryKey: ["margens-batches"],
