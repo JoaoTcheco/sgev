@@ -18,6 +18,7 @@ import { useAuthUser, useProfile } from "@/hooks/use-auth";
 import { ReceiptBody } from "@/routes/_authenticated/configuracoes";
 import { printReceiptWindow } from "@/lib/print-receipt";
 import { useOpenCashSession } from "@/hooks/use-cash-session";
+import { invalidateAfterSale } from "@/lib/invalidate";
 import { useBarcodeScanner } from "@/hooks/use-barcode-scanner";
 import { Link } from "@tanstack/react-router";
 
@@ -211,11 +212,7 @@ function VendasPage() {
     onSuccess: ({ saleId, receipt_number }) => {
       toast.success("Venda finalizada", { description: receipt_number ? `Recibo ${receipt_number}` : undefined });
       setLastSale({ id: saleId, receipt_number, at: new Date() });
-      queryClient.invalidateQueries({ queryKey: ["pdv-products"] });
-      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
-      queryClient.invalidateQueries({ queryKey: ["alerts"] });
-      queryClient.invalidateQueries({ queryKey: ["stock"] });
-      queryClient.invalidateQueries({ queryKey: ["accounts"] });
+      invalidateAfterSale(queryClient);
     },
     onError: (e: Error) => toast.error("Falha ao finalizar", { description: e.message }),
   });
