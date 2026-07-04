@@ -14,6 +14,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { formatMZN, formatDateTime } from "@/lib/format";
 import { useAuthUser } from "@/hooks/use-auth";
+import { invalidateAfterCashSession } from "@/lib/invalidate";
+
 
 export const Route = createFileRoute("/_authenticated/caixa")({
   head: () => ({ meta: [{ title: "Caixa — PharmaSys" }] }),
