@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { Badge } from "@/components/ui/badge";
 
 import { RoleGate } from "@/components/role-gate";
+import { invalidateAfterSupplierChange } from "@/lib/invalidate";
 
 export const Route = createFileRoute("/_authenticated/fornecedores")({
   head: () => ({ meta: [{ title: "Fornecedores — PharmaSys" }] }),
@@ -50,7 +51,7 @@ function FornecedoresPage() {
       toast.success("Fornecedor guardado");
       setOpen(false);
       setEditing(null);
-      qc.invalidateQueries({ queryKey: ["suppliers"] });
+      invalidateAfterSupplierChange(qc);
     },
     onError: (e: Error) => toast.error("Falha", { description: e.message }),
   });

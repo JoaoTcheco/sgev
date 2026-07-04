@@ -17,6 +17,7 @@ import { formatMZN } from "@/lib/format";
 import { useBarcodeScanner } from "@/hooks/use-barcode-scanner";
 import { printLabels } from "@/lib/print-labels";
 import { RoleGate } from "@/components/role-gate";
+import { invalidateAfterStockEntry } from "@/lib/invalidate";
 
 export const Route = createFileRoute("/_authenticated/entrada")({
   head: () => ({ meta: [{ title: "Entrada de Mercadoria — PharmaSys" }] }),
@@ -190,10 +191,7 @@ function EntradaPage() {
     setSaving(false);
     if (okCount > 0) {
       toast.success(`${okCount} entrada(s) registada(s)${invoiceRef ? ` · NF ${invoiceRef}` : ""}`);
-      queryClient.invalidateQueries({ queryKey: ["stock"] });
-      queryClient.invalidateQueries({ queryKey: ["pdv-products"] });
-      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
-      queryClient.invalidateQueries({ queryKey: ["alerts"] });
+      invalidateAfterStockEntry(queryClient);
     }
     if (okCount < pending.length) toast.error("Alguns itens falharam — reveja a tabela.");
   }
