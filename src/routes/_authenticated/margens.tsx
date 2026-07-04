@@ -1,17 +1,25 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, TrendingUp, TrendingDown, Percent, Package as PackageIcon } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Search, TrendingUp, TrendingDown, Percent, Package as PackageIcon, Download, Palette, RotateCcw } from "lucide-react";
 import { formatMZN } from "@/lib/format";
 import { RoleGate } from "@/components/role-gate";
+import { toast } from "sonner";
+
+type Thresholds = { good: number; ok: number; low: number };
+const DEFAULT_THRESHOLDS: Thresholds = { good: 30, ok: 15, low: 0 };
+const THRESHOLDS_KEY = "pharmasys.margin.thresholds";
+
 
 export const Route = createFileRoute("/_authenticated/margens")({
   head: () => ({ meta: [{ title: "Margens & Custos — PharmaSys" }] }),
@@ -42,12 +50,13 @@ function margin(sale: number, cost: number) {
   return { pct: (abs / sale) * 100, abs };
 }
 
-function marginBadge(pct: number) {
-  if (pct >= 30) return "bg-emerald-600 hover:bg-emerald-700";
-  if (pct >= 15) return "bg-amber-500 hover:bg-amber-600";
-  if (pct >= 0) return "bg-orange-500 hover:bg-orange-600";
+function marginBadge(pct: number, t: Thresholds) {
+  if (pct >= t.good) return "bg-emerald-600 hover:bg-emerald-700";
+  if (pct >= t.ok) return "bg-amber-500 hover:bg-amber-600";
+  if (pct >= t.low) return "bg-orange-500 hover:bg-orange-600";
   return "bg-red-600 hover:bg-red-700";
 }
+
 
 function MargensPage() {
   const [search, setSearch] = useState("");
