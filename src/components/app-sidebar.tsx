@@ -16,7 +16,9 @@ import {
   Settings,
   Receipt,
   Banknote,
+  Percent,
 } from "lucide-react";
+
 
 import {
   Sidebar,
@@ -54,6 +56,7 @@ const OPERATIONAL: Item[] = [
 const MANAGEMENT: Item[] = [
   { title: "Contas", url: "/contas", icon: Wallet, roles: ["admin", "pharmacist"] },
   { title: "Fornecedores", url: "/fornecedores", icon: Truck, roles: ["admin", "pharmacist"] },
+  { title: "Margens & Custos", url: "/margens", icon: Percent, roles: ["admin", "pharmacist"] },
 ];
 
 

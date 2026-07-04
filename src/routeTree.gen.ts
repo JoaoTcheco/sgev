@@ -15,6 +15,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedVendasRouteImport } from './routes/_authenticated/vendas'
 import { Route as AuthenticatedUtilizadoresRouteImport } from './routes/_authenticated/utilizadores'
 import { Route as AuthenticatedRelatoriosRouteImport } from './routes/_authenticated/relatorios'
+import { Route as AuthenticatedMargensRouteImport } from './routes/_authenticated/margens'
 import { Route as AuthenticatedHistoricoRouteImport } from './routes/_authenticated/historico'
 import { Route as AuthenticatedFornecedoresRouteImport } from './routes/_authenticated/fornecedores'
 import { Route as AuthenticatedEstoqueRouteImport } from './routes/_authenticated/estoque'
@@ -56,6 +57,11 @@ const AuthenticatedUtilizadoresRoute =
 const AuthenticatedRelatoriosRoute = AuthenticatedRelatoriosRouteImport.update({
   id: '/relatorios',
   path: '/relatorios',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedMargensRoute = AuthenticatedMargensRouteImport.update({
+  id: '/margens',
+  path: '/margens',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedHistoricoRoute = AuthenticatedHistoricoRouteImport.update({
@@ -136,6 +142,7 @@ export interface FileRoutesByFullPath {
   '/estoque': typeof AuthenticatedEstoqueRoute
   '/fornecedores': typeof AuthenticatedFornecedoresRoute
   '/historico': typeof AuthenticatedHistoricoRoute
+  '/margens': typeof AuthenticatedMargensRoute
   '/relatorios': typeof AuthenticatedRelatoriosRoute
   '/utilizadores': typeof AuthenticatedUtilizadoresRoute
   '/vendas': typeof AuthenticatedVendasRoute
@@ -155,6 +162,7 @@ export interface FileRoutesByTo {
   '/estoque': typeof AuthenticatedEstoqueRoute
   '/fornecedores': typeof AuthenticatedFornecedoresRoute
   '/historico': typeof AuthenticatedHistoricoRoute
+  '/margens': typeof AuthenticatedMargensRoute
   '/relatorios': typeof AuthenticatedRelatoriosRoute
   '/utilizadores': typeof AuthenticatedUtilizadoresRoute
   '/vendas': typeof AuthenticatedVendasRoute
@@ -176,6 +184,7 @@ export interface FileRoutesById {
   '/_authenticated/estoque': typeof AuthenticatedEstoqueRoute
   '/_authenticated/fornecedores': typeof AuthenticatedFornecedoresRoute
   '/_authenticated/historico': typeof AuthenticatedHistoricoRoute
+  '/_authenticated/margens': typeof AuthenticatedMargensRoute
   '/_authenticated/relatorios': typeof AuthenticatedRelatoriosRoute
   '/_authenticated/utilizadores': typeof AuthenticatedUtilizadoresRoute
   '/_authenticated/vendas': typeof AuthenticatedVendasRoute
@@ -197,6 +206,7 @@ export interface FileRouteTypes {
     | '/estoque'
     | '/fornecedores'
     | '/historico'
+    | '/margens'
     | '/relatorios'
     | '/utilizadores'
     | '/vendas'
@@ -216,6 +226,7 @@ export interface FileRouteTypes {
     | '/estoque'
     | '/fornecedores'
     | '/historico'
+    | '/margens'
     | '/relatorios'
     | '/utilizadores'
     | '/vendas'
@@ -236,6 +247,7 @@ export interface FileRouteTypes {
     | '/_authenticated/estoque'
     | '/_authenticated/fornecedores'
     | '/_authenticated/historico'
+    | '/_authenticated/margens'
     | '/_authenticated/relatorios'
     | '/_authenticated/utilizadores'
     | '/_authenticated/vendas'
@@ -291,6 +303,13 @@ declare module '@tanstack/react-router' {
       path: '/relatorios'
       fullPath: '/relatorios'
       preLoaderRoute: typeof AuthenticatedRelatoriosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/margens': {
+      id: '/_authenticated/margens'
+      path: '/margens'
+      fullPath: '/margens'
+      preLoaderRoute: typeof AuthenticatedMargensRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/historico': {
@@ -391,6 +410,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedEstoqueRoute: typeof AuthenticatedEstoqueRoute
   AuthenticatedFornecedoresRoute: typeof AuthenticatedFornecedoresRoute
   AuthenticatedHistoricoRoute: typeof AuthenticatedHistoricoRoute
+  AuthenticatedMargensRoute: typeof AuthenticatedMargensRoute
   AuthenticatedRelatoriosRoute: typeof AuthenticatedRelatoriosRoute
   AuthenticatedUtilizadoresRoute: typeof AuthenticatedUtilizadoresRoute
   AuthenticatedVendasRoute: typeof AuthenticatedVendasRoute
@@ -409,6 +429,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedEstoqueRoute: AuthenticatedEstoqueRoute,
   AuthenticatedFornecedoresRoute: AuthenticatedFornecedoresRoute,
   AuthenticatedHistoricoRoute: AuthenticatedHistoricoRoute,
+  AuthenticatedMargensRoute: AuthenticatedMargensRoute,
   AuthenticatedRelatoriosRoute: AuthenticatedRelatoriosRoute,
   AuthenticatedUtilizadoresRoute: AuthenticatedUtilizadoresRoute,
   AuthenticatedVendasRoute: AuthenticatedVendasRoute,
