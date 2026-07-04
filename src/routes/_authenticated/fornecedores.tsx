@@ -51,7 +51,7 @@ function FornecedoresPage() {
       toast.success("Fornecedor guardado");
       setOpen(false);
       setEditing(null);
-      qc.invalidateQueries({ queryKey: ["suppliers"] });
+      invalidateAfterSupplierChange(qc);
     },
     onError: (e: Error) => toast.error("Falha", { description: e.message }),
   });
