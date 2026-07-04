@@ -354,7 +354,7 @@ function MargensPage() {
                           {formatMZN(m.abs)}
                         </TableCell>
                         <TableCell className="text-right">
-                          <Badge className={marginBadge(m.pct)}>{m.pct.toFixed(1)}%</Badge>
+                          <Badge className={marginBadge(m.pct, thresholds)}>{m.pct.toFixed(1)}%</Badge>
                         </TableCell>
                         <TableCell className="text-right tabular-nums">{p.totalQty}</TableCell>
                       </TableRow>
@@ -387,7 +387,7 @@ function MargensPage() {
                         <p className="truncate font-medium">{p.name}</p>
                         <p className="text-xs text-muted-foreground">Venda {formatMZN(p.sale_price)}</p>
                       </div>
-                      <Badge className={marginBadge(margin(p.sale_price, bestCost).pct)}>
+                      <Badge className={marginBadge(margin(p.sale_price, bestCost).pct, thresholds)}>
                         Melhor: {margin(p.sale_price, bestCost).pct.toFixed(1)}%
                       </Badge>
                     </div>
