@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedVendasHistoricoRouteImport } from './routes/_authenticated/vendas-historico'
 import { Route as AuthenticatedVendasRouteImport } from './routes/_authenticated/vendas'
 import { Route as AuthenticatedUtilizadoresRouteImport } from './routes/_authenticated/utilizadores'
 import { Route as AuthenticatedRelatoriosRouteImport } from './routes/_authenticated/relatorios'
@@ -43,6 +44,12 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedVendasHistoricoRoute =
+  AuthenticatedVendasHistoricoRouteImport.update({
+    id: '/vendas-historico',
+    path: '/vendas-historico',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedVendasRoute = AuthenticatedVendasRouteImport.update({
   id: '/vendas',
   path: '/vendas',
@@ -146,6 +153,7 @@ export interface FileRoutesByFullPath {
   '/relatorios': typeof AuthenticatedRelatoriosRoute
   '/utilizadores': typeof AuthenticatedUtilizadoresRoute
   '/vendas': typeof AuthenticatedVendasRoute
+  '/vendas-historico': typeof AuthenticatedVendasHistoricoRoute
   '/recibo/$ref': typeof AuthenticatedReciboRefRoute
   '/recibo/': typeof AuthenticatedReciboIndexRoute
 }
@@ -166,6 +174,7 @@ export interface FileRoutesByTo {
   '/relatorios': typeof AuthenticatedRelatoriosRoute
   '/utilizadores': typeof AuthenticatedUtilizadoresRoute
   '/vendas': typeof AuthenticatedVendasRoute
+  '/vendas-historico': typeof AuthenticatedVendasHistoricoRoute
   '/recibo/$ref': typeof AuthenticatedReciboRefRoute
   '/recibo': typeof AuthenticatedReciboIndexRoute
 }
@@ -188,6 +197,7 @@ export interface FileRoutesById {
   '/_authenticated/relatorios': typeof AuthenticatedRelatoriosRoute
   '/_authenticated/utilizadores': typeof AuthenticatedUtilizadoresRoute
   '/_authenticated/vendas': typeof AuthenticatedVendasRoute
+  '/_authenticated/vendas-historico': typeof AuthenticatedVendasHistoricoRoute
   '/_authenticated/recibo/$ref': typeof AuthenticatedReciboRefRoute
   '/_authenticated/recibo/': typeof AuthenticatedReciboIndexRoute
 }
@@ -210,6 +220,7 @@ export interface FileRouteTypes {
     | '/relatorios'
     | '/utilizadores'
     | '/vendas'
+    | '/vendas-historico'
     | '/recibo/$ref'
     | '/recibo/'
   fileRoutesByTo: FileRoutesByTo
@@ -230,6 +241,7 @@ export interface FileRouteTypes {
     | '/relatorios'
     | '/utilizadores'
     | '/vendas'
+    | '/vendas-historico'
     | '/recibo/$ref'
     | '/recibo'
   id:
@@ -251,6 +263,7 @@ export interface FileRouteTypes {
     | '/_authenticated/relatorios'
     | '/_authenticated/utilizadores'
     | '/_authenticated/vendas'
+    | '/_authenticated/vendas-historico'
     | '/_authenticated/recibo/$ref'
     | '/_authenticated/recibo/'
   fileRoutesById: FileRoutesById
@@ -283,6 +296,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/vendas-historico': {
+      id: '/_authenticated/vendas-historico'
+      path: '/vendas-historico'
+      fullPath: '/vendas-historico'
+      preLoaderRoute: typeof AuthenticatedVendasHistoricoRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/vendas': {
       id: '/_authenticated/vendas'
@@ -414,6 +434,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedRelatoriosRoute: typeof AuthenticatedRelatoriosRoute
   AuthenticatedUtilizadoresRoute: typeof AuthenticatedUtilizadoresRoute
   AuthenticatedVendasRoute: typeof AuthenticatedVendasRoute
+  AuthenticatedVendasHistoricoRoute: typeof AuthenticatedVendasHistoricoRoute
   AuthenticatedReciboRefRoute: typeof AuthenticatedReciboRefRoute
   AuthenticatedReciboIndexRoute: typeof AuthenticatedReciboIndexRoute
 }
@@ -433,6 +454,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedRelatoriosRoute: AuthenticatedRelatoriosRoute,
   AuthenticatedUtilizadoresRoute: AuthenticatedUtilizadoresRoute,
   AuthenticatedVendasRoute: AuthenticatedVendasRoute,
+  AuthenticatedVendasHistoricoRoute: AuthenticatedVendasHistoricoRoute,
   AuthenticatedReciboRefRoute: AuthenticatedReciboRefRoute,
   AuthenticatedReciboIndexRoute: AuthenticatedReciboIndexRoute,
 }
