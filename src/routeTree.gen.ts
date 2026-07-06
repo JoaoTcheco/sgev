@@ -26,6 +26,7 @@ import { Route as AuthenticatedContasRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedConfiguracoesRouteImport } from './routes/_authenticated/configuracoes'
 import { Route as AuthenticatedCaixaRouteImport } from './routes/_authenticated/caixa'
 import { Route as AuthenticatedAlertasRouteImport } from './routes/_authenticated/alertas'
+import { Route as AuthenticatedAdminVendasRouteImport } from './routes/_authenticated/admin-vendas'
 import { Route as AuthenticatedReciboIndexRouteImport } from './routes/_authenticated/recibo.index'
 import { Route as AuthenticatedReciboRefRouteImport } from './routes/_authenticated/recibo.$ref'
 
@@ -117,6 +118,12 @@ const AuthenticatedAlertasRoute = AuthenticatedAlertasRouteImport.update({
   path: '/alertas',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAdminVendasRoute =
+  AuthenticatedAdminVendasRouteImport.update({
+    id: '/admin-vendas',
+    path: '/admin-vendas',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedReciboIndexRoute =
   AuthenticatedReciboIndexRouteImport.update({
     id: '/recibo/',
@@ -132,6 +139,7 @@ const AuthenticatedReciboRefRoute = AuthenticatedReciboRefRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/admin-vendas': typeof AuthenticatedAdminVendasRoute
   '/alertas': typeof AuthenticatedAlertasRoute
   '/caixa': typeof AuthenticatedCaixaRoute
   '/configuracoes': typeof AuthenticatedConfiguracoesRoute
@@ -152,6 +160,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/admin-vendas': typeof AuthenticatedAdminVendasRoute
   '/alertas': typeof AuthenticatedAlertasRoute
   '/caixa': typeof AuthenticatedCaixaRoute
   '/configuracoes': typeof AuthenticatedConfiguracoesRoute
@@ -174,6 +183,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/_authenticated/admin-vendas': typeof AuthenticatedAdminVendasRoute
   '/_authenticated/alertas': typeof AuthenticatedAlertasRoute
   '/_authenticated/caixa': typeof AuthenticatedCaixaRoute
   '/_authenticated/configuracoes': typeof AuthenticatedConfiguracoesRoute
@@ -196,6 +206,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/admin-vendas'
     | '/alertas'
     | '/caixa'
     | '/configuracoes'
@@ -216,6 +227,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/admin-vendas'
     | '/alertas'
     | '/caixa'
     | '/configuracoes'
@@ -237,6 +249,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/_authenticated/admin-vendas'
     | '/_authenticated/alertas'
     | '/_authenticated/caixa'
     | '/_authenticated/configuracoes'
@@ -382,6 +395,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAlertasRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin-vendas': {
+      id: '/_authenticated/admin-vendas'
+      path: '/admin-vendas'
+      fullPath: '/admin-vendas'
+      preLoaderRoute: typeof AuthenticatedAdminVendasRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/recibo/': {
       id: '/_authenticated/recibo/'
       path: '/recibo'
@@ -400,6 +420,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAdminVendasRoute: typeof AuthenticatedAdminVendasRoute
   AuthenticatedAlertasRoute: typeof AuthenticatedAlertasRoute
   AuthenticatedCaixaRoute: typeof AuthenticatedCaixaRoute
   AuthenticatedConfiguracoesRoute: typeof AuthenticatedConfiguracoesRoute
@@ -419,6 +440,7 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAdminVendasRoute: AuthenticatedAdminVendasRoute,
   AuthenticatedAlertasRoute: AuthenticatedAlertasRoute,
   AuthenticatedCaixaRoute: AuthenticatedCaixaRoute,
   AuthenticatedConfiguracoesRoute: AuthenticatedConfiguracoesRoute,
