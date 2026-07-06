@@ -62,6 +62,7 @@ const MANAGEMENT: Item[] = [
 
 const ADMIN: Item[] = [
   { title: "Utilizadores", url: "/utilizadores", icon: Users, roles: ["admin"] },
+  { title: "Histórico de Vendas", url: "/vendas-historico", icon: Receipt, roles: ["admin"] },
   { title: "Histórico & Logs", url: "/historico", icon: History, roles: ["admin"] },
   { title: "Configurações", url: "/configuracoes", icon: Settings, roles: ["admin"] },
 ];
