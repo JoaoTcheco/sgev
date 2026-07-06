@@ -510,6 +510,7 @@ export type Database = {
           product_id: string
           product_name: string
           quantity: number
+          refunded_qty: number
           sale_id: string
           total: number
           unit_kind: string
@@ -523,6 +524,7 @@ export type Database = {
           product_id: string
           product_name: string
           quantity: number
+          refunded_qty?: number
           sale_id: string
           total: number
           unit_kind?: string
@@ -536,6 +538,7 @@ export type Database = {
           product_id?: string
           product_name?: string
           quantity?: number
+          refunded_qty?: number
           sale_id?: string
           total?: number
           unit_kind?: string
@@ -577,6 +580,7 @@ export type Database = {
           notes: string | null
           payment_method: Database["public"]["Enums"]["payment_method"]
           receipt_number: string | null
+          refunded_amount: number
           sale_number: number
           status: Database["public"]["Enums"]["sale_status"]
           subtotal: number
@@ -593,6 +597,7 @@ export type Database = {
           notes?: string | null
           payment_method?: Database["public"]["Enums"]["payment_method"]
           receipt_number?: string | null
+          refunded_amount?: number
           sale_number?: number
           status?: Database["public"]["Enums"]["sale_status"]
           subtotal?: number
@@ -609,6 +614,7 @@ export type Database = {
           notes?: string | null
           payment_method?: Database["public"]["Enums"]["payment_method"]
           receipt_number?: string | null
+          refunded_amount?: number
           sale_number?: number
           status?: Database["public"]["Enums"]["sale_status"]
           subtotal?: number
@@ -822,6 +828,16 @@ export type Database = {
             Returns: string
           }
       refresh_alerts: { Args: never; Returns: undefined }
+      refund_sale: {
+        Args: {
+          p_amount?: number
+          p_items?: Json
+          p_mode: string
+          p_reason?: string
+          p_sale_id: string
+        }
+        Returns: Json
+      }
     }
     Enums: {
       alert_severity: "info" | "warning" | "critical"
