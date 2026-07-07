@@ -66,14 +66,24 @@ function VendasHistoricoPage() {
     queryFn: async () => {
       let q = supabase
         .from("sales")
-        .select("id, receipt_number, sale_number, total, refunded_amount, status, payment_method, created_at, user_id, profiles(full_name, email)")
+        .select("id, receipt_number, sale_number, total, refunded_amount, status, payment_method, created_at, user_id")
         .order("created_at", { ascending: false })
         .limit(500);
       if (fFrom) q = q.gte("created_at", mzLocalToISO(fFrom, 0, 0, 0));
       if (fTo) q = q.lte("created_at", mzLocalToISO(fTo, 23, 59, 59));
       const { data, error } = await q;
       if (error) throw error;
-      return (data ?? []) as unknown as SaleRow[];
+      const rows = (data ?? []) as unknown as SaleRow[];
+      const ids = Array.from(new Set(rows.map((r) => r.user_id).filter(Boolean))) as string[];
+      if (ids.length > 0) {
+        const { data: profs } = await supabase.from("profiles").select("id, full_name, email").in("id", ids);
+        const map = new Map((profs ?? []).map((p: { id: string; full_name: string | null; email: string | null }) => [p.id, p]));
+        for (const r of rows) {
+          const p = r.user_id ? map.get(r.user_id) : null;
+          r.profiles = p ? { full_name: p.full_name, email: p.email } : null;
+        }
+      }
+      return rows;
     },
   });
 
