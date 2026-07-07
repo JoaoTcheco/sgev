@@ -299,8 +299,8 @@ function RefundDialog({ sale, isAdmin, onClose, onDone }: { sale: SaleRow | null
         if (list.length === 0) throw new Error("Selecione ao menos um item");
         payload.p_mode = "items"; payload.p_items = list;
       }
-      const { data, error } = await rpc("refund_sale", payload);
-      if (error) throw new Error(error.message);
+      const { data, error } = await supabase.rpc("refund_sale" as never, payload as never);
+      if (error) throw new Error((error as { message?: string }).message ?? "Erro desconhecido");
       return data;
     },
     onSuccess: () => {
