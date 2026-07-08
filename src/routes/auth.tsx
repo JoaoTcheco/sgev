@@ -72,8 +72,16 @@ function AuthPage() {
           <CardContent>
             <form onSubmit={handleLogin} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="login-email">E-mail</Label>
-                <Input id="login-email" name="email" type="email" required autoComplete="email" />
+                <Label htmlFor="login-email">Utilizador</Label>
+                <Input
+                  id="login-email"
+                  name="email"
+                  type="text"
+                  required
+                  autoComplete="username"
+                  autoFocus
+                  defaultValue="admin"
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="login-password">Palavra-passe</Label>
@@ -83,6 +91,10 @@ function AuthPage() {
                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Entrar
               </Button>
+              <p className="text-center text-xs text-muted-foreground">
+                Primeira vez? Utilizador <code className="rounded bg-muted px-1 py-0.5">admin</code> · Palavra-passe{" "}
+                <code className="rounded bg-muted px-1 py-0.5">PharmaAdmin@2026</code>
+              </p>
             </form>
           </CardContent>
         </Card>
