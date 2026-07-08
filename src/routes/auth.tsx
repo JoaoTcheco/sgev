@@ -22,10 +22,13 @@ function AuthPage() {
   const [checking, setChecking] = useState(true);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      if (data.user) navigate({ to: "/dashboard", replace: true });
-      else setChecking(false);
-    });
+    supabase.auth
+      .getUser()
+      .then(({ data }) => {
+        if (data?.user) navigate({ to: "/dashboard", replace: true });
+      })
+      .catch((e) => console.error("[auth] getUser failed", e))
+      .finally(() => setChecking(false));
   }, [navigate]);
 
   async function handleLogin(e: React.FormEvent<HTMLFormElement>) {
