@@ -22,7 +22,8 @@ function createWindow() {
   });
 
   if (isDev) {
-    win.loadURL("http://localhost:8080");
+    const devUrl = process.env.ELECTRON_DEV_URL || "http://localhost:5173";
+    win.loadURL(devUrl);
     win.webContents.openDevTools({ mode: "detach" });
   } else {
     win.loadFile(path.join(__dirname, "..", "dist-spa", "electron-index.html"));
