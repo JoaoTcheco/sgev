@@ -51,7 +51,9 @@
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "shortcutName": "PharmaSys",
-      "artifactName": "PharmaSys-Setup-${version}.${ext}"
+      "artifactName": "PharmaSys-Setup-${version}.${ext}",
+      "differentialPackage": false,
+      "unicode": true
     },
     "msi": {
       "oneClick": false,
