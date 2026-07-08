@@ -20,10 +20,10 @@ jobs:
     timeout-minutes: 45
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Use Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: "22"
           cache: "npm"
@@ -34,8 +34,8 @@ jobs:
       - name: Build SPA bundle
         run: npm run electron:build
 
-      - name: Package Windows installers (NSIS + MSI)
-        run: npx electron-builder --win nsis msi --x64 --publish never
+      - name: Package Windows installers (NSIS)
+        run: npx electron-builder --win nsis --x64 --publish never
         env:
           GH_TOKEN: ""
           CSC_IDENTITY_AUTO_DISCOVERY: "false"
@@ -43,7 +43,7 @@ jobs:
 
       - name: List artifacts
         shell: pwsh
-        run: Get-ChildItem dist-electron -Recurse -Include *.exe,*.msi,*.blockmap | Select-Object FullName,Length
+        run: Get-ChildItem dist-electron -Recurse -Include *.exe,*.blockmap | Select-Object FullName,Length
 
       - name: Upload installers
         uses: actions/upload-artifact@v4
@@ -51,7 +51,6 @@ jobs:
           name: pharmasys-windows-installers
           path: |
             dist-electron/*.exe
-            dist-electron/*.msi
             dist-electron/*.blockmap
           if-no-files-found: error
           retention-days: 30
@@ -62,7 +61,6 @@ jobs:
         with:
           files: |
             dist-electron/*.exe
-            dist-electron/*.msi
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
