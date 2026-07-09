@@ -140,6 +140,7 @@ $router->add('payables/view',   'PayableController@view',   'GET', true, $MGR);
 $router->add('payables/pay',    'PayableController@pay',    'POST',true, $MGR);
 $router->add('payables/cancel', 'PayableController@cancel', 'POST',true, $MGR);
 $router->add('payables/delete', 'PayableController@delete', 'POST',true, $ADMIN);
+$router->add('payables/export', 'PayableController@export', 'GET', true, $MGR);
 
 $router->add('receivables',        'ReceivableController@index',   'GET', true, $MGR);
 $router->add('receivables/new',    'ReceivableController@form',    'GET', true, $MGR);
