@@ -43,7 +43,7 @@ $router->add('products/edit',             'ProductController@form',     'GET',  
 $router->add('products/save',             'ProductController@save',     'POST', true);
 $router->add('products/delete',           'ProductController@delete',   'POST', true);
 
-// Stock — lotes e movimentos
+// Stock
 $router->add('stock',                     'StockController@index',      'GET',  true);
 $router->add('stock/view',                'StockController@view',       'GET',  true);
 $router->add('batches',                   'BatchController@index',      'GET',  true);
@@ -61,6 +61,20 @@ $router->add('alerts/resolve',            'AlertController@resolve',    'POST', 
 // Etiquetas
 $router->add('labels',                    'LabelController@index',      'GET',  true);
 $router->add('labels/print',              'LabelController@print',      'POST', true);
+
+// PDV / Vendas
+$router->add('pdv',                       'SaleController@pdv',         'GET',  true);
+$router->add('sales/search',              'SaleController@search',      'GET',  true);
+$router->add('sales/checkout',            'SaleController@checkout',    'POST', true);
+$router->add('sales/receipt',             'SaleController@receipt',    'GET',  true);
+
+// Caixa
+$router->add('cash',                      'CashController@index',       'GET',  true);
+$router->add('cash/open',                 'CashController@openForm',    'GET',  true);
+$router->add('cash/open/submit',          'CashController@open',        'POST', true);
+$router->add('cash/close',                'CashController@closeForm',   'GET',  true);
+$router->add('cash/close/submit',         'CashController@close',       'POST', true);
+$router->add('cash/view',                 'CashController@view',        'GET',  true);
 
 // Administração
 $router->add('users',                     'UserController@index',       'GET',  true);
