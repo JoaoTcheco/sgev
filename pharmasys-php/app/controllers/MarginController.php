@@ -84,4 +84,37 @@ class MarginController extends Controller {
             'stock_value_sale' => $stock_value_sale,
         ]);
     }
+
+    public function export(): void {
+        requireRole('admin','pharmacist');
+        [$rows, $good, $ok, $q, $bucket] = $this->fetch($_GET);
+
+        $filename = 'margens_' . date('Ymd_His') . '.csv';
+        while (ob_get_level() > 0) { @ob_end_clean(); }
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        header('Cache-Control: no-store, no-cache');
+
+        $out = fopen('php://output', 'w');
+        fwrite($out, "\xEF\xBB\xBF");
+        fputcsv($out, ['Produto','Lote','Validade','Fornecedor','Qtd','Custo','Venda','Margem','Margem %','Faixa'], ';');
+        $labels = ['good'=>'Boa','ok'=>'OK','low'=>'Baixa','loss'=>'Prejuízo'];
+        foreach ($rows as $r) {
+            fputcsv($out, [
+                $r['name'],
+                $r['batch_number'],
+                $r['expiry_date'],
+                $r['supplier_name'] ?? '',
+                (int)$r['quantity'],
+                number_format((float)$r['cost_price'], 2, ',', ''),
+                number_format((float)$r['sale_price'], 2, ',', ''),
+                number_format((float)$r['margin_abs'], 2, ',', ''),
+                number_format((float)$r['margin_pct'], 2, ',', ''),
+                $labels[$r['bucket']] ?? $r['bucket'],
+            ], ';');
+        }
+        fclose($out);
+        exit;
+    }
 }
+
