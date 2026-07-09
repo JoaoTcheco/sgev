@@ -1,9 +1,23 @@
+<?php
+$today = date('Y-m-d');
+$ranges = [
+    'today' => ['label'=>'Hoje',    'from'=>$today, 'to'=>$today],
+    '7d'    => ['label'=>'7 dias',  'from'=>date('Y-m-d', strtotime('-6 days')),  'to'=>$today],
+    '30d'   => ['label'=>'30 dias', 'from'=>date('Y-m-d', strtotime('-29 days')), 'to'=>$today],
+    'month' => ['label'=>'Mês',     'from'=>date('Y-m-01'), 'to'=>$today],
+];
+$activeRange = '';
+foreach ($ranges as $k=>$rg) {
+    if ($filters['from']===$rg['from'] && $filters['to']===$rg['to']) { $activeRange = $k; break; }
+}
+?>
 <section class="crud">
   <div class="crud-header">
     <h1 class="page-title">Histórico de vendas</h1>
     <div class="hist-totals">
       <div><small>Vendas</small><strong><?= (int)$totals['count'] ?></strong></div>
       <div><small>Total bruto</small><strong><?= e(formatMZN($totals['gross'])) ?></strong></div>
+      <div><small>Líquido (s/ estorno)</small><strong class="green"><?= e(formatMZN($totals['net'])) ?></strong></div>
       <div><small>Com estorno</small><strong class="orange"><?= (int)$totals['refunded_count'] ?></strong></div>
     </div>
   </div>
@@ -37,9 +51,17 @@
         <option value="refunded"       <?= $filters['status']==='refunded'?'selected':''       ?>>Estornada</option>
       </select>
     </div>
-    <div style="display:flex;gap:8px;">
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
       <button class="btn btn-primary">Filtrar</button>
       <a class="btn btn-ghost" href="<?= url('history/export') ?>&<?= http_build_query($filters) ?>">⬇ CSV</a>
+      <a class="btn btn-ghost" href="<?= url('history') ?>">Limpar</a>
+      <span style="width:1px;height:24px;background:var(--border);margin:0 4px;"></span>
+      <?php foreach ($ranges as $k=>$rg):
+        $qs = $filters; $qs['from']=$rg['from']; $qs['to']=$rg['to'];
+        $cls = $activeRange===$k ? 'btn btn-sm btn-primary' : 'btn btn-sm btn-ghost';
+      ?>
+        <a class="<?= $cls ?>" href="<?= url('history') ?>&<?= http_build_query($qs) ?>"><?= e($rg['label']) ?></a>
+      <?php endforeach; ?>
     </div>
   </form>
 
@@ -69,6 +91,26 @@
         </tr>
       <?php endforeach; endif; ?>
       </tbody>
+      <?php if ($items && !empty($totals['by_method'])): ?>
+      <tfoot>
+        <tr class="hist-foot">
+          <td colspan="5" style="text-align:right;"><strong>Totais por método de pagamento:</strong></td>
+          <td colspan="4">
+            <div style="display:flex;flex-wrap:wrap;gap:8px;">
+              <?php foreach ($totals['by_method'] as $m): ?>
+                <span class="badge badge-gray" title="<?= (int)$m['count'] ?> venda(s)">
+                  <?= e($m['label']) ?>: <strong><?= e(formatMZN($m['total'])) ?></strong>
+                  <small>(<?= (int)$m['count'] ?>)</small>
+                </span>
+              <?php endforeach; ?>
+              <span class="badge badge-green" style="margin-left:auto;">
+                Líquido total: <strong><?= e(formatMZN($totals['net'])) ?></strong>
+              </span>
+            </div>
+          </td>
+        </tr>
+      </tfoot>
+      <?php endif; ?>
     </table>
   </div>
 </section>

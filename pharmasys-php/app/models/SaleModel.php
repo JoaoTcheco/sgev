@@ -167,10 +167,25 @@ class SaleModel {
     }
 
     public static function historyTotals(array $rows): array {
+        $labels = ['cash'=>'Numerário','mpesa'=>'M-Pesa','emola'=>'E-Mola','card'=>'Cartão','transfer'=>'Transferência'];
+        $byMethod = [];
+        $net = 0.0;
+        foreach ($rows as $r) {
+            $m = $r['payment_method'] ?? 'cash';
+            if (!isset($byMethod[$m])) $byMethod[$m] = ['label'=>$labels[$m] ?? strtoupper($m), 'count'=>0, 'total'=>0.0];
+            $byMethod[$m]['count']++;
+            if ($r['status'] !== 'refunded') {
+                $byMethod[$m]['total'] += (float)$r['total'];
+                $net += (float)$r['total'];
+            }
+        }
+        uasort($byMethod, fn($a,$b) => $b['total'] <=> $a['total']);
         return [
             'count'          => count($rows),
             'gross'          => array_sum(array_map(fn($r) => (float)$r['total'], $rows)),
+            'net'            => $net,
             'refunded_count' => count(array_filter($rows, fn($r) => $r['status'] !== 'completed')),
+            'by_method'      => $byMethod,
         ];
     }
 
