@@ -10,7 +10,7 @@
 </head>
 <body class="auth-body">
 <?php $flash = getFlash(); if ($flash): ?>
-  <div class="flash flash-<?= e($flash['type']) ?>"><?= e($flash['message']) ?></div>
+  <div class="auth-flash flash flash-<?= e($flash['type']) ?>"><?= e($flash['message']) ?></div>
 <?php endif; ?>
 <?= $content ?>
 </body>
