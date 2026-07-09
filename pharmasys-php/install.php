@@ -277,24 +277,49 @@ function check_requirements(): array {
 function render_locked(): void {
     ?><!doctype html><html lang="pt"><head><meta charset="utf-8"><title>PharmaSys — Já instalado</title><?php render_styles(); ?></head>
     <body><div class="wrap"><div class="card">
-    <h1>Sistema já instalado</h1>
-    <p>O PharmaSys já foi instalado neste servidor.</p>
-    <p>Para reinstalar, apague o ficheiro <code>.installed</code> na raiz do projecto e recarregue esta página.</p>
-    <a class="btn" href="index.php">Ir para o sistema →</a>
+    <div class="brand" style="margin-bottom:20px;">
+        <div class="brand-logo">
+            <svg viewBox="0 0 32 32" width="28" height="28" fill="none">
+                <rect width="32" height="32" rx="8" fill="url(#g2)"/>
+                <path d="M10 8h8a6 6 0 0 1 0 12h-2v4h-6V8z M10 14h8" stroke="white" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                <defs><linearGradient id="g2" x1="0" y1="0" x2="32" y2="32"><stop stop-color="#0f766e"/><stop offset="1" stop-color="#14b8a6"/></linearGradient></defs>
+            </svg>
+        </div>
+        <div><h1>PharmaSys</h1><p class="sub">Sistema já instalado</p></div>
+    </div>
+    <div class="alert info">
+        O PharmaSys já foi instalado neste servidor. Para reinstalar, apague o ficheiro <code>.installed</code> na raiz do projecto e recarregue esta página.
+    </div>
+    <a class="btn primary" href="index.php">Ir para o sistema →</a>
     </div></div></body></html><?php
 }
 
+
 function render_layout(array $state): void {
     $step = (int)($state['step'] ?? 1);
+    $labels = ['Requisitos', 'Base de Dados', 'Administrador', 'Concluído'];
     ?><!doctype html><html lang="pt"><head><meta charset="utf-8"><title>PharmaSys — Instalação</title><?php render_styles(); ?></head>
     <body><div class="wrap"><div class="card">
     <header class="head">
-        <h1>PharmaSys — Instalador</h1>
+        <div class="brand">
+            <div class="brand-logo">
+                <svg viewBox="0 0 32 32" width="28" height="28" fill="none">
+                    <rect width="32" height="32" rx="8" fill="url(#g1)"/>
+                    <path d="M10 8h8a6 6 0 0 1 0 12h-2v4h-6V8z M10 14h8" stroke="white" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                    <defs><linearGradient id="g1" x1="0" y1="0" x2="32" y2="32"><stop stop-color="#0f766e"/><stop offset="1" stop-color="#14b8a6"/></linearGradient></defs>
+                </svg>
+            </div>
+            <div>
+                <h1>PharmaSys</h1>
+                <p class="sub">Assistente de Instalação</p>
+            </div>
+        </div>
         <ol class="steps">
-            <li class="<?= $step >= 1 ? 'active' : '' ?>">1. Requisitos</li>
-            <li class="<?= $step >= 2 ? 'active' : '' ?>">2. Base de Dados</li>
-            <li class="<?= $step >= 3 ? 'active' : '' ?>">3. Administrador</li>
-            <li class="<?= $step >= 4 ? 'active' : '' ?>">4. Concluído</li>
+            <?php foreach ($labels as $i => $lb): $n = $i + 1; ?>
+                <li class="<?= $step > $n ? 'done' : ($step === $n ? 'active' : '') ?>">
+                    <span class="dot"><?= $step > $n ? '✓' : $n ?></span><?= htmlspecialchars($lb) ?>
+                </li>
+            <?php endforeach; ?>
         </ol>
     </header>
 
@@ -315,10 +340,11 @@ function render_layout(array $state): void {
     ?>
 
     <footer class="foot">
-        <a href="install.php?action=reset">Reiniciar assistente</a>
+        <a href="install.php?action=reset">↺ Reiniciar assistente</a>
     </footer>
     </div></div></body></html><?php
 }
+
 
 function render_step1(): void {
     $reqs = check_requirements();
