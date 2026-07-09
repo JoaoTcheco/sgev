@@ -39,4 +39,5 @@ RewriteRule ^(.*)$ index.php?r=$1 [QSA,L]
     Header unset X-Powered-By
 </IfModule>
 
-ErrorDocument 404 /pharmasys/index.php?r=error/notfound
+# 404 é tratado pelo router (dispatch → error/notfound) via RewriteRule acima.
+# Não usar ErrorDocument com caminho absoluto porque depende do sub-directório de instalação.
