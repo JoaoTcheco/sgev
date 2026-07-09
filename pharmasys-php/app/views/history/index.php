@@ -37,7 +37,10 @@
         <option value="refunded"       <?= $filters['status']==='refunded'?'selected':''       ?>>Estornada</option>
       </select>
     </div>
-    <div><button class="btn btn-primary">Filtrar</button></div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-primary">Filtrar</button>
+      <a class="btn btn-ghost" href="<?= url('history/export') ?>&<?= http_build_query($filters) ?>">⬇ CSV</a>
+    </div>
   </form>
 
   <div class="crud-table-card">

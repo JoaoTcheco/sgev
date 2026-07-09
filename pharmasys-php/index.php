@@ -155,6 +155,7 @@ $router->add('margins',         'MarginController@index',   'GET', true, $MGR);
 
 // ---------- Administração (admin) ----------
 $router->add('history',        'SaleHistoryController@index',  'GET', true, $ADMIN);
+$router->add('history/export', 'SaleHistoryController@export', 'GET', true, $ADMIN);
 $router->add('history/view',   'SaleHistoryController@view',   'GET', true, $ADMIN);
 $router->add('history/refund', 'SaleHistoryController@refund', 'POST',true, $ADMIN);
 

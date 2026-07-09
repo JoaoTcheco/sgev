@@ -19,6 +19,48 @@ class SaleHistoryController extends Controller {
         ]);
     }
 
+    public function export(): void {
+        requireAuth();
+        $filters = [
+            'from'           => $_GET['from']           ?? date('Y-m-01'),
+            'to'             => $_GET['to']             ?? date('Y-m-d'),
+            'receipt'        => trim($_GET['receipt']   ?? ''),
+            'customer_id'    => $_GET['customer_id']    ?? '',
+            'payment_method' => $_GET['payment_method'] ?? '',
+            'status'         => $_GET['status']         ?? '',
+        ];
+        $rows = SaleModel::history($filters);
+
+        $filename = 'vendas_' . date('Ymd_His') . '.csv';
+        while (ob_get_level() > 0) { @ob_end_clean(); }
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        header('Cache-Control: no-store, no-cache');
+
+        $out = fopen('php://output', 'w');
+        // BOM UTF-8 para Excel
+        fwrite($out, "\xEF\xBB\xBF");
+        fputcsv($out, ['Recibo','Data','Cliente','Atendente','Itens','Estornados','Subtotal','Desconto','Total','Pagamento','Estado'], ';');
+        $labels = ['completed'=>'Concluída','partial_refund'=>'Estorno parcial','refunded'=>'Estornada'];
+        foreach ($rows as $s) {
+            fputcsv($out, [
+                $s['receipt_number'],
+                formatDateTime($s['created_at']),
+                $s['customer_name'] ?: '',
+                $s['user_name'] ?? '',
+                (int)$s['total_qty'],
+                (int)$s['refunded_qty'],
+                number_format((float)($s['subtotal'] ?? 0), 2, ',', ''),
+                number_format((float)($s['discount'] ?? 0), 2, ',', ''),
+                number_format((float)$s['total'], 2, ',', ''),
+                strtoupper($s['payment_method']),
+                $labels[$s['status']] ?? $s['status'],
+            ], ';');
+        }
+        fclose($out);
+        exit;
+    }
+
     public function view(): void {
         requireAuth();
         $sale = SaleModel::find($_GET['id'] ?? '');
