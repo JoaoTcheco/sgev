@@ -152,6 +152,7 @@ $router->add('receivables/delete', 'ReceivableController@delete',  'POST',true, 
 $router->add('reports',         'ReportController@index',   'GET', true, $MGR);
 $router->add('reports/export',  'ReportController@export',  'GET', true, $MGR);
 $router->add('margins',         'MarginController@index',   'GET', true, $MGR);
+$router->add('margins/export',  'MarginController@export',  'GET', true, $MGR);
 
 // ---------- Administração (admin) ----------
 $router->add('history',        'SaleHistoryController@index',  'GET', true, $ADMIN);

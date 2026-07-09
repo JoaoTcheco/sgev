@@ -7,13 +7,12 @@
  */
 class MarginController extends Controller {
 
-    public function index(): void {
-        requireRole('admin','pharmacist');
-
-        $q       = trim($_GET['q'] ?? '');
-        $bucket  = $_GET['bucket'] ?? '';         // good | ok | low | loss
-        $good    = max(0, (float)($_GET['good'] ?? 30));
-        $ok      = max(0, (float)($_GET['ok']   ?? 15));
+    /** Consulta partilhada por index() e export(). */
+    private function fetch(array $req): array {
+        $q      = trim($req['q'] ?? '');
+        $bucket = $req['bucket'] ?? '';
+        $good   = max(0, (float)($req['good'] ?? 30));
+        $ok     = max(0, (float)($req['ok']   ?? 15));
 
         $sql = "SELECT p.id AS product_id, p.name, p.unit, p.pack_size, p.sale_price,
                        b.id AS batch_id, b.batch_number, b.expiry_date, b.quantity, b.cost_price,
@@ -34,16 +33,24 @@ class MarginController extends Controller {
         $sql .= ' ORDER BY margin_pct ASC, p.name ASC LIMIT 500';
         $rows = Database::all($sql, $p);
 
-        // Classificação em memória
         foreach ($rows as &$r) {
             $pct = (float)$r['margin_pct'];
-            if ($pct < 0)       $r['bucket'] = 'loss';
-            elseif ($pct < $ok) $r['bucket'] = 'low';
+            if ($pct < 0)         $r['bucket'] = 'loss';
+            elseif ($pct < $ok)   $r['bucket'] = 'low';
             elseif ($pct < $good) $r['bucket'] = 'ok';
-            else                $r['bucket'] = 'good';
+            else                  $r['bucket'] = 'good';
         }
         unset($r);
         if ($bucket) $rows = array_values(array_filter($rows, fn($r) => $r['bucket'] === $bucket));
+
+        return [$rows, $good, $ok, $q, $bucket];
+    }
+
+    public function index(): void {
+        requireRole('admin','pharmacist');
+        [$rows, $good, $ok, $q, $bucket] = $this->fetch($_GET);
+
+
 
         // Agregados
         $stats = ['good'=>0,'ok'=>0,'low'=>0,'loss'=>0];
@@ -77,4 +84,37 @@ class MarginController extends Controller {
             'stock_value_sale' => $stock_value_sale,
         ]);
     }
+
+    public function export(): void {
+        requireRole('admin','pharmacist');
+        [$rows, $good, $ok, $q, $bucket] = $this->fetch($_GET);
+
+        $filename = 'margens_' . date('Ymd_His') . '.csv';
+        while (ob_get_level() > 0) { @ob_end_clean(); }
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        header('Cache-Control: no-store, no-cache');
+
+        $out = fopen('php://output', 'w');
+        fwrite($out, "\xEF\xBB\xBF");
+        fputcsv($out, ['Produto','Lote','Validade','Fornecedor','Qtd','Custo','Venda','Margem','Margem %','Faixa'], ';');
+        $labels = ['good'=>'Boa','ok'=>'OK','low'=>'Baixa','loss'=>'Prejuízo'];
+        foreach ($rows as $r) {
+            fputcsv($out, [
+                $r['name'],
+                $r['batch_number'],
+                $r['expiry_date'],
+                $r['supplier_name'] ?? '',
+                (int)$r['quantity'],
+                number_format((float)$r['cost_price'], 2, ',', ''),
+                number_format((float)$r['sale_price'], 2, ',', ''),
+                number_format((float)$r['margin_abs'], 2, ',', ''),
+                number_format((float)$r['margin_pct'], 2, ',', ''),
+                $labels[$r['bucket']] ?? $r['bucket'],
+            ], ';');
+        }
+        fclose($out);
+        exit;
+    }
 }
+
