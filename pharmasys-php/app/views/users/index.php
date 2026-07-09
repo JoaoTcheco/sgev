@@ -4,7 +4,10 @@
       <h1 class="page-title">Utilizadores</h1>
       <p class="page-subtitle">Gestão de contas e papéis</p>
     </div>
-    <a href="<?= url('users/new') ?>" class="btn btn-primary">+ Novo utilizador</a>
+    <div style="display:flex;gap:8px;">
+      <a href="<?= url('users') ?>&print=1" class="btn btn-ghost">🖨️ PDF</a>
+      <a href="<?= url('users/new') ?>" class="btn btn-primary">+ Novo utilizador</a>
+    </div>
   </div>
 
   <div class="crud-table-card">
