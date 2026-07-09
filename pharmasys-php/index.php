@@ -120,6 +120,8 @@ $router->add('accounts/edit',             'AccountController@form',         'GET
 $router->add('accounts/save',             'AccountController@save',         'POST',true, $MGR);
 $router->add('accounts/delete',           'AccountController@delete',       'POST',true, $ADMIN);
 $router->add('accounts/movements',        'AccountController@movements',    'GET', true, $MGR);
+$router->add('accounts/movements/export', 'AccountController@exportMovements','GET', true, $MGR);
+
 $router->add('accounts/adjust',           'AccountController@adjust',       'POST',true, $ADMIN);
 $router->add('accounts/transfer',         'AccountController@transferForm', 'GET', true, $MGR);
 $router->add('accounts/transfer/submit',  'AccountController@transfer',     'POST',true, $MGR);
