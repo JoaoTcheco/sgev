@@ -68,6 +68,11 @@ $router->add('sales/search',              'SaleController@search',      'GET',  
 $router->add('sales/checkout',            'SaleController@checkout',    'POST', true);
 $router->add('sales/receipt',             'SaleController@receipt',    'GET',  true);
 
+// Histórico / Estorno
+$router->add('history',                   'SaleHistoryController@index',  'GET',  true);
+$router->add('history/view',              'SaleHistoryController@view',   'GET',  true);
+$router->add('history/refund',            'SaleHistoryController@refund', 'POST', true);
+
 // Caixa
 $router->add('cash',                      'CashController@index',       'GET',  true);
 $router->add('cash/open',                 'CashController@openForm',    'GET',  true);
