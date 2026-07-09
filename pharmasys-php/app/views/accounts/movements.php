@@ -34,6 +34,21 @@
       <label>Até <input type="date" name="date_to" value="<?= e($filters['date_to'] ?? '') ?>"></label>
       <button class="btn btn-primary">Filtrar</button>
       <a href="<?= url('accounts/movements') ?>&id=<?= e($account['id']) ?>" class="btn">Limpar</a>
+      <?php
+        $today = date('Y-m-d');
+        $ranges = [
+          'Hoje'   => [$today, $today],
+          '7d'     => [date('Y-m-d', strtotime('-6 days')), $today],
+          '30d'    => [date('Y-m-d', strtotime('-29 days')), $today],
+          'Mês'    => [date('Y-m-01'), $today],
+        ];
+        foreach ($ranges as $lbl => [$f,$t]):
+          $active = (($filters['date_from']??'')===$f && ($filters['date_to']??'')===$t);
+          $qs = ['id'=>$account['id'],'type'=>$filters['type']??'','date_from'=>$f,'date_to'=>$t];
+      ?>
+        <a class="btn btn-sm <?= $active?'btn-primary':'' ?>"
+           href="<?= url('accounts/movements') ?>&<?= http_build_query($qs) ?>"><?= $lbl ?></a>
+      <?php endforeach; ?>
     </form>
 
     <?php if ($isAdmin): ?>
