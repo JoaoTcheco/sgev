@@ -113,4 +113,9 @@ $router->add('backup/restore',            'BackupController@restore',           
 $router->add('backup/products/export',    'BackupController@exportProductsCsv',  'GET',  true);
 $router->add('backup/products/import',    'BackupController@importProductsCsv',  'POST', true);
 
+// Auditoria
+$router->add('audit',                     'AuditController@index',   'GET', true);
+$router->add('audit/view',                'AuditController@view',    'GET', true);
+$router->add('audit/export',              'AuditController@export',  'GET', true);
+
 $router->dispatch($_GET['r'] ?? '');

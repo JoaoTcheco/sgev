@@ -1,0 +1,68 @@
+.audit-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:20px}
+.audit-card{background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:16px}
+.audit-card-title{font-size:12px;text-transform:uppercase;letter-spacing:.4px;color:#6b7280;margin-bottom:6px}
+.audit-card-value{font-size:28px;font-weight:700;color:#111827;line-height:1}
+.audit-card-sub{font-size:12px;color:#9ca3af;margin-top:4px}
+
+.audit-grid{display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-bottom:20px}
+.audit-chart,.audit-top{background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:16px}
+.audit-chart h3,.audit-top h3{margin:0 0 12px;font-size:14px;color:#374151}
+.bars{display:flex;align-items:flex-end;gap:8px;height:180px;padding-top:20px}
+.bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;position:relative}
+.bar{width:100%;background:linear-gradient(180deg,#3b82f6,#1d4ed8);border-radius:4px 4px 0 0;min-height:2px;transition:opacity .15s}
+.bar-wrap:hover .bar{opacity:.85}
+.bar-label{font-size:10px;color:#6b7280;margin-top:4px}
+.bar-val{position:absolute;top:-16px;font-size:10px;color:#374151;font-weight:600}
+
+.top-list{list-style:none;padding:0;margin:0}
+.top-list li{margin-bottom:10px}
+.top-row{display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px}
+.top-label{color:#374151;font-family:monospace}
+.top-count{color:#6b7280;font-weight:600}
+.top-bar{height:6px;background:#f3f4f6;border-radius:3px;overflow:hidden}
+.top-fill{height:100%;background:#10b981;border-radius:3px}
+
+.audit-filters{padding:16px;margin-bottom:16px}
+.filter-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:12px}
+.filter-row:last-child{margin-bottom:0}
+.filter-field{display:flex;flex-direction:column;gap:4px}
+.filter-field label{font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:#6b7280}
+.filter-field input,.filter-field select{padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px}
+.filter-actions{display:flex;align-items:flex-end;gap:8px}
+
+.audit-table{width:100%;border-collapse:collapse;font-size:13px}
+.audit-table th,.audit-table td{padding:10px 12px;border-bottom:1px solid #f3f4f6;text-align:left;vertical-align:top}
+.audit-table th{background:#f9fafb;font-weight:600;color:#374151;font-size:11px;text-transform:uppercase;letter-spacing:.4px}
+.audit-table tr:hover{background:#fafafa}
+.user-cell{display:flex;flex-direction:column}
+.user-cell small{color:#6b7280;font-size:11px}
+.entity-tag{display:inline-block;padding:2px 8px;background:#eef2ff;color:#4338ca;border-radius:4px;font-size:11px;font-family:monospace}
+.details-cell{max-width:340px}
+.details-preview{color:#4b5563;font-family:monospace;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nowrap{white-space:nowrap}
+.mono{font-family:monospace}
+.small{font-size:11px}
+.empty{text-align:center;color:#9ca3af;padding:32px}
+
+.chip{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.3px}
+.chip-success{background:#d1fae5;color:#065f46}
+.chip-danger{background:#fee2e2;color:#991b1b}
+.chip-warning{background:#fef3c7;color:#92400e}
+.chip-info{background:#dbeafe;color:#1e40af}
+.chip-neutral{background:#f3f4f6;color:#4b5563}
+
+.pagination{display:flex;justify-content:space-between;align-items:center;padding:16px;border-top:1px solid #f3f4f6}
+.page-info{color:#6b7280;font-size:13px}
+
+.audit-detail{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:20px}
+.audit-detail>div{display:flex;flex-direction:column;gap:4px}
+.dl-label{font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:#6b7280}
+.dl-value{color:#111827;font-size:14px}
+.details-block{background:#0f172a;color:#e2e8f0;padding:16px;border-radius:8px;overflow-x:auto;font-family:monospace;font-size:12px;line-height:1.55;white-space:pre-wrap;word-break:break-word}
+.current-row{background:#fef9c3 !important}
+
+@media(max-width:960px){
+  .audit-summary,.filter-row{grid-template-columns:repeat(2,1fr)}
+  .audit-grid{grid-template-columns:1fr}
+  .audit-detail{grid-template-columns:1fr}
+}
