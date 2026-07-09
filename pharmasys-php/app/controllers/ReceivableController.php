@@ -100,4 +100,43 @@ class ReceivableController extends Controller {
         catch (Throwable $e) { flash('error', $e->getMessage()); }
         redirect('receivables');
     }
+
+    public function export(): void {
+        $this->guard();
+        $filters = [
+            'q'           => trim($_GET['q']           ?? ''),
+            'status'      => trim($_GET['status']      ?? ''),
+            'customer_id' => trim($_GET['customer_id'] ?? ''),
+            'due_from'    => trim($_GET['due_from']    ?? ''),
+            'due_to'      => trim($_GET['due_to']      ?? ''),
+            'overdue'     => trim($_GET['overdue']     ?? ''),
+        ];
+        $data = ReceivableModel::paginate($filters, 1, 10000);
+
+        $filename = 'contas_receber_' . date('Ymd_His') . '.csv';
+        while (ob_get_level() > 0) { @ob_end_clean(); }
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        header('Cache-Control: no-store, no-cache');
+        $out = fopen('php://output', 'w');
+        fwrite($out, "\xEF\xBB\xBF");
+        fputcsv($out, ['Emissão','Vencimento','Cliente','Recibo','Descrição','Valor','Recebido','Saldo','Estado','Dias'], ';');
+        $labels = ['open'=>'Em aberto','partial'=>'Parcial','paid'=>'Recebido','canceled'=>'Cancelada'];
+        foreach ($data['rows'] as $r) {
+            fputcsv($out, [
+                $r['issue_date'] ?? '',
+                $r['due_date'],
+                $r['customer_name'] ?? '',
+                $r['receipt_number'] ?? '',
+                $r['description'],
+                number_format((float)$r['amount'], 2, ',', ''),
+                number_format((float)$r['paid_amount'], 2, ',', ''),
+                number_format((float)$r['balance'], 2, ',', ''),
+                $labels[$r['status']] ?? $r['status'],
+                (int)$r['days_to_due'],
+            ], ';');
+        }
+        fclose($out);
+        exit;
+    }
 }
