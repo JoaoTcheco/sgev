@@ -136,4 +136,112 @@ class SaleModel {
     public static function items(string $saleId): array {
         return Database::all('SELECT * FROM sale_items WHERE sale_id = ? ORDER BY created_at', [$saleId]);
     }
+
+    /** Histórico com filtros: from, to, receipt, customer_id, payment_method, status, user_id. */
+    public static function history(array $f = []): array {
+        $sql = 'SELECT s.*, c.full_name AS customer_name, u.full_name AS user_name,
+                       (SELECT COALESCE(SUM(quantity),0)     FROM sale_items WHERE sale_id = s.id) AS total_qty,
+                       (SELECT COALESCE(SUM(refunded_qty),0) FROM sale_items WHERE sale_id = s.id) AS refunded_qty
+                FROM sales s
+                LEFT JOIN customers c ON c.id = s.customer_id
+                LEFT JOIN users u     ON u.id = s.user_id
+                WHERE 1=1';
+        $p = [];
+        if (!empty($f['from']))           { $sql .= ' AND s.created_at >= ?'; $p[] = $f['from'] . ' 00:00:00'; }
+        if (!empty($f['to']))             { $sql .= ' AND s.created_at <= ?'; $p[] = $f['to']   . ' 23:59:59'; }
+        if (!empty($f['receipt']))        { $sql .= ' AND s.receipt_number LIKE ?'; $p[] = '%' . $f['receipt'] . '%'; }
+        if (!empty($f['customer_id']))    { $sql .= ' AND s.customer_id = ?'; $p[] = $f['customer_id']; }
+        if (!empty($f['payment_method'])) { $sql .= ' AND s.payment_method = ?'; $p[] = $f['payment_method']; }
+        if (!empty($f['status']))         { $sql .= ' AND s.status = ?'; $p[] = $f['status']; }
+        if (!empty($f['user_id']))        { $sql .= ' AND s.user_id = ?'; $p[] = $f['user_id']; }
+        $sql .= ' ORDER BY s.created_at DESC LIMIT 500';
+        return Database::all($sql, $p);
+    }
+
+    public static function historyTotals(array $rows): array {
+        return [
+            'count'          => count($rows),
+            'gross'          => array_sum(array_map(fn($r) => (float)$r['total'], $rows)),
+            'refunded_count' => count(array_filter($rows, fn($r) => $r['status'] !== 'completed')),
+        ];
+    }
+
+    /**
+     * Estorno parcial ou total.
+     * $refunds = ['sale_item_id' => qty, ...]
+     * Repõe stock nos lotes, actualiza refunded_qty, debita conta, marca status.
+     */
+    public static function refund(string $saleId, array $refunds, string $reason = ''): void {
+        $sale = self::find($saleId);
+        if (!$sale) throw new Exception('Venda não encontrada.');
+        if ($sale['status'] === 'refunded') throw new Exception('Venda já totalmente estornada.');
+
+        $items = self::items($saleId);
+        $itemsById = [];
+        foreach ($items as $it) $itemsById[$it['id']] = $it;
+
+        $refundValue = 0;
+        $anyRefund = false;
+        $txnId = uuidv4();
+
+        Database::begin();
+        try {
+            foreach ($refunds as $itemId => $qty) {
+                $qty = (int)$qty;
+                if ($qty <= 0) continue;
+                if (!isset($itemsById[$itemId])) throw new Exception('Item inválido.');
+                $it = $itemsById[$itemId];
+                $available = (int)$it['quantity'] - (int)$it['refunded_qty'];
+                if ($qty > $available) {
+                    throw new Exception('Quantidade a estornar excede a disponível para ' . $it['product_name'] . '.');
+                }
+                $anyRefund = true;
+
+                Database::query('UPDATE sale_items SET refunded_qty = refunded_qty + ? WHERE id = ?', [$qty, $itemId]);
+                if ($it['batch_id']) BatchModel::adjustQuantity($it['batch_id'], $qty);
+
+                StockMovementModel::record([
+                    'batch_id'     => $it['batch_id'],
+                    'product_id'   => $it['product_id'],
+                    'type'         => 'refund',
+                    'quantity'     => $qty,
+                    'reason'       => 'Estorno recibo ' . $sale['receipt_number'] . ($reason ? ' — ' . $reason : ''),
+                    'reference_id' => $saleId,
+                ], $txnId);
+
+                $refundValue += $qty * (float)$it['unit_price'];
+            }
+
+            if (!$anyRefund) throw new Exception('Nenhuma quantidade indicada para estorno.');
+
+            if ($sale['account_id'] && $refundValue > 0) {
+                FinancialAccountModel::debit(
+                    $sale['account_id'], $refundValue,
+                    'Estorno ' . $sale['receipt_number'] . ($reason ? ' — ' . $reason : ''),
+                    $saleId, $txnId
+                );
+            }
+
+            $agg = Database::one(
+                'SELECT COALESCE(SUM(quantity),0) q, COALESCE(SUM(refunded_qty),0) r
+                 FROM sale_items WHERE sale_id = ?', [$saleId]
+            );
+            $newStatus = ($agg['r'] >= $agg['q']) ? 'refunded' : 'partial_refund';
+            Database::query(
+                'UPDATE sales SET status = ?, notes = CONCAT(COALESCE(notes,""), ?) WHERE id = ?',
+                [$newStatus,
+                 "\n[Estorno " . date('Y-m-d H:i') . '] ' . formatMZN($refundValue)
+                    . ($reason ? ' — ' . $reason : ''),
+                 $saleId]
+            );
+
+            AuditLogModel::log('sale.refund', 'sale', $saleId,
+                ['refunds' => $refunds, 'value' => $refundValue, 'reason' => $reason, 'new_status' => $newStatus], $txnId);
+
+            Database::commit();
+        } catch (Throwable $e) {
+            Database::rollBack();
+            throw $e;
+        }
+    }
 }

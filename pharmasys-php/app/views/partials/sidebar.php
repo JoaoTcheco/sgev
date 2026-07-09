@@ -11,8 +11,9 @@
     <a href="<?= url('dashboard') ?>" class="nav-item <?= $r === 'dashboard' ? 'active' : '' ?>">Dashboard</a>
 
     <div class="nav-section">Operação</div>
-    <a href="<?= url('pdv') ?>"   class="nav-item nav-item-primary <?= str_starts_with($r,'pdv')||str_starts_with($r,'sales') ? 'active' : '' ?>">🛒 PDV — Vendas</a>
-    <a href="<?= url('cash') ?>"  class="nav-item <?= str_starts_with($r,'cash') ? 'active' : '' ?>">Caixa</a>
+    <a href="<?= url('pdv') ?>"      class="nav-item nav-item-primary <?= str_starts_with($r,'pdv')||$r==='sales/checkout'||$r==='sales/receipt' ? 'active' : '' ?>">🛒 PDV — Vendas</a>
+    <a href="<?= url('cash') ?>"     class="nav-item <?= str_starts_with($r,'cash') ? 'active' : '' ?>">Caixa</a>
+    <a href="<?= url('history') ?>"  class="nav-item <?= str_starts_with($r,'history') ? 'active' : '' ?>">Histórico / Estorno</a>
 
     <div class="nav-section">Stock</div>
     <a href="<?= url('stock') ?>"    class="nav-item <?= str_starts_with($r,'stock')    ? 'active' : '' ?>">Estoque</a>
@@ -35,8 +36,7 @@
       <a href="<?= url('settings') ?>" class="nav-item <?= str_starts_with($r,'settings') ? 'active' : '' ?>">Configurações</a>
     <?php endif; ?>
 
-    <div class="nav-section">Próximos pacotes</div>
-    <span class="nav-item disabled">Histórico / Estorno</span>
+    <div class="nav-section">Próximo pacote</div>
     <span class="nav-item disabled">Relatórios</span>
   </nav>
   <a href="<?= url('logout') ?>" class="nav-logout">Sair</a>
