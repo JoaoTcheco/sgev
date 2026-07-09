@@ -130,4 +130,13 @@ $router->add('purchases/delete',     'PurchaseOrderController@delete',       'PO
 $router->add('purchases/receive',    'PurchaseOrderController@receiveForm',  'GET',  true);
 $router->add('purchases/receive/submit', 'PurchaseOrderController@receive',  'POST', true);
 
+// Notificações in-app
+$router->add('notifications',              'NotificationController@index',       'GET',  true);
+$router->add('notifications/feed',         'NotificationController@feed',        'GET',  true);
+$router->add('notifications/read',         'NotificationController@markRead',    'POST', true);
+$router->add('notifications/read-all',     'NotificationController@markAllRead', 'POST', true);
+$router->add('notifications/delete',       'NotificationController@delete',      'POST', true);
+$router->add('notifications/clear-read',   'NotificationController@clearRead',   'POST', true);
+$router->add('notifications/refresh',      'NotificationController@refresh',     'POST', true);
+
 $router->dispatch($_GET['r'] ?? '');
