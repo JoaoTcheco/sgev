@@ -131,6 +131,23 @@
       <a href="<?= url('audit') ?>" class="btn btn-ghost">Limpar</a>
     </div>
   </div>
+  <div class="filter-row" style="gap:6px;align-items:center;">
+    <span class="muted" style="font-size:12px;">Intervalos rápidos:</span>
+    <?php
+      $today = date('Y-m-d');
+      $ranges = [
+        'Hoje'   => [$today, $today],
+        '7 dias' => [date('Y-m-d', strtotime('-6 days')), $today],
+        '30 dias'=> [date('Y-m-d', strtotime('-29 days')), $today],
+        'Mês'    => [date('Y-m-01'), $today],
+      ];
+      foreach ($ranges as $lbl => [$f,$t]):
+        $active = ($filters['from']===$f && $filters['to']===$t);
+        $qs = array_merge($filters, ['from'=>$f,'to'=>$t]);
+    ?>
+      <a class="btn btn-sm <?= $active?'btn-primary':'btn-ghost' ?>"
+         href="<?= url('audit') ?>&<?= http_build_query($qs) ?>"><?= $lbl ?></a>
+    <?php endforeach; ?>
 </form>
 
 <div class="card">
