@@ -22,6 +22,10 @@
       Alertas
       <?php $n = AlertModel::countOpen(); if ($n): ?><span class="nav-count"><?= $n ?></span><?php endif; ?>
     </a>
+    <a href="<?= url('notifications') ?>" class="nav-item <?= str_starts_with($r,'notifications') ? 'active' : '' ?>">
+      Notificações
+      <?php $nn = NotificationModel::countUnread($u); if ($nn): ?><span class="nav-count"><?= $nn ?></span><?php endif; ?>
+    </a>
     <a href="<?= url('labels') ?>"   class="nav-item <?= str_starts_with($r,'labels')   ? 'active' : '' ?>">Etiquetas</a>
 
     <div class="nav-section">Cadastros</div>
