@@ -91,4 +91,8 @@ $router->add('users/delete',              'UserController@delete',      'POST', 
 $router->add('settings',                  'SettingController@index',    'GET',  true);
 $router->add('settings/save',             'SettingController@save',     'POST', true);
 
+// Relatórios
+$router->add('reports',                   'ReportController@index',     'GET',  true);
+$router->add('reports/export',            'ReportController@export',    'GET',  true);
+
 $router->dispatch($_GET['r'] ?? '');
