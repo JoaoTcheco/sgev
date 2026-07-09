@@ -1,28 +1,105 @@
-/* PharmaSys — estilos globais */
-* { box-sizing: border-box; }
-html, body { margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; color: #1e293b; background: #f8fafc; }
+/* ================================================================
+   PharmaSys — Design System (alinhado ao frontend Lovable)
+   Paleta verde-teal, cantos suaves, tipografia refinada.
+   ================================================================ */
 
+:root {
+  /* ---- Cores ---- */
+  --background: #f7faf9;
+  --foreground: #10231f;
+  --card: #ffffff;
+  --card-foreground: #10231f;
+  --muted: #eef4f2;
+  --muted-foreground: #5a726c;
+  --border: #dfe8e5;
+  --input: #e6edeb;
+  --input-border: #d3deda;
+  --ring: rgba(15, 118, 110, 0.35);
+
+  --primary: #0f766e;
+  --primary-hover: #0d5f5a;
+  --primary-foreground: #ffffff;
+  --primary-glow: #14b8a6;
+
+  --accent: #d7efe8;
+  --accent-foreground: #114d47;
+
+  --success: #16a34a;
+  --success-bg: #ecfdf5;
+  --danger: #dc2626;
+  --danger-bg: #fef2f2;
+  --warning: #d97706;
+  --warning-bg: #fffbeb;
+  --info: #2563eb;
+  --info-bg: #eff6ff;
+
+  --sidebar: #0f2724;
+  --sidebar-foreground: #e6f2ef;
+  --sidebar-muted: #94b2ac;
+  --sidebar-active: #14b8a6;
+  --sidebar-active-bg: rgba(20, 184, 166, 0.15);
+  --sidebar-border: #1c3a36;
+
+  --radius-sm: 6px;
+  --radius: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+
+  --shadow-sm: 0 1px 2px rgba(15, 39, 36, 0.04);
+  --shadow: 0 4px 12px rgba(15, 39, 36, 0.06);
+  --shadow-lg: 0 20px 40px -12px rgba(15, 39, 36, 0.18);
+  --shadow-glow: 0 10px 30px -10px rgba(15, 118, 110, 0.35);
+
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-sans);
+  color: var(--foreground);
+  background: var(--background);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a { color: inherit; }
+
+/* ---- Flash ---- */
 .flash {
-  padding: 12px 18px; margin: 12px; border-radius: 8px; font-size: 14px;
+  padding: 12px 18px;
+  margin: 12px;
+  border-radius: var(--radius);
+  font-size: 14px;
   border: 1px solid transparent;
 }
-.flash-success { background: #ecfdf5; border-color: #a7f3d0; color: #065f46; }
-.flash-error   { background: #fef2f2; border-color: #fecaca; color: #991b1b; }
-.flash-info    { background: #eff6ff; border-color: #bfdbfe; color: #1e40af; }
-.flash-warning { background: #fffbeb; border-color: #fde68a; color: #92400e; }
+.flash-success { background: var(--success-bg); border-color: #a7f3d0; color: #065f46; }
+.flash-error   { background: var(--danger-bg);  border-color: #fecaca; color: #991b1b; }
+.flash-info    { background: var(--info-bg);    border-color: #bfdbfe; color: #1e40af; }
+.flash-warning { background: var(--warning-bg); border-color: #fde68a; color: #92400e; }
 
-.app-shell { display: flex; min-height: 100vh; }
-.app-main  { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+/* ---- Shell ---- */
+.app-shell   { display: flex; min-height: 100vh; }
+.app-main    { flex: 1; display: flex; flex-direction: column; min-width: 0; }
 .app-content { padding: 24px; flex: 1; }
 
 .app-header {
-  height: 60px; background: #fff; border-bottom: 1px solid #e2e8f0;
-  display: flex; align-items: center; justify-content: space-between; padding: 0 20px;
+  height: 60px;
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 20px;
 }
 .header-title { font-weight: 600; font-size: 16px; }
 .header-user  { display: flex; align-items: center; gap: 10px; }
 .user-name    { font-size: 14px; font-weight: 500; }
-.user-badge   { font-size: 11px; padding: 2px 8px; border-radius: 999px; background: #dbeafe; color: #1e40af; text-transform: uppercase; }
+.user-badge   {
+  font-size: 11px; padding: 3px 10px; border-radius: 999px;
+  background: var(--accent); color: var(--accent-foreground);
+  text-transform: uppercase; font-weight: 600; letter-spacing: 0.03em;
+}
 
 .page-title    { font-size: 24px; font-weight: 700; margin: 0 0 4px; }
-.page-subtitle { color: #64748b; margin: 0 0 24px; }
+.page-subtitle { color: var(--muted-foreground); margin: 0 0 24px; }
