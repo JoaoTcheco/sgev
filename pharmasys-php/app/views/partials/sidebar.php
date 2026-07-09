@@ -30,14 +30,16 @@
     <a href="<?= url('suppliers') ?>"  class="nav-item <?= str_starts_with($r,'suppliers')  ? 'active' : '' ?>">Fornecedores</a>
     <a href="<?= url('customers') ?>"  class="nav-item <?= str_starts_with($r,'customers')  ? 'active' : '' ?>">Clientes</a>
 
+    <?php if (hasRole('admin','pharmacist')): ?>
+      <div class="nav-section">Análise</div>
+      <a href="<?= url('reports') ?>" class="nav-item <?= str_starts_with($r,'reports') ? 'active' : '' ?>">Relatórios</a>
+    <?php endif; ?>
+
     <?php if (hasRole('admin')): ?>
       <div class="nav-section">Administração</div>
       <a href="<?= url('users') ?>"    class="nav-item <?= str_starts_with($r,'users')    ? 'active' : '' ?>">Utilizadores</a>
       <a href="<?= url('settings') ?>" class="nav-item <?= str_starts_with($r,'settings') ? 'active' : '' ?>">Configurações</a>
     <?php endif; ?>
-
-    <div class="nav-section">Próximo pacote</div>
-    <span class="nav-item disabled">Relatórios</span>
   </nav>
   <a href="<?= url('logout') ?>" class="nav-logout">Sair</a>
 </aside>
