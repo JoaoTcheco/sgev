@@ -112,14 +112,29 @@ class CashSessionModel {
              FROM sales WHERE cash_session_id = ? AND status <> "refunded"',
             [$sessionId]
         );
-        return array_merge($s, $stats, ['expected' => self::expectedCash($sessionId)]);
+        $adj = self::adjustments($sessionId);
+        return array_merge($s, $stats, [
+            'expected'  => self::expectedCash($sessionId),
+            'sangrias'  => $adj['sangrias'],
+            'reforcos'  => $adj['reforcos'],
+            'adj_count' => $adj['count'],
+        ]);
     }
 
-    public static function history(int $limit = 30): array {
-        return Database::all(
-            'SELECT s.*, u.full_name AS user_name FROM cash_sessions s
-             LEFT JOIN users u ON u.id = s.user_id
-             ORDER BY s.opened_at DESC LIMIT ' . (int)$limit
-        );
+    public static function history(int $limit = 30, array $filters = []): array {
+        $where = [];
+        $params = [];
+        if (!empty($filters['date_from'])) { $where[] = 'DATE(s.opened_at) >= ?'; $params[] = $filters['date_from']; }
+        if (!empty($filters['date_to']))   { $where[] = 'DATE(s.opened_at) <= ?'; $params[] = $filters['date_to']; }
+        if (!empty($filters['user_id']))   { $where[] = 's.user_id = ?';          $params[] = $filters['user_id']; }
+        if (!empty($filters['status']) && in_array($filters['status'], ['open','closed'], true)) {
+            $where[] = 's.status = ?'; $params[] = $filters['status'];
+        }
+        $sql = 'SELECT s.*, u.full_name AS user_name FROM cash_sessions s
+                LEFT JOIN users u ON u.id = s.user_id';
+        if ($where) $sql .= ' WHERE ' . implode(' AND ', $where);
+        $sql .= ' ORDER BY s.opened_at DESC LIMIT ' . (int)$limit;
+        return Database::all($sql, $params);
     }
 }
+
