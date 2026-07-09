@@ -26,7 +26,7 @@ class CashSessionModel {
         return $id;
     }
 
-    /** Vendas em numerário durante a sessão (para calcular esperado). */
+    /** Vendas em numerário + reforços - sangrias durante a sessão. */
     public static function expectedCash(string $sessionId): float {
         $row = Database::one(
             'SELECT s.opening_amount,
@@ -37,8 +37,58 @@ class CashSessionModel {
              GROUP BY s.id',
             [$sessionId]
         );
-        return (float)($row['opening_amount'] ?? 0) + (float)($row['cash_sales'] ?? 0);
+        $base = (float)($row['opening_amount'] ?? 0) + (float)($row['cash_sales'] ?? 0);
+        $adj = self::adjustments($sessionId);
+        return $base + $adj['reforcos'] - $adj['sangrias'];
     }
+
+    /** Totais de sangria e reforço da sessão (via account_movements). */
+    public static function adjustments(string $sessionId): array {
+        $r = Database::one(
+            "SELECT
+                COALESCE(SUM(CASE WHEN type='debit'  THEN amount ELSE 0 END),0) AS sangrias,
+                COALESCE(SUM(CASE WHEN type='credit' THEN amount ELSE 0 END),0) AS reforcos,
+                COUNT(*) AS n
+             FROM account_movements
+             WHERE txn_id = ?",
+            ['cs:' . $sessionId]
+        ) ?: ['sangrias'=>0,'reforcos'=>0,'n'=>0];
+        return [
+            'sangrias' => (float)$r['sangrias'],
+            'reforcos' => (float)$r['reforcos'],
+            'count'    => (int)$r['n'],
+        ];
+    }
+
+    /** Movimentos (sangria/reforço) da sessão para listar. */
+    public static function movements(string $sessionId): array {
+        return Database::all(
+            "SELECT am.*, u.full_name AS user_name
+             FROM account_movements am
+             LEFT JOIN users u ON u.id = am.user_id
+             WHERE am.txn_id = ?
+             ORDER BY am.created_at DESC",
+            ['cs:' . $sessionId]
+        );
+    }
+
+    /** Retira dinheiro do caixa (sangria). */
+    public static function sangria(string $sessionId, float $amount, string $reason): void {
+        if ($amount <= 0) throw new RuntimeException('Valor tem de ser positivo.');
+        $cash = FinancialAccountModel::findByType('cash');
+        if (!$cash) throw new RuntimeException('Conta Caixa não encontrada.');
+        if ((float)$cash['balance'] < $amount) throw new RuntimeException('Saldo do caixa insuficiente.');
+        FinancialAccountModel::debit($cash['id'], $amount, 'Sangria: ' . ($reason ?: 'sem motivo'), null, 'cs:' . $sessionId);
+    }
+
+    /** Adiciona dinheiro ao caixa (reforço / troco). */
+    public static function reforco(string $sessionId, float $amount, string $reason): void {
+        if ($amount <= 0) throw new RuntimeException('Valor tem de ser positivo.');
+        $cash = FinancialAccountModel::findByType('cash');
+        if (!$cash) throw new RuntimeException('Conta Caixa não encontrada.');
+        FinancialAccountModel::credit($cash['id'], $amount, 'Reforço: ' . ($reason ?: 'sem motivo'), null, 'cs:' . $sessionId);
+    }
+
 
     public static function close(string $sessionId, float $counted, string $notes = ''): void {
         $expected = self::expectedCash($sessionId);
