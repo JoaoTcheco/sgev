@@ -56,6 +56,11 @@ CREATE TABLE IF NOT EXISTS `pharmacy_settings` (
   `label_width_mm` INT NOT NULL DEFAULT 40,
   `label_height_mm` INT NOT NULL DEFAULT 25,
   `label_columns` INT NOT NULL DEFAULT 5,
+  `label_gap_mm` INT NOT NULL DEFAULT 3,
+  `label_show_price` TINYINT(1) NOT NULL DEFAULT 1,
+  `label_show_cost` TINYINT(1) NOT NULL DEFAULT 0,
+  `label_show_batch` TINYINT(1) NOT NULL DEFAULT 1,
+  `label_show_expiry` TINYINT(1) NOT NULL DEFAULT 1,
   `printer_name` VARCHAR(120) NULL,
   `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   CONSTRAINT chk_singleton CHECK (`id` = 1)

@@ -75,8 +75,17 @@
         <input type="number" min="1" max="10" name="label_columns" value="<?= e($s['label_columns'] ?? 5) ?>"></div>
       <div><label>Margem da folha (mm)</label>
         <input type="number" min="0" name="label_margin" value="<?= e($s['label_margin'] ?? 4) ?>"></div>
+      <div><label>Espaçamento entre etiquetas (mm)</label>
+        <input type="number" min="0" name="label_gap_mm" value="<?= e($s['label_gap_mm'] ?? 3) ?>"></div>
+    </div>
+    <div class="grid-4" style="margin-top:8px;">
+      <label class="checkbox"><input type="checkbox" name="label_show_price"  <?= !empty($s['label_show_price'])  ? 'checked' : '' ?>> Mostrar preço</label>
+      <label class="checkbox"><input type="checkbox" name="label_show_cost"   <?= !empty($s['label_show_cost'])   ? 'checked' : '' ?>> Mostrar custo</label>
+      <label class="checkbox"><input type="checkbox" name="label_show_batch"  <?= !empty($s['label_show_batch'])  ? 'checked' : '' ?>> Mostrar lote</label>
+      <label class="checkbox"><input type="checkbox" name="label_show_expiry" <?= !empty($s['label_show_expiry']) ? 'checked' : '' ?>> Mostrar validade</label>
     </div>
     <p class="hint">Dica: as etiquetas ajustam o tamanho do código de barras automaticamente à largura configurada; imprima uma folha de teste para calibrar as margens antes de colar as etiquetas nos produtos.</p>
+
 
     <div class="form-actions">
       <button class="btn btn-primary" type="submit">Guardar alterações</button>
