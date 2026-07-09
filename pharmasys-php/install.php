@@ -277,24 +277,49 @@ function check_requirements(): array {
 function render_locked(): void {
     ?><!doctype html><html lang="pt"><head><meta charset="utf-8"><title>PharmaSys — Já instalado</title><?php render_styles(); ?></head>
     <body><div class="wrap"><div class="card">
-    <h1>Sistema já instalado</h1>
-    <p>O PharmaSys já foi instalado neste servidor.</p>
-    <p>Para reinstalar, apague o ficheiro <code>.installed</code> na raiz do projecto e recarregue esta página.</p>
-    <a class="btn" href="index.php">Ir para o sistema →</a>
+    <div class="brand" style="margin-bottom:20px;">
+        <div class="brand-logo">
+            <svg viewBox="0 0 32 32" width="28" height="28" fill="none">
+                <rect width="32" height="32" rx="8" fill="url(#g2)"/>
+                <path d="M10 8h8a6 6 0 0 1 0 12h-2v4h-6V8z M10 14h8" stroke="white" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                <defs><linearGradient id="g2" x1="0" y1="0" x2="32" y2="32"><stop stop-color="#0f766e"/><stop offset="1" stop-color="#14b8a6"/></linearGradient></defs>
+            </svg>
+        </div>
+        <div><h1>PharmaSys</h1><p class="sub">Sistema já instalado</p></div>
+    </div>
+    <div class="alert info">
+        O PharmaSys já foi instalado neste servidor. Para reinstalar, apague o ficheiro <code>.installed</code> na raiz do projecto e recarregue esta página.
+    </div>
+    <a class="btn primary" href="index.php">Ir para o sistema →</a>
     </div></div></body></html><?php
 }
 
+
 function render_layout(array $state): void {
     $step = (int)($state['step'] ?? 1);
+    $labels = ['Requisitos', 'Base de Dados', 'Administrador', 'Concluído'];
     ?><!doctype html><html lang="pt"><head><meta charset="utf-8"><title>PharmaSys — Instalação</title><?php render_styles(); ?></head>
     <body><div class="wrap"><div class="card">
     <header class="head">
-        <h1>PharmaSys — Instalador</h1>
+        <div class="brand">
+            <div class="brand-logo">
+                <svg viewBox="0 0 32 32" width="28" height="28" fill="none">
+                    <rect width="32" height="32" rx="8" fill="url(#g1)"/>
+                    <path d="M10 8h8a6 6 0 0 1 0 12h-2v4h-6V8z M10 14h8" stroke="white" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                    <defs><linearGradient id="g1" x1="0" y1="0" x2="32" y2="32"><stop stop-color="#0f766e"/><stop offset="1" stop-color="#14b8a6"/></linearGradient></defs>
+                </svg>
+            </div>
+            <div>
+                <h1>PharmaSys</h1>
+                <p class="sub">Assistente de Instalação</p>
+            </div>
+        </div>
         <ol class="steps">
-            <li class="<?= $step >= 1 ? 'active' : '' ?>">1. Requisitos</li>
-            <li class="<?= $step >= 2 ? 'active' : '' ?>">2. Base de Dados</li>
-            <li class="<?= $step >= 3 ? 'active' : '' ?>">3. Administrador</li>
-            <li class="<?= $step >= 4 ? 'active' : '' ?>">4. Concluído</li>
+            <?php foreach ($labels as $i => $lb): $n = $i + 1; ?>
+                <li class="<?= $step > $n ? 'done' : ($step === $n ? 'active' : '') ?>">
+                    <span class="dot"><?= $step > $n ? '✓' : $n ?></span><?= htmlspecialchars($lb) ?>
+                </li>
+            <?php endforeach; ?>
         </ol>
     </header>
 
@@ -315,10 +340,11 @@ function render_layout(array $state): void {
     ?>
 
     <footer class="foot">
-        <a href="install.php?action=reset">Reiniciar assistente</a>
+        <a href="install.php?action=reset">↺ Reiniciar assistente</a>
     </footer>
     </div></div></body></html><?php
 }
+
 
 function render_step1(): void {
     $reqs = check_requirements();
@@ -405,39 +431,129 @@ function render_step4(array $state): void {
 
 function render_styles(): void {
     ?>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
       *{box-sizing:border-box}
-      body{font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:#0f172a;color:#e2e8f0;margin:0;padding:2rem}
-      .wrap{max-width:780px;margin:0 auto}
-      .card{background:#1e293b;border:1px solid #334155;border-radius:14px;padding:2rem;box-shadow:0 10px 40px rgba(0,0,0,.4)}
-      h1{margin:0 0 .5rem;font-size:1.5rem;color:#fff}
-      h2{margin:1.5rem 0 1rem;color:#38bdf8;font-size:1.15rem}
-      p{line-height:1.55}
-      code{background:#0f172a;padding:2px 6px;border-radius:4px;color:#fbbf24;font-size:.9em}
-      .head{border-bottom:1px solid #334155;padding-bottom:1rem;margin-bottom:1rem}
-      .steps{list-style:none;padding:0;margin:1rem 0 0;display:flex;gap:.5rem;flex-wrap:wrap}
-      .steps li{padding:.35rem .8rem;background:#0f172a;border:1px solid #334155;border-radius:20px;font-size:.85rem;color:#94a3b8}
-      .steps li.active{background:#0369a1;border-color:#0284c7;color:#fff}
-      .grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1rem}
-      .grid label{display:flex;flex-direction:column;gap:.35rem;font-size:.85rem;color:#cbd5e1}
-      .grid .row{grid-column:1/-1;display:flex;justify-content:flex-end;gap:.5rem}
-      input{padding:.65rem .8rem;border-radius:8px;border:1px solid #475569;background:#0f172a;color:#f1f5f9;font-size:.95rem;width:100%}
-      input:focus{outline:none;border-color:#38bdf8}
-      .btn{display:inline-block;padding:.7rem 1.2rem;border-radius:8px;border:none;background:#334155;color:#fff;font-weight:600;cursor:pointer;text-decoration:none}
-      .btn.primary{background:linear-gradient(135deg,#0ea5e9,#0369a1)}
-      .btn:hover{opacity:.9}
-      .req{width:100%;border-collapse:collapse;margin:1rem 0}
-      .req td{padding:.55rem .8rem;border-bottom:1px solid #334155}
-      .req .ok{color:#4ade80;font-weight:600}
-      .req .bad{color:#f87171;font-weight:600}
-      .alert{padding:.9rem 1rem;border-radius:10px;margin:1rem 0;border:1px solid transparent}
-      .alert.error{background:#450a0a;border-color:#7f1d1d;color:#fecaca}
-      .alert.success{background:#052e16;border-color:#166534;color:#bbf7d0}
-      .hint{color:#94a3b8;font-size:.9rem}
-      .hint.success{color:#4ade80}
-      .foot{margin-top:2rem;text-align:center;font-size:.85rem}
-      .foot a{color:#64748b}
+      :root{
+        --primary:#0f766e;--primary-glow:#14b8a6;--primary-hover:#0d5f5a;
+        --bg:#f7faf9;--card:#fff;--fg:#10231f;--muted:#5a726c;
+        --border:#dfe8e5;--input-border:#d3deda;
+        --success:#16a34a;--success-bg:#ecfdf5;
+        --danger:#dc2626;--danger-bg:#fef2f2;
+        --info:#2563eb;--info-bg:#eff6ff;
+        --radius:12px;--radius-lg:16px;
+        --shadow:0 20px 60px -20px rgba(15,39,36,.18);
+      }
+      html,body{margin:0;padding:0;font-family:'Inter',-apple-system,Segoe UI,Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+      body{
+        min-height:100vh;color:var(--fg);
+        background:radial-gradient(1200px 800px at 10% -10%,#d7efe8 0%,transparent 60%),
+                   radial-gradient(900px 700px at 110% 110%,#ccfbf1 0%,transparent 55%),
+                   var(--bg);
+        padding:32px 20px;
+      }
+      .wrap{max-width:820px;margin:0 auto}
+      .card{
+        background:var(--card);border:1px solid var(--border);
+        border-radius:var(--radius-lg);padding:36px;
+        box-shadow:var(--shadow);
+      }
+      /* Brand */
+      .brand{display:flex;align-items:center;gap:14px;margin-bottom:28px}
+      .brand-logo{
+        width:52px;height:52px;border-radius:14px;
+        background:linear-gradient(135deg,var(--primary),var(--primary-glow));
+        display:flex;align-items:center;justify-content:center;
+        box-shadow:0 8px 24px -8px rgba(15,118,110,.5);
+      }
+      .brand h1{margin:0;font-size:22px;font-weight:800;letter-spacing:-.02em;color:var(--fg)}
+      .brand .sub{margin:2px 0 0;color:var(--muted);font-size:14px}
+
+      h2{margin:24px 0 8px;color:var(--primary);font-size:16px;font-weight:700;letter-spacing:-.01em}
+      p{line-height:1.55;color:var(--muted);margin:6px 0 14px}
+      code{background:#f1f5f9;padding:2px 8px;border-radius:4px;color:var(--primary);font-family:'JetBrains Mono',monospace;font-size:.9em;font-weight:600}
+
+      /* Steps */
+      .head{border-bottom:1px solid var(--border);padding-bottom:22px;margin-bottom:22px}
+      .steps{list-style:none;padding:0;margin:0;display:flex;gap:8px;flex-wrap:wrap}
+      .steps li{
+        display:inline-flex;align-items:center;gap:8px;
+        padding:8px 14px;background:#f8fafc;border:1px solid var(--border);
+        border-radius:999px;font-size:12px;font-weight:600;color:var(--muted);
+        transition:all .15s;
+      }
+      .steps li .dot{
+        width:22px;height:22px;border-radius:50%;
+        background:#e2e8f0;color:#fff;
+        display:inline-flex;align-items:center;justify-content:center;
+        font-size:11px;font-weight:700;
+      }
+      .steps li.active{
+        background:#ecfdf5;border-color:rgba(15,118,110,.3);color:var(--primary);
+        box-shadow:0 0 0 3px rgba(15,118,110,.08);
+      }
+      .steps li.active .dot{background:var(--primary)}
+      .steps li.done{background:#f0fdf4;color:#166534;border-color:#bbf7d0}
+      .steps li.done .dot{background:#16a34a}
+
+      /* Forms */
+      .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px}
+      .grid label{display:flex;flex-direction:column;gap:6px;font-size:13px;color:#334155;font-weight:600}
+      .grid .row{grid-column:1/-1;display:flex;justify-content:flex-end;gap:8px;margin-top:8px}
+      @media(max-width:640px){.grid{grid-template-columns:1fr}}
+      input{
+        padding:10px 12px;border-radius:8px;border:1px solid var(--input-border);
+        background:#fff;color:var(--fg);font-size:14px;width:100%;font-family:inherit;
+        transition:border-color .12s,box-shadow .12s;
+      }
+      input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(15,118,110,.12)}
+
+      /* Buttons */
+      .btn{
+        display:inline-flex;align-items:center;justify-content:center;gap:6px;
+        padding:11px 22px;border-radius:10px;border:1px solid var(--border);
+        background:#fff;color:#475569;font-weight:600;cursor:pointer;text-decoration:none;
+        font-size:14px;font-family:inherit;transition:all .15s;
+      }
+      .btn:hover{background:#f8fafc;color:var(--fg)}
+      .btn.primary{
+        background:linear-gradient(135deg,var(--primary),var(--primary-glow));
+        border-color:transparent;color:#fff;
+        box-shadow:0 4px 12px rgba(15,118,110,.25);
+      }
+      .btn.primary:hover{
+        background:linear-gradient(135deg,var(--primary-hover),var(--primary));
+        box-shadow:0 6px 18px rgba(15,118,110,.35);
+      }
+
+      /* Requirements */
+      .req{width:100%;border-collapse:collapse;margin:14px 0;background:#f8fafc;border-radius:10px;overflow:hidden}
+      .req td{padding:12px 16px;border-bottom:1px solid var(--border);font-size:14px}
+      .req tr:last-child td{border-bottom:0}
+      .req td:last-child{text-align:right;font-weight:600;font-family:monospace}
+      .req .ok{color:var(--success)}
+      .req .bad{color:var(--danger)}
+
+      /* Alerts */
+      .alert{
+        padding:14px 16px;border-radius:10px;margin:14px 0;
+        border:1px solid transparent;font-size:14px;line-height:1.55;
+      }
+      .alert.error{background:var(--danger-bg);border-color:#fecaca;color:#991b1b}
+      .alert.success{background:var(--success-bg);border-color:#a7f3d0;color:#065f46}
+      .alert.info{background:var(--info-bg);border-color:#bfdbfe;color:#1e40af}
+      .alert ul{margin:8px 0 0;padding-left:20px}
+      .alert code{background:rgba(15,23,42,.08)}
+
+      .hint{color:var(--muted);font-size:13px}
+      .hint.success{color:var(--success);font-weight:600}
+      .foot{margin-top:32px;text-align:center;font-size:13px;padding-top:20px;border-top:1px solid var(--border)}
+      .foot a{color:var(--muted);text-decoration:none;font-weight:500}
+      .foot a:hover{color:var(--primary)}
       ul{margin:.3rem 0 0 1.2rem}
     </style>
     <?php
 }
+
