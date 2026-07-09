@@ -16,6 +16,35 @@ class SaleController extends Controller {
         ]);
     }
 
+    /** Lista de categorias com contagem de produtos activos e stock disponível (AJAX). */
+    public function categories(): void {
+        requireAuth();
+        $rows = Database::all(
+            "SELECT c.id, c.name, c.description,
+                    COUNT(DISTINCT p.id) AS product_count,
+                    COALESCE(SUM(b.quantity), 0) AS total_stock
+             FROM categories c
+             LEFT JOIN products p ON p.category_id = c.id AND p.active = 1
+             LEFT JOIN batches  b ON b.product_id = p.id
+             GROUP BY c.id
+             ORDER BY c.name"
+        );
+        // Também adicionar bucket "Sem categoria" se existirem produtos sem category_id
+        $orphan = Database::one(
+            "SELECT COUNT(DISTINCT p.id) AS product_count, COALESCE(SUM(b.quantity),0) AS total_stock
+             FROM products p LEFT JOIN batches b ON b.product_id = p.id
+             WHERE p.active = 1 AND p.category_id IS NULL"
+        );
+        if ($orphan && (int)$orphan['product_count'] > 0) {
+            $rows[] = [
+                'id' => '__none__', 'name' => 'Sem categoria', 'description' => '',
+                'product_count' => (int)$orphan['product_count'],
+                'total_stock'   => (int)$orphan['total_stock'],
+            ];
+        }
+        $this->json($rows);
+    }
+
     /** Catálogo inicial do PDV (top-vendas + stock). */
     public function browse(): void {
         requireAuth();
@@ -23,7 +52,8 @@ class SaleController extends Controller {
         $onlyStock = ($_GET['stock'] ?? '1') === '1';
         $params = [];
         $where = 'p.active = 1';
-        if ($catId !== '') { $where .= ' AND p.category_id = ?'; $params[] = $catId; }
+        if ($catId === '__none__') { $where .= ' AND p.category_id IS NULL'; }
+        elseif ($catId !== '')     { $where .= ' AND p.category_id = ?'; $params[] = $catId; }
         $rows = Database::all(
             "SELECT p.id, p.name, p.barcode, p.sub_barcode, p.unit, p.pack_size,
                     p.sale_price, p.sub_unit_price, p.sub_unit_label, p.requires_prescription,

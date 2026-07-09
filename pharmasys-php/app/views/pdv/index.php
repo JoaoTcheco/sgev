@@ -6,21 +6,31 @@
       <div id="pdv-results" class="pdv-results"></div>
     </div>
 
-    <!-- Catálogo inicial (filtros + grelha) -->
+    <!-- Catálogo em duas etapas: (1) categorias → (2) produtos da categoria -->
     <div class="pdv-catalog" id="pdv-catalog">
-      <div class="cat-toolbar">
-        <div class="cat-chips" id="cat-chips">
-          <button type="button" class="chip active" data-cat="">Todas</button>
-          <?php foreach ($categories as $c): ?>
-            <button type="button" class="chip" data-cat="<?= e($c['id']) ?>"><?= e($c['name']) ?></button>
-          <?php endforeach; ?>
+      <!-- Modo 1: Grelha de categorias -->
+      <div id="cat-mode" class="cat-mode">
+        <div class="cat-mode-header">
+          <h3>Escolha uma categoria</h3>
+          <label class="only-stock">
+            <input type="checkbox" id="only-stock" checked> Só com stock
+          </label>
         </div>
-        <label class="only-stock">
-          <input type="checkbox" id="only-stock" checked> Só com stock
-        </label>
+        <div id="categories-grid" class="categories-grid">
+          <div class="catalog-loading">A carregar categorias…</div>
+        </div>
       </div>
-      <div id="catalog-grid" class="catalog-grid">
-        <div class="catalog-loading">A carregar produtos…</div>
+
+      <!-- Modo 2: Produtos da categoria seleccionada -->
+      <div id="prod-mode" class="prod-mode hidden">
+        <div class="prod-mode-header">
+          <button type="button" id="btn-back-cats" class="btn btn-ghost btn-sm">← Categorias</button>
+          <h3 id="prod-mode-title">Produtos</h3>
+          <span id="prod-mode-count" class="prod-count-badge"></span>
+        </div>
+        <div id="catalog-grid" class="catalog-grid">
+          <div class="catalog-loading">A carregar produtos…</div>
+        </div>
       </div>
     </div>
 
