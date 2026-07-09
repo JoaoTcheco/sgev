@@ -46,6 +46,7 @@
 
       <div class="nav-section">Análise</div>
       <a href="<?= url('reports') ?>"  class="nav-item <?= str_starts_with($r,'reports')  ? 'active' : '' ?>">Relatórios</a>
+      <a href="<?= url('margins') ?>"  class="nav-item <?= str_starts_with($r,'margins')  ? 'active' : '' ?>">Margens & Custos</a>
     <?php endif; ?>
 
     <?php if (hasRole('admin')): ?>
