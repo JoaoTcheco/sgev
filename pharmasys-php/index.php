@@ -118,4 +118,16 @@ $router->add('audit',                     'AuditController@index',   'GET', true
 $router->add('audit/view',                'AuditController@view',    'GET', true);
 $router->add('audit/export',              'AuditController@export',  'GET', true);
 
+// Ordens de Compra
+$router->add('purchases',            'PurchaseOrderController@index',        'GET',  true);
+$router->add('purchases/new',        'PurchaseOrderController@form',         'GET',  true);
+$router->add('purchases/edit',       'PurchaseOrderController@form',         'GET',  true);
+$router->add('purchases/save',       'PurchaseOrderController@save',         'POST', true);
+$router->add('purchases/view',       'PurchaseOrderController@view',         'GET',  true);
+$router->add('purchases/confirm',    'PurchaseOrderController@confirm',      'POST', true);
+$router->add('purchases/cancel',     'PurchaseOrderController@cancel',       'POST', true);
+$router->add('purchases/delete',     'PurchaseOrderController@delete',       'POST', true);
+$router->add('purchases/receive',    'PurchaseOrderController@receiveForm',  'GET',  true);
+$router->add('purchases/receive/submit', 'PurchaseOrderController@receive',  'POST', true);
+
 $router->dispatch($_GET['r'] ?? '');
