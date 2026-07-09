@@ -24,6 +24,8 @@ $router->add('error/notfound',  'AuthController@notFound');
 
 // ---------- Operação (todos) ----------
 $router->add('dashboard',       'DashboardController@index',      'GET', true, $ALL);
+$router->add('dashboard/kpis',  'DashboardController@kpis',       'GET', true, $ALL);
+
 $router->add('pdv',             'SaleController@pdv',             'GET', true, $ALL);
 $router->add('sales/search',    'SaleController@search',          'GET', true, $ALL);
 $router->add('sales/browse',    'SaleController@browse',          'GET', true, $ALL);
