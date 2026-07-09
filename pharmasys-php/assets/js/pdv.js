@@ -156,7 +156,9 @@
 
   // ---------- CARRINHO ----------
   const addToCart = (p, kind) => {
+    if (+p.expired === 1) return alert('Produto expirado — não pode ser vendido.');
     if (+p.stock <= 0) return alert('Produto sem stock.');
+    if (+p.requires_prescription === 1 && !confirm(`"${p.name}" requer receita médica. Confirmar venda?`)) return;
     const price = kind === 'sub' ? +p.sub_unit_price : +p.sale_price;
     if (!price) return alert('Produto sem preço definido.');
     const key = p.id + '|' + kind;
