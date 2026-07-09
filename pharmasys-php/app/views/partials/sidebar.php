@@ -32,7 +32,8 @@
 
     <?php if (hasRole('admin','pharmacist')): ?>
       <div class="nav-section">Análise</div>
-      <a href="<?= url('reports') ?>" class="nav-item <?= str_starts_with($r,'reports') ? 'active' : '' ?>">Relatórios</a>
+      <a href="<?= url('reports') ?>"  class="nav-item <?= str_starts_with($r,'reports')  ? 'active' : '' ?>">Relatórios</a>
+      <a href="<?= url('accounts') ?>" class="nav-item <?= str_starts_with($r,'accounts') ? 'active' : '' ?>">Contas Financeiras</a>
     <?php endif; ?>
 
     <?php if (hasRole('admin')): ?>
