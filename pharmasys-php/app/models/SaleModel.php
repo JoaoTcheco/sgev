@@ -132,7 +132,7 @@ class SaleModel {
 
     public static function find(string $id): ?array {
         return Database::one(
-            'SELECT s.*, c.full_name AS customer_name, c.tax_id AS customer_tax_id, c.phone AS customer_phone,
+            'SELECT s.*, c.name AS customer_name, c.nuit AS customer_tax_id, c.phone AS customer_phone,
                     u.full_name AS user_name
              FROM sales s
              LEFT JOIN customers c ON c.id = s.customer_id
@@ -147,7 +147,7 @@ class SaleModel {
 
     /** Histórico com filtros: from, to, receipt, customer_id, payment_method, status, user_id. */
     public static function history(array $f = []): array {
-        $sql = 'SELECT s.*, c.full_name AS customer_name, u.full_name AS user_name,
+        $sql = 'SELECT s.*, c.name AS customer_name, u.full_name AS user_name,
                        (SELECT COALESCE(SUM(quantity),0)     FROM sale_items WHERE sale_id = s.id) AS total_qty,
                        (SELECT COALESCE(SUM(refunded_qty),0) FROM sale_items WHERE sale_id = s.id) AS refunded_qty
                 FROM sales s
