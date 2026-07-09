@@ -6,6 +6,15 @@ class LabelController extends Controller {
         $this->view('labels/index', ['products' => ProductModel::all()]);
     }
 
+    /** Impressão rápida de N etiquetas de um único produto (link direto na lista). */
+    public function quick(): void {
+        requireAuth();
+        $p = ProductModel::find($_GET['id'] ?? '');
+        if (!$p) { flash('error', 'Produto não encontrado.'); redirect('products'); }
+        $qty = max(1, min(200, (int)($_GET['qty'] ?? 1)));
+        $this->view('labels/print', ['selection' => [['product' => $p, 'qty' => $qty]]], 'print');
+    }
+
     /** Página de impressão — grelha com etiquetas geradas via JsBarcode. */
     public function print(): void {
         requireAuth();
