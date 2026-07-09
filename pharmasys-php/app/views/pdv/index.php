@@ -79,7 +79,7 @@
       <select id="customer_id">
         <option value="">— Consumidor final —</option>
         <?php foreach ($customers as $c): ?>
-          <option value="<?= e($c['id']) ?>"><?= e($c['full_name']) ?></option>
+          <option value="<?= e($c['id']) ?>"><?= e($c['name']) ?></option>
         <?php endforeach; ?>
       </select>
 
