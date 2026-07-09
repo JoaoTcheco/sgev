@@ -168,7 +168,12 @@ $router->add('users',        'UserController@index',   'GET', true, $ADMIN);
 $router->add('users/new',    'UserController@form',    'GET', true, $ADMIN);
 $router->add('users/edit',   'UserController@form',    'GET', true, $ADMIN);
 $router->add('users/save',   'UserController@save',    'POST',true, $ADMIN);
-$router->add('users/delete', 'UserController@delete',  'POST',true, $ADMIN);
+$router->add('users/delete',   'UserController@delete',   'POST',true, $ADMIN);
+$router->add('users/activate', 'UserController@activate', 'POST',true, $ADMIN);
+
+$router->add('profile',          'ProfileController@index',    'GET', true);
+$router->add('profile/save',     'ProfileController@save',     'POST',true);
+$router->add('profile/password', 'ProfileController@password', 'POST',true);
 
 $router->add('settings',      'SettingController@index','GET', true, $ADMIN);
 $router->add('settings/save', 'SettingController@save', 'POST',true, $ADMIN);
