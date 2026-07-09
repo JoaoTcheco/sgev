@@ -26,6 +26,7 @@ $router->add('error/notfound',  'AuthController@notFound');
 $router->add('dashboard',       'DashboardController@index',      'GET', true, $ALL);
 $router->add('pdv',             'SaleController@pdv',             'GET', true, $ALL);
 $router->add('sales/search',    'SaleController@search',          'GET', true, $ALL);
+$router->add('sales/browse',    'SaleController@browse',          'GET', true, $ALL);
 $router->add('sales/checkout',  'SaleController@checkout',        'POST',true, $ALL);
 $router->add('sales/receipt',   'SaleController@receipt',         'GET', true, $ALL);
 
