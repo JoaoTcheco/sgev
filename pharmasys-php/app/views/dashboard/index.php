@@ -282,3 +282,21 @@ SVG;
 
 </section>
 <link rel="stylesheet" href="<?= asset('css/dashboard-page.css') ?>">
+<script>
+(function(){
+  const url = <?= json_encode(url('dashboard/kpis')) ?>;
+  async function tick(){
+    try {
+      const r = await fetch(url, { headers: { 'X-Requested-With':'XMLHttpRequest' }, credentials:'same-origin' });
+      if (!r.ok) return;
+      const d = await r.json();
+      document.querySelectorAll('[data-k]').forEach(el => {
+        const k = el.dataset.k;
+        if (d[k] !== undefined && d[k] !== null) el.textContent = d[k];
+      });
+    } catch(e){}
+  }
+  setInterval(tick, 30000);
+})();
+</script>
+
