@@ -42,9 +42,11 @@ $router->add('cash/sangria',    'CashController@sangria',         'POST',true, $
 $router->add('cash/reforco',    'CashController@reforco',         'POST',true, $ALL);
 
 
-$router->add('alerts',          'AlertController@index',          'GET', true, $ALL);
-$router->add('alerts/refresh',  'AlertController@refresh',        'POST',true, $ALL);
-$router->add('alerts/resolve',  'AlertController@resolve',        'POST',true, $ALL);
+$router->add('alerts',             'AlertController@index',      'GET', true, $ALL);
+$router->add('alerts/refresh',     'AlertController@refresh',    'POST',true, $ALL);
+$router->add('alerts/resolve',     'AlertController@resolve',    'POST',true, $ALL);
+$router->add('alerts/resolve-all', 'AlertController@resolveAll', 'POST',true, $ALL);
+$router->add('alerts/export',      'AlertController@export',     'GET', true, $ALL);
 
 $router->add('notifications',            'NotificationController@index',       'GET', true, $ALL);
 $router->add('notifications/feed',       'NotificationController@feed',        'GET', true, $ALL);
