@@ -52,7 +52,8 @@ class SaleController extends Controller {
         $onlyStock = ($_GET['stock'] ?? '1') === '1';
         $params = [];
         $where = 'p.active = 1';
-        if ($catId !== '') { $where .= ' AND p.category_id = ?'; $params[] = $catId; }
+        if ($catId === '__none__') { $where .= ' AND p.category_id IS NULL'; }
+        elseif ($catId !== '')     { $where .= ' AND p.category_id = ?'; $params[] = $catId; }
         $rows = Database::all(
             "SELECT p.id, p.name, p.barcode, p.sub_barcode, p.unit, p.pack_size,
                     p.sale_price, p.sub_unit_price, p.sub_unit_label, p.requires_prescription,
