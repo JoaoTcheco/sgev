@@ -95,6 +95,7 @@ $router->add('settings/save',             'SettingController@save',     'POST', 
 // Relatórios
 $router->add('reports',                   'ReportController@index',     'GET',  true);
 $router->add('reports/export',            'ReportController@export',    'GET',  true);
+$router->add('margins',                   'MarginController@index',     'GET',  true);
 
 // Contas financeiras
 $router->add('accounts',                  'AccountController@index',          'GET',  true);
