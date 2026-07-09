@@ -1,0 +1,213 @@
+/* ================================================================
+   PharmaSys — Dashboard page (KPIs, charts, listas)
+   Estilo alinhado ao frontend Lovable.
+   ================================================================ */
+
+.ds { display: flex; flex-direction: column; gap: 24px; }
+
+/* ---- Cabeçalho ---- */
+.ds-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.ds-title {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--foreground);
+}
+.ds-subtitle { margin: 4px 0 0; color: var(--muted-foreground); font-size: 14px; }
+.ds-actions  { display: flex; gap: 8px; }
+
+.ds-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  height: 34px; padding: 0 14px;
+  border-radius: 8px; font-size: 13px; font-weight: 500;
+  text-decoration: none; border: 1px solid transparent;
+  transition: background .12s, border-color .12s;
+}
+.ds-btn-primary  { background: var(--primary); color: var(--primary-foreground); }
+.ds-btn-primary:hover  { background: var(--primary-hover); }
+.ds-btn-outline  { background: transparent; color: var(--foreground); border-color: var(--border); }
+.ds-btn-outline:hover  { background: var(--muted); }
+
+/* ---- KPIs primários (4 colunas) ---- */
+.ds-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 16px;
+}
+.ds-kpi {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 18px 20px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow .15s;
+}
+.ds-kpi:hover { box-shadow: var(--shadow); }
+.ds-kpi-body { min-width: 0; flex: 1; }
+.ds-kpi-title { margin: 0; font-size: 13px; color: var(--muted-foreground); font-weight: 500; }
+.ds-kpi-value {
+  margin: 6px 0 4px;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--foreground);
+  line-height: 1.2;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.ds-kpi-sub { margin: 0; font-size: 12px; color: var(--muted-foreground); }
+
+.ds-kpi-icon {
+  width: 40px; height: 40px;
+  border-radius: 10px;
+  display: grid; place-items: center;
+  flex-shrink: 0;
+}
+.ds-kpi-icon svg { width: 20px; height: 20px; }
+
+.tone-primary .ds-kpi-icon { background: rgba(15,118,110,0.12); color: var(--primary); }
+.tone-success .ds-kpi-icon { background: rgba(22,163,74,0.15);  color: var(--success); }
+.tone-warning .ds-kpi-icon { background: rgba(217,119,6,0.18);  color: var(--warning); }
+.tone-muted   .ds-kpi-icon { background: var(--muted);          color: var(--muted-foreground); }
+
+/* ---- Mini KPIs ---- */
+.ds-mini-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+.ds-mini {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  box-shadow: var(--shadow-sm);
+}
+.ds-mini-ic {
+  width: 36px; height: 36px;
+  border-radius: 8px;
+  background: var(--muted);
+  color: var(--muted-foreground);
+  display: grid; place-items: center;
+  flex-shrink: 0;
+}
+.ds-mini-ic svg { width: 16px; height: 16px; }
+.ds-mini > div p { margin: 0; font-size: 12px; color: var(--muted-foreground); }
+.ds-mini > div strong {
+  display: block; margin-top: 2px;
+  font-size: 18px; color: var(--foreground);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+/* ---- Cards genéricos ---- */
+.ds-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  display: flex; flex-direction: column;
+  overflow: hidden;
+}
+.ds-card-head {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+}
+.ds-card-head h2 { margin: 0; font-size: 15px; font-weight: 600; color: var(--foreground); }
+.ds-card-head p  { margin: 3px 0 0; font-size: 12.5px; color: var(--muted-foreground); }
+.ds-card-body    { padding: 18px 20px; }
+
+.ds-link {
+  font-size: 13px; color: var(--primary); text-decoration: none; font-weight: 500;
+}
+.ds-link:hover { color: var(--primary-hover); }
+
+/* ---- Zona de gráficos ---- */
+.ds-charts {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 16px;
+}
+@media (max-width: 960px) { .ds-charts { grid-template-columns: 1fr; } }
+
+.ds-chart-wrap { padding: 12px 12px 4px; }
+.ds-svg { display: block; width: 100%; height: auto; }
+
+.ds-donut-wrap {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: 20px;
+  align-items: center;
+}
+@media (max-width: 520px) { .ds-donut-wrap { grid-template-columns: 1fr; justify-items: center; } }
+.ds-donut { display: block; }
+
+.ds-legend {
+  list-style: none; margin: 0; padding: 0;
+  display: flex; flex-direction: column; gap: 6px;
+  font-size: 13px;
+}
+.ds-legend li { display: flex; align-items: center; gap: 8px; }
+.ds-legend .dot { width: 8px; height: 8px; border-radius: 999px; flex-shrink: 0; }
+.ds-legend .lbl { flex: 1; color: var(--foreground); }
+.ds-legend .val { font-weight: 600; color: var(--foreground); font-variant-numeric: tabular-nums; }
+.ds-empty { padding: 32px 0; text-align: center; color: var(--muted-foreground); font-size: 14px; }
+.ds-empty-line { color: var(--muted-foreground); font-size: 13px; }
+
+/* ---- Listas (top produtos + recentes) ---- */
+.ds-lists {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+@media (max-width: 960px) { .ds-lists { grid-template-columns: 1fr; } }
+
+/* Barras horizontais — top produtos */
+.ds-bars { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 14px; }
+.ds-bar-row { display: flex; justify-content: space-between; font-size: 13px; }
+.ds-bar-name { color: var(--foreground); font-weight: 500;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 70%; }
+.ds-bar-val  { color: var(--foreground); font-weight: 600; font-variant-numeric: tabular-nums; }
+.ds-bar-track {
+  height: 6px; background: var(--muted);
+  border-radius: 999px; margin-top: 6px; overflow: hidden;
+}
+.ds-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary), var(--primary-glow));
+  border-radius: 999px;
+  transition: width .5s ease;
+}
+.ds-bar-meta { margin-top: 4px; font-size: 11.5px; color: var(--muted-foreground); }
+
+/* Vendas recentes */
+.ds-recent { list-style: none; margin: 0; padding: 0; }
+.ds-recent li {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+.ds-recent li:last-child { border-bottom: 0; }
+.ds-recent-title { margin: 0; font-size: 13.5px; font-weight: 500; color: var(--foreground); }
+.ds-recent-time  { margin: 2px 0 0; font-size: 11.5px; color: var(--muted-foreground); }
+.ds-recent-right { text-align: right; }
+.ds-recent-total { margin: 0; font-size: 14px; font-weight: 600; color: var(--foreground); font-variant-numeric: tabular-nums; }
+
+.ds-pill {
+  display: inline-block; margin-top: 3px;
+  padding: 2px 8px; border-radius: 999px;
+  background: var(--muted); color: var(--muted-foreground);
+  font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em;
+}
