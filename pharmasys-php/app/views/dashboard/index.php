@@ -46,9 +46,11 @@ function ds_area_chart(array $series, int $w = 720, int $h = 220, int $pad = 28)
         $gy = $pad + ($innerH * $g / 4);
         $grid .= "<line x1=\"$pad\" y1=\"$gy\" x2=\"".($pad+$innerW)."\" y2=\"$gy\" stroke=\"#e8efec\" stroke-dasharray=\"3 3\"/>";
     }
-    /* Labels do eixo X */
+    /* Labels do eixo X — só mostra ~7 marcas quando são muitos pontos */
     $xl = '';
+    $labelEvery = max(1, (int)ceil($n / 7));
     foreach ($series as $i => $r) {
+        if ($i % $labelEvery !== 0 && $i !== $n-1) continue;
         $x = $pad + $i * $step;
         $xl .= "<text x=\"$x\" y=\"".($pad+$innerH+18)."\" text-anchor=\"middle\" font-size=\"11\" fill=\"#5a726c\">".htmlspecialchars($r['label'])."</text>";
     }
