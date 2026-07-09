@@ -45,12 +45,17 @@ class UserController extends Controller {
     }
     public function delete(): void {
         requireRole('admin'); csrfVerify();
+        $id = $_POST['id'] ?? '';
         $u = currentUser();
-        if ($u && $u['id'] === ($_POST['id'] ?? '')) {
+        if ($u && $u['id'] === $id) {
             flash('error', 'Não podes desactivar a tua própria conta.');
             redirect('users');
         }
-        UserModel::delete($_POST['id']);
+        if (UserModel::isLastActiveAdmin($id)) {
+            flash('error', 'Não é possível desactivar o último administrador do sistema.');
+            redirect('users');
+        }
+        UserModel::delete($id);
         flash('success', 'Utilizador desactivado.');
         redirect('users');
     }
