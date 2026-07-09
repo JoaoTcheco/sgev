@@ -109,4 +109,37 @@ class AccountController extends Controller {
             'totals'    => FinancialAccountModel::movementTotals($acc['id'], $filters),
         ]);
     }
+
+    /** Exporta os movimentos (com filtros aplicados) em CSV (UTF-8 + BOM). */
+    public function exportMovements(): void {
+        requireRole('admin','pharmacist');
+        $acc = FinancialAccountModel::find($_GET['id'] ?? '');
+        if (!$acc) { flash('error', 'Conta não encontrada.'); redirect('accounts'); }
+        $filters = [
+            'type'      => $_GET['type']      ?? '',
+            'date_from' => $_GET['date_from'] ?? '',
+            'date_to'   => $_GET['date_to']   ?? '',
+        ];
+        $rows = FinancialAccountModel::movements($acc['id'], $filters, 100000);
+        $slug = preg_replace('/[^a-z0-9]+/i', '_', strtolower($acc['name'])) ?: 'conta';
+        $fname = 'movimentos_' . $slug . '_' . date('Ymd_His') . '.csv';
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename="' . $fname . '"');
+        $out = fopen('php://output', 'w');
+        fwrite($out, "\xEF\xBB\xBF");
+        fputcsv($out, ['Data','Tipo','Motivo','Recibo','Utilizador','Valor (MZN)'], ';');
+        foreach ($rows as $m) {
+            fputcsv($out, [
+                $m['created_at'],
+                $m['type'] === 'credit' ? 'Entrada' : 'Saída',
+                $m['reason'] ?? '',
+                $m['receipt_number'] ?? '',
+                $m['user_name'] ?? '',
+                number_format((float)$m['amount'], 2, '.', ''),
+            ], ';');
+        }
+        fclose($out);
+        exit;
+    }
 }
+
