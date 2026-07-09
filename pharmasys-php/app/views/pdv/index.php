@@ -2,7 +2,7 @@
   <!-- ESQUERDA: pesquisa + carrinho -->
   <div class="pdv-left">
     <div class="pdv-searchbar">
-      <input type="text" id="pdv-search" placeholder="🔍 Pesquisar por nome ou ler código de barras…" autofocus>
+      <input type="text" id="pdv-search" placeholder="Pesquisar por nome ou ler código de barras…" autofocus>
       <div id="pdv-results" class="pdv-results"></div>
     </div>
 
@@ -69,11 +69,11 @@
       <div class="pay-type">
         <label class="pt-opt">
           <input type="radio" name="pay_type" value="cash" checked>
-          <span>💵 Espécie</span>
+          <span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg> Espécie</span>
         </label>
         <label class="pt-opt">
           <input type="radio" name="pay_type" value="electronic">
-          <span>📱 Eletrónico / Digital</span>
+          <span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/></svg> Eletrónico</span>
         </label>
       </div>
 
@@ -99,10 +99,10 @@
       <div class="pay-block hidden" id="block-electronic">
         <label class="lbl">Carteira / Método</label>
         <div class="wallet-grid">
-          <label class="wallet"><input type="radio" name="wallet" value="mpesa" checked><span>📱 M-Pesa</span></label>
-          <label class="wallet"><input type="radio" name="wallet" value="emola"><span>📱 E-Mola</span></label>
-          <label class="wallet"><input type="radio" name="wallet" value="card"><span>💳 Cartão</span></label>
-          <label class="wallet"><input type="radio" name="wallet" value="transfer"><span>🏦 Transferência</span></label>
+          <label class="wallet"><input type="radio" name="wallet" value="mpesa" checked><span>M-Pesa</span></label>
+          <label class="wallet"><input type="radio" name="wallet" value="emola"><span>E-Mola</span></label>
+          <label class="wallet"><input type="radio" name="wallet" value="card"><span>Cartão</span></label>
+          <label class="wallet"><input type="radio" name="wallet" value="transfer"><span>Transferência</span></label>
         </div>
         <label class="lbl">Nº de referência / Transação (opcional)</label>
         <input type="text" id="payment_ref" placeholder="ex: MP240709.1234.A00001">
