@@ -106,4 +106,11 @@ $router->add('accounts/adjust',           'AccountController@adjust',         'P
 $router->add('accounts/transfer',         'AccountController@transferForm',   'GET',  true);
 $router->add('accounts/transfer/submit',  'AccountController@transfer',       'POST', true);
 
+// Backup & Importação
+$router->add('backup',                    'BackupController@index',              'GET',  true);
+$router->add('backup/export',             'BackupController@exportSql',          'GET',  true);
+$router->add('backup/restore',            'BackupController@restore',            'POST', true);
+$router->add('backup/products/export',    'BackupController@exportProductsCsv',  'GET',  true);
+$router->add('backup/products/import',    'BackupController@importProductsCsv',  'POST', true);
+
 $router->dispatch($_GET['r'] ?? '');
