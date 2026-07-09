@@ -43,6 +43,7 @@ class Router {
         }
 
         if ($route['auth']) requireAuth();
+        if (!empty($route['roles'])) requireRole(...$route['roles']);
 
         [$class, $action] = explode('@', $route['handler']);
         if (!class_exists($class) || !method_exists($class, $action)) {
