@@ -4,10 +4,17 @@ class CashController extends Controller {
         requireAuth();
         FinancialAccountModel::ensureSystemAccounts();
         $current = CashSessionModel::current();
+        $filters = [
+            'date_from' => $_GET['date_from'] ?? '',
+            'date_to'   => $_GET['date_to']   ?? '',
+            'status'    => $_GET['status']    ?? '',
+        ];
         $this->render('cash/index', [
-            'current'  => $current ? CashSessionModel::summary($current['id']) : null,
-            'history'  => CashSessionModel::history(20),
-            'accounts' => FinancialAccountModel::all(),
+            'current'   => $current ? CashSessionModel::summary($current['id']) : null,
+            'movements' => $current ? CashSessionModel::movements($current['id']) : [],
+            'history'   => CashSessionModel::history(30, $filters),
+            'accounts'  => FinancialAccountModel::all(),
+            'filters'   => $filters,
         ]);
     }
 
@@ -48,10 +55,39 @@ class CashController extends Controller {
         redirect('cash');
     }
 
+    public function sangria(): void {
+        requireAuth(); csrfVerify();
+        try {
+            $c = CashSessionModel::current();
+            if (!$c) throw new RuntimeException('Não há sessão aberta.');
+            CashSessionModel::sangria($c['id'], (float)($_POST['amount'] ?? 0), trim($_POST['reason'] ?? ''));
+            flash('success', 'Sangria registada.');
+        } catch (Throwable $e) {
+            flash('error', $e->getMessage());
+        }
+        redirect('cash');
+    }
+
+    public function reforco(): void {
+        requireAuth(); csrfVerify();
+        try {
+            $c = CashSessionModel::current();
+            if (!$c) throw new RuntimeException('Não há sessão aberta.');
+            CashSessionModel::reforco($c['id'], (float)($_POST['amount'] ?? 0), trim($_POST['reason'] ?? ''));
+            flash('success', 'Reforço registado.');
+        } catch (Throwable $e) {
+            flash('error', $e->getMessage());
+        }
+        redirect('cash');
+    }
+
     public function view(): void {
         requireAuth();
         $s = CashSessionModel::find($_GET['id'] ?? '');
         if (!$s) { flash('error', 'Sessão não encontrada.'); redirect('cash'); }
-        $this->render('cash/view', ['session' => CashSessionModel::summary($s['id'])]);
+        $this->render('cash/view', [
+            'session'   => CashSessionModel::summary($s['id']),
+            'movements' => CashSessionModel::movements($s['id']),
+        ]);
     }
 }
