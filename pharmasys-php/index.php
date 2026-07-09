@@ -95,4 +95,15 @@ $router->add('settings/save',             'SettingController@save',     'POST', 
 $router->add('reports',                   'ReportController@index',     'GET',  true);
 $router->add('reports/export',            'ReportController@export',    'GET',  true);
 
+// Contas financeiras
+$router->add('accounts',                  'AccountController@index',          'GET',  true);
+$router->add('accounts/new',              'AccountController@form',           'GET',  true);
+$router->add('accounts/edit',             'AccountController@form',           'GET',  true);
+$router->add('accounts/save',             'AccountController@save',           'POST', true);
+$router->add('accounts/delete',           'AccountController@delete',         'POST', true);
+$router->add('accounts/movements',        'AccountController@movements',      'GET',  true);
+$router->add('accounts/adjust',           'AccountController@adjust',         'POST', true);
+$router->add('accounts/transfer',         'AccountController@transferForm',   'GET',  true);
+$router->add('accounts/transfer/submit',  'AccountController@transfer',       'POST', true);
+
 $router->dispatch($_GET['r'] ?? '');
