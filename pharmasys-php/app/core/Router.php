@@ -6,10 +6,11 @@
 class Router {
     private array $routes = [];
 
-    public function add(string $path, string $handler, string $method = 'GET', bool $auth = false): void {
+    public function add(string $path, string $handler, string $method = 'GET', bool $auth = false, array $roles = []): void {
         $this->routes[strtoupper($method) . ' ' . trim($path, '/')] = [
             'handler' => $handler,
             'auth'    => $auth,
+            'roles'   => $roles,
         ];
     }
 
