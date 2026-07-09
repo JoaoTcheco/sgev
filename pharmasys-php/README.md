@@ -1,10 +1,11 @@
 # 💊 PharmaSys — Sistema de Gestão de Farmácia
 
-Sistema completo de gestão para farmácias comunitárias em Moçambique, desenvolvido em **PHP puro (sem frameworks, sem Composer)** com arquitectura **MVC leve**, PDV multi-etapa, controlo rigoroso de lotes (FEFO), gestão financeira integrada, auditoria e etiquetagem com códigos de barras.
+Sistema completo de gestão para farmácias comunitárias em Moçambique, portado do protótipo React/Lovable para **PHP 8 puro (sem frameworks, sem Composer)** com arquitectura **MVC leve**, mantendo **paridade visual e funcional** com a versão Lovable: mesmas telas, mesmas regras de negócio, mesmas permissões por papel.
 
 ![Status](https://img.shields.io/badge/status-produção-success.svg)
 ![PHP](https://img.shields.io/badge/PHP-8.0%2B-777BB4.svg)
 ![MySQL](https://img.shields.io/badge/MySQL-5.7%2B-4479A1.svg)
+![Frontend](https://img.shields.io/badge/frontend-HTML%20%2B%20CSS%20%2B%20JS%20vanilla-orange.svg)
 ![License](https://img.shields.io/badge/uso-privado-lightgrey.svg)
 
 ---
@@ -13,100 +14,101 @@ Sistema completo de gestão para farmácias comunitárias em Moçambique, desenv
 
 O PharmaSys foi desenhado para o dia-a-dia real de uma farmácia:
 
-- **Balconista** faz vendas rápidas no PDV, com pesquisa por nome/código de barras, carrinho com actualização instantânea de preço e total, escolha de pagamento (numerário, M-Pesa, e-Mola, cartão, transferência) e impressão automática de recibo em 58 mm, 80 mm ou A4.
-- **Farmacêutico** gere stock por lotes com validade (FEFO), ordens de compra, devoluções a fornecedor, contas a pagar/receber e relatórios de vendas, custos e margens.
-- **Administrador** gere utilizadores, papéis, configurações da farmácia, backups, importação de produtos por CSV e consulta o log completo de auditoria.
+- **Balconista (cashier)** faz vendas rápidas no PDV, com pesquisa por nome/código de barras, carrinho reactivo, pagamento (numerário com troco automático, M-Pesa, e-Mola, cartão, transferência) e impressão de recibo 58 mm / 80 mm / A4.
+- **Farmacêutico (pharmacist)** gere stock por lotes com validade (FEFO), ordens de compra, devoluções a fornecedor, contas a pagar/receber, alertas de validade, margens e relatórios.
+- **Administrador (admin)** gere utilizadores, papéis, configurações da farmácia, backups, importação/exportação CSV, auditoria completa e histórico global de vendas.
 
-Todas as operações críticas correm dentro de transacções SQL e produzem entradas na tabela `audit_log` e `stock_movements` correlacionadas por `txn_id`, garantindo rastreabilidade total.
+Todas as operações críticas correm em **transacções SQL** e produzem entradas em `audit_logs` e `stock_movements` correlacionadas por `txn_id`, garantindo rastreabilidade total.
 
 ---
 
-## 📁 Estrutura de Pastas e Ficheiros
+## 📁 Estrutura de Pastas
 
 ```
 pharmasys-php/
 ├── 📂 app/
-│   ├── 📂 core/                     # Núcleo do framework caseiro
-│   │   ├── Autoload.php             # Autoload PSR-0 simples + helpers globais
-│   │   ├── Controller.php           # Base para controllers (view/json/redirect)
-│   │   ├── Database.php             # Wrapper PDO (one/all/query/begin/commit)
-│   │   └── Router.php               # Router baseado em ?r=modulo/accao
+│   ├── 📂 core/                     Núcleo do micro-framework
+│   │   ├── Autoload.php             Autoload + helpers globais (e, csrf, url, hasRole…)
+│   │   ├── Controller.php           Base: render($tpl,$data,$layout), json()
+│   │   ├── Database.php             Wrapper PDO: one/all/query/begin/commit/rollBack
+│   │   └── Router.php               Rotas ?r=modulo/accao com guards de auth/role
 │   │
-│   ├── 📂 controllers/              # Controllers HTTP (um por módulo)
-│   │   ├── AuthController.php       # Login / logout / redirect
-│   │   ├── DashboardController.php  # KPIs e widgets iniciais
-│   │   ├── ProductController.php    # CRUD de produtos
-│   │   ├── CategoryController.php   # CRUD de categorias
-│   │   ├── SupplierController.php   # CRUD de fornecedores
-│   │   ├── CustomerController.php   # CRUD de clientes
-│   │   ├── BatchController.php      # CRUD de lotes / entradas de stock
-│   │   ├── StockController.php      # Consulta agregada de stock
-│   │   ├── AlertController.php      # Alertas (stock baixo, validade)
-│   │   ├── LabelController.php      # Impressão de etiquetas A4/térmicas
-│   │   ├── SaleController.php       # PDV — pesquisa, checkout, recibo
-│   │   ├── SaleHistoryController.php# Histórico de vendas + estorno
-│   │   ├── CashController.php       # Sessões de caixa (abertura/fecho)
-│   │   ├── AccountController.php    # Contas financeiras + transferências
-│   │   ├── PayableController.php    # Contas a pagar (AP)
-│   │   ├── ReceivableController.php # Contas a receber (AR)
-│   │   ├── PurchaseOrderController.php   # Ordens de compra + recepção
-│   │   ├── SupplierReturnController.php  # Devoluções a fornecedor
-│   │   ├── NotificationController.php    # Notificações in-app
-│   │   ├── ReportController.php     # Relatórios (vendas, stock, margens)
-│   │   ├── MarginController.php     # Análise dedicada de margens por lote
-│   │   ├── UserController.php       # Gestão de utilizadores
-│   │   ├── SettingController.php    # Configurações da farmácia
-│   │   ├── AuditController.php      # Log de auditoria
-│   │   └── BackupController.php     # Export/import SQL e CSV
+│   ├── 📂 controllers/              Um por módulo (25 controllers)
+│   │   ├── AuthController              login / logout
+│   │   ├── DashboardController         KPIs, série temporal 7d/30d, auto-refresh alertas
+│   │   ├── ProfileController           Perfil self-service (dados + password)
+│   │   ├── ProductController           CRUD produtos + importação/exportação CSV
+│   │   ├── CategoryController          CRUD categorias
+│   │   ├── SupplierController          CRUD fornecedores
+│   │   ├── CustomerController          CRUD clientes
+│   │   ├── BatchController             CRUD lotes / entradas de stock
+│   │   ├── StockController             Consulta agregada e movimentos
+│   │   ├── AlertController             Alertas (stock baixo / expira / expirado)
+│   │   ├── NotificationController      Notificações in-app + feed AJAX
+│   │   ├── LabelController             Etiquetas A4 e térmicas com CODE128
+│   │   ├── SaleController              PDV — pesquisa, checkout, recibo
+│   │   ├── SaleHistoryController       Histórico + estorno + totais por método
+│   │   ├── CashController              Sessões de caixa (abertura/movimentos/fecho)
+│   │   ├── AccountController           Contas financeiras + transferências + filtros
+│   │   ├── PayableController           Contas a pagar (AP) com pagamentos parciais
+│   │   ├── ReceivableController        Contas a receber (AR) com pagamentos parciais
+│   │   ├── PurchaseOrderController     OC draft→confirmed→partial→received
+│   │   ├── SupplierReturnController    Devoluções draft→confirmed (debita stock + AP-)
+│   │   ├── ReportController            Relatórios de vendas, stock e custos
+│   │   ├── MarginController            Margens por lote (bom/aceitável/baixo)
+│   │   ├── UserController              CRUD utilizadores + activar/desactivar
+│   │   ├── SettingController           Configurações da farmácia (logo, NUIT, recibo…)
+│   │   ├── AuditController             Log de auditoria com filtros rápidos
+│   │   └── BackupController            Export SQL + import/export CSV de produtos
 │   │
-│   ├── 📂 models/                   # Modelos (SQL + regras de negócio)
-│   │   ├── UserModel.php
-│   │   ├── ProductModel.php
-│   │   ├── CategoryModel.php
-│   │   ├── SupplierModel.php
-│   │   ├── CustomerModel.php
-│   │   ├── BatchModel.php           # FEFO, ajustes, lookup por produto
-│   │   ├── StockMovementModel.php   # in / out / adjust / refund / expired
-│   │   ├── AlertModel.php
-│   │   ├── NotificationModel.php
-│   │   ├── SaleModel.php            # createFull() com FEFO + auditoria
-│   │   ├── CashSessionModel.php
-│   │   ├── FinancialAccountModel.php# credit / debit / transfer
-│   │   ├── PayableModel.php
-│   │   ├── ReceivableModel.php
-│   │   ├── PurchaseOrderModel.php   # draft→confirmed→partial→received
-│   │   ├── SupplierReturnModel.php  # draft→confirmed (debita stock + AP-)
-│   │   ├── ReportModel.php
-│   │   ├── AuditLogModel.php
-│   │   └── SettingModel.php
+│   ├── 📂 models/                   Modelos com SQL + regras de negócio (19 models)
+│   │   ├── UserModel                 CRUD, verifyPassword, isLastActiveAdmin, ensureAdmin
+│   │   ├── ProductModel              CRUD + pesquisa + importação CSV
+│   │   ├── CategoryModel · SupplierModel · CustomerModel
+│   │   ├── BatchModel                FEFO, ajustes, criação por recepção de OC
+│   │   ├── StockMovementModel        in / out / adjust / refund / expired
+│   │   ├── AlertModel                refresh() calcula alertas e chama Notification::refresh
+│   │   ├── NotificationModel         Dedupe por chave, contadores por utilizador
+│   │   ├── SaleModel                 createFull() atómico, FEFO, history + totais
+│   │   ├── CashSessionModel          Abertura, movimentos, fecho com diferenças
+│   │   ├── FinancialAccountModel     credit / debit / transfer, saldos
+│   │   ├── PayableModel · ReceivableModel  Pagamentos parciais, KPIs de vencimento
+│   │   ├── PurchaseOrderModel        Fluxo completo + recepção → cria lotes
+│   │   ├── SupplierReturnModel       Fluxo completo + debita stock + AP negativa
+│   │   ├── ReportModel               Agregações de vendas, stock, custos
+│   │   ├── AuditLogModel             log($event,$meta,$txn) transversal
+│   │   └── SettingModel              Config chave-valor + upload de logo
 │   │
-│   ├── 📂 views/                    # Templates PHP puros
-│   │   ├── layouts/                 # app / auth / receipt / print
-│   │   ├── partials/                # header / sidebar / flash
-│   │   ├── auth/ dashboard/ products/ categories/ suppliers/ customers/
-│   │   ├── stock/ batches/ alerts/ labels/ notifications/
+│   ├── 📂 views/                    Templates PHP puros (sem Twig/Blade)
+│   │   ├── layouts/    app · auth · receipt · print (todos com print-mode)
+│   │   ├── partials/   sidebar · header · flash
+│   │   ├── auth/ dashboard/ profile/
+│   │   ├── products/ categories/ suppliers/ customers/
+│   │   ├── stock/ batches/ alerts/ notifications/ labels/
 │   │   ├── pdv/ sales/ history/ cash/
 │   │   ├── accounts/ payables/ receivables/
 │   │   ├── purchases/ supplier_returns/
 │   │   ├── reports/ margins/
 │   │   ├── users/ settings/ audit/ backup/
-│   │   └── errors/                  # 404 e outros
+│   │   └── errors/   404 e outros
 │   │
-│   ├── bootstrap.php                # Carrega autoload, sessão, helpers
-│   └── config.php                   # Constantes de BD e app
+│   ├── bootstrap.php               Autoload, sessão, ensureAdmin, config
+│   └── config.php                  Credenciais BD + APP_URL + APP_DEBUG
 │
 ├── 📂 assets/
-│   ├── css/                         # app, pdv, receipt, labels, purchases, etc.
-│   └── js/                          # app, pdv, purchases, notifications, ...
+│   ├── css/     app, dashboard, pdv, crud, receipt, labels, purchases, cash,
+│   │           accounts, ap_ar, history, notifications, reports, audit, backup,
+│   │           margins, supplier_returns, stock, profile, print, auth
+│   └── js/      app, pdv, purchases, notifications, dashboard, cash
 │
-├── 📄 database.sql                  # Base de dados ÚNICA e completa (todas as tabelas + seed)
-├── 📄 index.php                     # Front controller + rotas
-├── 📄 .htaccess                     # Reescrita e protecção de pastas
-└── 📄 README.md                     # Este ficheiro
+├── 📄 database.sql                Base de dados ÚNICA (schema + seed mínimo)
+├── 📄 index.php                   Front controller + tabela de rotas + try/catch global
+├── 📄 install.php                 Assistente web para criar BD e primeiro admin
+├── 📄 .htaccess                   Reescrita, protecções e 404 pelo router
+└── 📄 README.md                   Este ficheiro
 ```
 
-> 💡 **Base de dados unificada**: todo o schema vive num único ficheiro `database.sql`. Já não existe pasta `migrations/` — basta importar `database.sql` numa BD vazia para ter o sistema pronto.
-
+> 💡 **Base de dados unificada**: todo o schema vive em `database.sql`. Não há pasta `migrations/` — importar o ficheiro numa BD vazia deixa o sistema pronto. O utilizador `admin` é criado automaticamente pelo `bootstrap.php` na 1ª execução.
 
 ---
 
@@ -116,71 +118,114 @@ pharmasys-php/
 
 | Ficheiro | Papel |
 |---|---|
-| `Database.php` | Singleton PDO com `one()`, `all()`, `query()`, `begin()`, `commit()`, `rollBack()`. Tudo com prepared statements. |
-| `Router.php` | Regista rotas do tipo `modulo/accao → Controller@metodo` e distingue GET/POST + autenticação. |
-| `Controller.php` | Base com `view($tpl, $data, $layout='app')` e `json($payload)`. |
-| `Autoload.php` | Carrega classes de `controllers/` e `models/` e regista helpers globais: `e()`, `csrfField()`, `csrfVerify()`, `flash()`, `redirect()`, `url()`, `asset()`, `currentUser()`, `hasRole()`, `requireAuth()`, `requireRole()`, `formatMZN()`, `formatDate()`, `formatDateTime()`, `uuidv4()`. |
+| `Database.php` | Singleton PDO com `one()`, `all()`, `query()`, `begin()`, `commit()`, `rollBack()`. Prepared statements em 100 % das queries. |
+| `Router.php` | Regista `modulo/accao → Controller@metodo` com método HTTP, requisito de auth e lista de papéis autorizados. |
+| `Controller.php` | Base com `render($tpl, $data, $layout='app')`, `json($payload)` e `redirect()`. |
+| `Autoload.php` | Autoloader de `controllers/` e `models/` + helpers globais: `e()`, `csrfField()`, `csrfVerify()`, `flash()`, `redirect()`, `url()`, `asset()`, `currentUser()`, `hasRole()`, `requireAuth()`, `requireRole()`, `formatMZN()`, `formatDate()`, `formatDateTime()`, `uuidv4()`, `config()`. |
 
-### 2. Autenticação e Papéis
-- Três papéis: **admin**, **pharmacist**, **cashier**.
-- Passwords com `password_hash()` (bcrypt) e verificação por `password_verify()`.
+### 2. Autenticação, Papéis e Perfil
+- Três papéis: **admin**, **pharmacist**, **cashier** (verificados via `requireRole()` em cada rota).
+- Passwords com `password_hash()` (bcrypt) e `password_verify()`.
 - CSRF token por sessão em todos os POST (`csrfField()` / `csrfVerify()`).
-- Guarda de rotas via `requireAuth()` e `requireRole('admin','pharmacist')`.
+- **Página de Perfil (`/profile`)** — self-service para qualquer utilizador autenticado: editar nome/email e alterar palavra-passe (verifica actual + confirma nova).
+- Protecção do último admin: `UserModel::isLastActiveAdmin()` impede despromoção/desactivação.
 
-### 3. PDV (Ponto de Venda) — `SaleController` + `SaleModel`
+### 3. PDV (Ponto de Venda)
 Fluxo em três passos: **Carrinho → Pagamento → Pré-visualização**.
-- Pesquisa AJAX por nome, código de barras principal (`barcode`) ou por unidade (`sub_barcode`).
-- Cada linha do carrinho mostra preço unitário e subtotal; total actualiza em tempo real.
-- Pagamento: numerário (com troco automático e botões de valor rápido) ou electrónico (M-Pesa, e-Mola, cartão, transferência) com campo de referência.
-- `createFull()` é atómico: valida stock, consome lotes por **FEFO**, cria `sale_items` por lote (facilita estorno), regista `stock_movements`, credita a conta financeira e escreve `audit_log`, tudo dentro de uma transacção.
-- Atalhos de teclado: **F2** finalizar, **F3** pesquisar, **Esc** voltar.
+- Pesquisa AJAX por nome, `barcode` principal ou `sub_barcode` por unidade.
+- Carrinho reactivo: cada linha mostra preço unitário, subtotal, total actualizado ao vivo.
+- Pagamento: numerário (troco automático, atalhos 100/200/500/1000) ou electrónico (M-Pesa/e-Mola/cartão/transferência) com campo de referência.
+- `SaleModel::createFull()` é atómico: valida stock, consome lotes por **FEFO**, cria `sale_items` por lote (facilita estorno), regista `stock_movements`, credita a conta financeira, escreve `audit_logs`, tudo em transacção.
+- Atalhos: **F2** finalizar · **F3** pesquisar · **Esc** voltar.
 
-### 4. Stock e Lotes — `BatchModel`, `StockMovementModel`
-- Todos os produtos são movimentados via lotes com número e data de validade.
-- **FEFO** (First Expire, First Out) aplicado no PDV e nas devoluções.
-- Cada movimento (`in`, `out`, `adjust`, `refund`, `expired`) grava origem, quantidade, motivo, `reference_id` e `txn_id` para correlação.
+### 4. Stock e Lotes
+- Todos os produtos movimentam-se via lotes com número, custo e data de validade.
+- **FEFO** aplicado no PDV e nas devoluções.
+- Movimentos (`in`, `out`, `adjust`, `refund`, `expired`) guardam origem, quantidade, motivo, `reference_id` e `txn_id` para correlação.
 
-### 5. Ordens de Compra — `PurchaseOrderController` + `PurchaseOrderModel`
-Fluxo `draft → confirmed → partial → received`. A recepção cria automaticamente lotes em `batches`, escreve movimento `in` e recalcula o estado da OC.
+### 5. Ordens de Compra
+Fluxo `draft → confirmed → partial → received`. A recepção cria lotes automaticamente em `batches`, escreve movimento `in` e recalcula o estado da OC. Numeração anual atómica via `po_seq`.
 
-### 6. Devoluções a Fornecedor — `SupplierReturnController` + `SupplierReturnModel`
-Fluxo `draft → confirmed`. Ao confirmar debita stock (lote escolhido ou FEFO) e cria um **payable negativo** contra o fornecedor (crédito), reutilizável em compras futuras ou reembolsável via fluxo AP.
+### 6. Devoluções a Fornecedor
+Fluxo `draft → confirmed`. Ao confirmar: debita stock (lote escolhido ou FEFO) e cria um **payable negativo** (crédito) contra o fornecedor, reutilizável em compras futuras. Numeração via `sr_seq`.
 
-### 7. Financeiro — `AccountController`, `PayableController`, `ReceivableController`
-- Contas financeiras (caixa, banco, M-Pesa, e-Mola) com movimentos, ajustes e transferências.
-- Contas a pagar (AP) e a receber (AR) com estados `open`/`partial`/`paid`, KPIs de vencimento, pagamentos parciais e histórico via `ar_ap_payments`.
+### 7. Financeiro
+- **Contas financeiras** (caixa, banco, M-Pesa, e-Mola) com movimentos, ajustes e transferências entre contas.
+- **Contas a Pagar (AP)** e **Contas a Receber (AR)** com estados `open`/`partial`/`paid`, KPIs de vencimento (a vencer / vencidas), pagamentos parciais registados em `ar_ap_payments`.
+- Página de movimentos por conta com atalhos "Hoje / 7 dias / 30 dias / Mês".
 
-### 8. Recibo Adaptativo e Etiquetas — `SaleController@receipt`, `LabelController`
-- Recibo com dados da farmácia (logo, slogan, farmacêutico, NUIT), código de barras CODE128 do número, `@page size` dinâmico para 58 mm, 80 mm ou A4.
-- Etiquetas em A4 (multi-coluna) ou rolo térmico, com dimensões, margens e nome de impressora configuráveis. Botão de impressão rápida na lista de produtos.
+### 8. Recibo e Etiquetas
+- Recibo com logo, slogan, farmacêutico, NUIT, `@page size` dinâmico 58 mm / 80 mm / A4 e código de barras CODE128 (SVG puro) do nº do recibo.
+- Etiquetas A4 multi-coluna ou rolo térmico, com dimensões, margens e nome da impressora configuráveis. Botão de impressão rápida na lista de produtos.
 
 ### 9. Alertas e Notificações
-- `AlertModel` recalcula alertas de stock mínimo e validade próxima.
-- `NotificationModel` centraliza alertas para utilizadores/papéis com deduplicação (`dedupe_key`) e polling de 60 s no frontend.
+- `AlertModel::refresh()` recalcula stock mínimo, validade próxima e expirados; encadeia `NotificationModel::refresh()` para criar notificações dedupe por chave `alert:<id>:<role>`.
+- Auto-refresh silencioso no Dashboard (throttle 5 min por sessão).
+- Sino no header com contador não-lido e feed AJAX de 60 s.
 
-### 10. Auditoria e Backup
-- `audit_log` guarda todas as acções críticas (venda, estorno, ajuste de lote, pagamento AP/AR, edição de utilizador, etc.), com JSON de metadados e `txn_id`.
-- Backup completo em SQL, exportação/importação de produtos em CSV.
+### 10. Dashboard
+- KPIs: vendas do dia, ticket médio, itens vendidos, produtos activos.
+- Série temporal 7d/30d (toggle no cabeçalho) com gráfico SVG.
+- Cartões de alertas, últimas vendas e top produtos.
+
+### 11. Histórico de Vendas
+- Filtros por período, recibo, cliente, método de pagamento e estado.
+- Atalhos rápidos "Hoje / 7d / 30d / Mês".
+- **Totais por método de pagamento** no rodapé (numerário, M-Pesa, e-Mola, cartão, transferência) + líquido excluindo estornadas.
+- Exportação **CSV** (com BOM UTF-8 para Excel) e **PDF via impressão** (`&print=1`).
+- Estorno parcial/total com reposição de stock nos lotes.
+
+### 12. Auditoria e Backup
+- `audit_logs` guarda todas as acções críticas (venda, estorno, ajuste de lote, pagamento AP/AR, edição de utilizador, etc.) com JSON de metadados, IP, timestamp e `txn_id`.
+- Filtros rápidos "Hoje / 7d / 30d / Mês" + exportação CSV/PDF.
+- Backup completo em SQL e importação/exportação de produtos em CSV.
+
+### 13. Exportação PDF universal
+- Layout `app.php` detecta `?print=1` e comuta para **print-mode**: esconde sidebar/header, injecta cabeçalho da farmácia (nome, data, utilizador) e barra "Imprimir / Guardar como PDF".
+- CSS partilhado `assets/css/print.css` com regras `@media print` (page-break, tabelas com header repetido, `@page margin:14mm`).
+- Botão "🖨️ PDF" activo em: Histórico de Vendas, Alertas, Auditoria, Margens, Utilizadores. Qualquer outra página pode ser impressa juntando `&print=1` ao URL.
 
 ---
 
-## 🗄️ Modelo de Dados (resumo)
+## 🗄️ Modelo de Dados (`database.sql`)
 
-| Tabela | Papel |
+Base única, 27 tabelas, todas InnoDB / utf8mb4, com FKs, índices e chaves compostas onde necessário.
+
+| Grupo | Tabelas |
 |---|---|
-| `users`, `pharmacy_settings` | Utilizadores, papéis, configuração da farmácia (logo, NUIT, recibo, etiquetas). |
-| `categories`, `products`, `suppliers`, `customers` | Cadastros base. |
-| `batches`, `stock_movements` | Lotes com validade e todo o histórico de movimentos. |
-| `sales`, `sale_items`, `receipt_seq` | Vendas, itens por lote e numeração anual atómica. |
-| `cash_sessions` | Abertura, movimentos e fecho de caixa por utilizador. |
-| `financial_accounts`, `financial_transactions` | Contas e movimentos (crédito/débito/transferência). |
-| `purchase_orders`, `purchase_order_items`, `po_seq` | Ordens de compra e recepção. |
-| `supplier_returns`, `supplier_return_items`, `sr_seq` | Devoluções a fornecedor. |
-| `payables`, `receivables`, `ar_ap_payments` | Contas a pagar/receber e pagamentos. |
-| `alerts`, `notifications` | Alertas operacionais e notificações in-app. |
-| `audit_log` | Log de auditoria de todas as acções. |
+| **Núcleo** | `users`, `pharmacy_settings` |
+| **Cadastros** | `categories`, `suppliers`, `customers`, `products` |
+| **Stock** | `batches`, `stock_movements` |
+| **PDV / Vendas** | `sales`, `sale_items`, `receipt_seq` |
+| **Caixa** | `cash_sessions` |
+| **Financeiro** | `financial_accounts`, `account_movements` |
+| **Compras** | `purchase_orders`, `purchase_order_items`, `po_seq` |
+| **Devoluções** | `supplier_returns`, `supplier_return_items`, `sr_seq` |
+| **AP / AR** | `payables`, `receivables`, `ar_ap_payments` |
+| **Operacional** | `alerts`, `notifications` |
+| **Auditoria** | `audit_logs` |
 
-Chaves primárias são UUID (`CHAR(36)`), gerados por `uuidv4()`, garantindo unicidade também em backups/restores parciais.
+Chaves primárias em UUID (`CHAR(36)`) geradas por `uuidv4()`, garantindo unicidade também em backups/restores parciais e evitando colisões entre instalações distintas.
+
+**Seed mínimo** incluído: `pharmacy_settings` (`80mm`) e conta financeira `Caixa` de sistema. Utilizador `admin` criado pelo `bootstrap.php` (`admin` / `PharmaAdmin@2026`).
+
+---
+
+## 🔐 Permissões por Papel
+
+| Módulo / Rota | admin | pharmacist | cashier |
+|---|:---:|:---:|:---:|
+| Dashboard, Perfil, Notificações, Alertas | ✅ | ✅ | ✅ |
+| PDV, Recibo, Caixa | ✅ | ✅ | ✅ |
+| Estoque, Lotes, Etiquetas | ✅ | ✅ | — |
+| Produtos, Categorias, Fornecedores, Clientes | ✅ | ✅ | — |
+| Ordens de Compra, Devoluções a Fornecedor | ✅ | ✅ | — |
+| Contas Financeiras, AP, AR | ✅ | ✅ | — |
+| Relatórios, Margens | ✅ | ✅ | — |
+| Histórico de Vendas (com estorno) | ✅ | ✅ | — |
+| Utilizadores, Configurações, Auditoria, Backup | ✅ | — | — |
+
+Guards centralizados em `index.php` (`$router->add(..., [$roles])`) e reforçados nos controllers via `requireRole(...)`. O último admin activo não pode ser desactivado nem despromovido.
 
 ---
 
@@ -189,103 +234,112 @@ Chaves primárias são UUID (`CHAR(36)`), gerados por `uuidv4()`, garantindo uni
 ### Venda no PDV
 1. Balconista abre sessão de caixa.
 2. Pesquisa produto → adiciona ao carrinho → ajusta quantidades.
-3. Escolhe pagamento e insere valor recebido (calcula troco) ou referência electrónica.
-4. Ao confirmar: transacção SQL debita lotes por FEFO, cria itens por lote, actualiza contas, gera recibo e imprime.
+3. Escolhe pagamento e insere valor recebido (troco automático) ou referência electrónica.
+4. Confirma → transacção SQL debita lotes por FEFO, cria itens por lote, credita a conta financeira, gera nº de recibo, escreve `audit_logs` e imprime recibo.
 
 ### Ordem de Compra → Recepção → Pagamento
-1. Farmacêutico cria OC em rascunho e confirma.
-2. Ao chegar a mercadoria, regista recepção parcial ou total (cria lotes automáticos).
-3. Uma conta a pagar (AP) é criada; pagamentos parciais debitam a conta financeira escolhida.
+1. Farmacêutico cria OC em `draft` e confirma.
+2. Ao chegar mercadoria, regista recepção parcial ou total (cria lotes automáticos com validade e custo).
+3. Payable (AP) é criado; pagamentos parciais debitam a conta financeira escolhida e vão para `ar_ap_payments`.
 
 ### Devolução a Fornecedor
-1. Farmacêutico cria devolução (com motivo: vencido, danificado, recall, etc.).
-2. Confirma → stock é debitado dos lotes indicados → AP negativa é criada como crédito.
+1. Farmacêutico cria devolução (motivo: vencido, danificado, recall…).
+2. Confirma → stock debitado dos lotes indicados → payable negativo criado como crédito.
+
+### Estorno de Venda
+1. Admin abre `Histórico → Ver`, escolhe quantidades por linha e motivo.
+2. `SaleModel::refund()` repõe stock nos lotes originais, actualiza `refunded_qty`, debita a conta, muda estado para `partial_refund` ou `refunded` e escreve auditoria.
 
 ---
 
 ## 🚀 Instalação
 
 ### Pré-requisitos
-- PHP 8.0+ com extensões `pdo_mysql`, `mbstring`, `gd`.
-- MySQL 5.7+ ou MariaDB 10.4+.
-- Servidor Apache/Nginx com `mod_rewrite` (ou equivalente).
+- **PHP 8.0+** com `pdo_mysql`, `mbstring`, `gd`, `fileinfo`.
+- **MySQL 5.7+** ou **MariaDB 10.4+**.
+- Apache/Nginx com `mod_rewrite` (ou equivalente).
 
-### Passos
-1. **Copiar ficheiros** para o webroot:
+### Via assistente web (recomendado)
+1. Copiar a pasta `pharmasys-php/` para o webroot (`htdocs`, `/var/www/html`, etc.).
+2. Aceder a `http://localhost/pharmasys-php/install.php` e seguir os passos.
+3. Após instalação, o instalador é automaticamente selado.
+
+### Manual
+1. Copiar ficheiros:
    ```bash
    cp -r pharmasys-php /var/www/html/pharmasys
    ```
-2. **Criar a base de dados** e importar schema:
+2. Criar BD e importar schema:
    ```bash
    mysql -u root -p -e "CREATE DATABASE pharmasys CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
    mysql -u root -p pharmasys < pharmasys-php/database.sql
    ```
-   > Não são necessárias migrações adicionais — o `database.sql` já contém todas as tabelas (Core, PDV, Lotes, AP/AR, Notificações, Compras, Devoluções, Auditoria).
-
-4. **Configurar** `pharmasys-php/app/config.php`:
+3. Editar `pharmasys-php/app/config.php`:
    ```php
    define('DB_HOST', 'localhost');
    define('DB_NAME', 'pharmasys');
    define('DB_USER', 'root');
    define('DB_PASS', '');
-   define('APP_URL', 'http://localhost/pharmasys/');
+   define('APP_URL',  'http://localhost/pharmasys/');
+   define('APP_DEBUG', false);
    ```
-5. **Permissões** de escrita para uploads e backups:
-   ```bash
-   chmod -R 775 pharmasys-php/assets/uploads pharmasys-php/storage
-   ```
-6. **Aceder**: `http://localhost/pharmasys/`
-   - Utilizador inicial: `admin` / palavra-passe: `admin123` — **alterar imediatamente após primeiro acesso**.
+4. Aceder a `http://localhost/pharmasys/` e entrar com **admin** / **PharmaAdmin@2026** (alterar imediatamente em Perfil).
 
 ---
 
-## 📱 Guia de Uso
+## 📱 Guia de Uso Rápido
 
 ### Balconista (Cashier)
 1. Abrir sessão de caixa (Caixa → Abrir).
 2. Vender no **PDV** (F2 finaliza, F3 pesquisa).
-3. Fechar sessão ao fim do turno, conferindo valores contados vs esperados.
+3. Fechar sessão ao fim do turno conferindo esperado vs. contado.
+4. Consultar notificações e alertas.
 
 ### Farmacêutico (Pharmacist)
-- Registar entradas de stock (Lotes → Nova entrada) ou receber através de OCs.
-- Criar ordens de compra e devoluções.
+- Registar entradas de stock (Lotes → Nova) ou receber via OC.
+- Criar ordens de compra e devoluções a fornecedor.
 - Consultar margens, relatórios e resolver alertas de validade.
-- Gerir contas a pagar e a receber.
+- Gerir AP, AR e movimentos de contas.
 
 ### Administrador (Admin)
-- Gerir utilizadores e papéis.
-- Configurar dados da farmácia (logo, NUIT, layout de recibos e etiquetas).
-- Consultar auditoria e exportar/importar dados.
+- Gerir utilizadores (criar, editar, activar/desactivar) e papéis.
+- Configurar dados da farmácia (logo, NUIT, recibo, etiquetas).
+- Consultar histórico global de vendas (com totais por método de pagamento) e auditoria.
+- Exportar/importar dados (SQL, CSV, PDF por impressão).
 
 ---
 
 ## 🔒 Segurança
 
-- **SQL Injection**: 100 % das queries usam prepared statements (`Database::one/all/query`).
-- **XSS**: helper `e()` (alias de `htmlspecialchars`) obrigatório em toda a saída.
+- **SQL Injection**: 100 % das queries via prepared statements.
+- **XSS**: helper `e()` obrigatório em toda a saída HTML.
 - **CSRF**: token por sessão validado em todos os POST.
-- **Autenticação**: bcrypt (`password_hash` / `password_verify`), sessões PHP com `session.cookie_httponly = 1` recomendado no `php.ini`.
-- **Autorização**: `requireAuth()` e `requireRole()` em todas as rotas privadas.
-- **Uploads**: whitelist de extensões, rename para UUID + extensão, guardados fora das pastas executadas por PHP.
-- **Auditoria**: cada acção crítica é registada com utilizador, IP, timestamp e metadados em `audit_log`.
+- **Autenticação**: bcrypt; recomendado `session.cookie_httponly = 1` e `session.cookie_secure = 1` em produção.
+- **Autorização**: `requireAuth()` + `requireRole()` em rota e controller.
+- **Uploads**: whitelist de extensões, rename para UUID, guardados fora de directórios executáveis.
+- **Auditoria**: cada acção crítica em `audit_logs` com IP, timestamp e metadados JSON.
+- **Debug**: `APP_DEBUG = false` em produção — página de erro amigável, stack-trace só em log.
 
 ---
 
-## 🎨 Design System
+## 🎨 Design System (paridade com Lovable)
 
-- **Cores**: primária `#0F766E` (verde farmácia), acento `#F59E0B`, alerta `#DC2626`, fundo `#F8FAFC`.
-- **Tipografia**: `Inter` para UI, `IBM Plex Mono` para códigos de barras e recibos.
-- **Layout**: sidebar fixa à esquerda + header com sino de notificações + área de conteúdo em cards.
-- **Impressão**: CSS dedicado (`receipt.css`, `labels.css`) com `@media print` e `@page size` dinâmico.
+- **Cores**: primária `#0F766E` (teal farmácia), acento `#F59E0B`, alerta `#DC2626`, sucesso `#16A34A`, fundo `#F8FAFC`.
+- **Tipografia**: `Inter` (400/500/600/700/800) para UI; `IBM Plex Mono` para códigos/recibos.
+- **Layout**: sidebar fixa com ícones SVG inline (Lucide-like), header com sino de notificações, área de conteúdo em cards com `--radius-lg: 14px` e sombras suaves.
+- **Tokens partilhados** em `assets/css/app.css`: `--primary`, `--card`, `--border`, `--muted`, `--text`, `--bg`.
+- **Impressão**: `receipt.css`, `labels.css` e `print.css` com `@page size` dinâmico e `@media print`.
+- **Componentes reutilizados** em todas as CRUDs: `crud-header`, `data-table`, `form-card`, `.btn/.btn-primary/.btn-ghost/.btn-danger/.btn-success`, `.badge-{green,orange,red,blue,gray}`.
 
 ---
 
 ## 🛠️ Tecnologias
 
-- **Backend**: PHP 8+ nativo, arquitectura MVC leve, PDO, sem Composer.
-- **Base de dados**: MySQL 5.7+ / MariaDB 10.4+, InnoDB, UTF-8 mb4.
+- **Backend**: PHP 8+ nativo, MVC leve, PDO, sem Composer.
+- **BD**: MySQL 5.7+ / MariaDB 10.4+, InnoDB, utf8mb4.
 - **Frontend**: HTML5, CSS3 (variáveis, grid, flex), JavaScript ES6+ vanilla.
-- **Códigos de barras**: geração CODE128 em SVG puro (sem dependências externas).
+- **Códigos de barras**: geração CODE128 em SVG puro (sem dependências).
+- **PDF**: geração via impressão do navegador (`&print=1` + CSS `@media print`) — não requer bibliotecas externas.
 
 ---
 
@@ -293,18 +347,22 @@ Chaves primárias são UUID (`CHAR(36)`), gerados por `uuidv4()`, garantindo uni
 
 | Sintoma | Solução |
 |---|---|
-| `Access denied for user` ao aceder | Verificar `app/config.php` e credenciais MySQL. |
-| Sino de notificações sempre a zero | Reimportar `database.sql` (contém a tabela `notifications`). |
-| Impressão de recibo desalinhada | Ajustar `Configurações → Recibo → largura` (58/80/A4) e margem da impressora. |
-| “Stock insuficiente” inesperado | Confirmar quantidades em `Lotes`; movimentos anteriores podem estar em outra sessão. |
-| Erro ao confirmar devolução | Faltam lotes com quantidade — reveja a linha antes de confirmar. |
+| `Access denied for user` | Verificar credenciais em `app/config.php`. |
+| Sino de notificações sempre a zero | Reimportar `database.sql` (contém `notifications` e `alerts`). |
+| Recibo desalinhado | Ajustar `Configurações → Recibo → largura` (58/80/A4). |
+| "Stock insuficiente" inesperado | Confirmar quantidades em `Lotes` — pode haver reservas noutra sessão. |
+| Erro ao confirmar devolução | Faltam lotes com quantidade — reveja as linhas. |
+| Página em branco em produção | `APP_DEBUG=false` + consultar `error_log` PHP; o `index.php` tem `try/catch` global. |
+| PDF via `&print=1` sem estilos | Confirmar que `assets/css/print.css` está carregado no layout `app.php`. |
 
 ---
 
 ## 🗺️ Roadmap
 
-- Dashboard executivo com widgets BI em tempo real (gráficos Chart.js).
-- Vinculação automática OC ↔ AP e Venda ↔ AR.
+- Envio de recibo por email/WhatsApp a partir do PDV.
+- Pesquisa global (⌘K) em produtos, clientes, recibos e OCs.
+- Top clientes / atendentes no dashboard admin.
+- Modo escuro completo (tokens já preparados).
 - Prescrições médicas com histórico por cliente.
 - Aplicação móvel companion (leitor de códigos de barras).
 
@@ -314,18 +372,20 @@ Chaves primárias são UUID (`CHAR(36)`), gerados por `uuidv4()`, garantindo uni
 
 Software desenvolvido sob medida. Uso exclusivo do cliente contratante. Todos os direitos reservados.
 
-**Versão:** 1.15.0 · **Última actualização:** Julho 2026 · **Estado:** Produção
+**Versão:** 1.16.0 · **Última actualização:** Julho 2026 · **Estado:** Produção
 
 ---
 
-## ✅ Revisão Final (v1.15.0 — Passo 10)
+## ✅ Histórico de Blocos (paridade com Lovable)
 
-Alinhamento visual completo com o design **Lovable-teal** (`#0f766e`) e endurecimento do front controller:
+| Bloco | Entrega |
+|---|---|
+| 1–8 | Núcleo, PDV, Stock, Compras, Financeiro, Recibo, Etiquetas, Alertas. |
+| 9 | Margens & Custos por lote com filtros. |
+| 10 | Dashboard com séries temporais 7d/30d (toggle). |
+| 11 | Notificações automáticas encadeadas em `AlertModel::refresh()` com dedupe por papel. |
+| 12 | Atalhos "Hoje / 7d / 30d / Mês" em Auditoria e movimentos de contas. |
+| 13 | Histórico de Vendas com **totais por método de pagamento** e KPI de líquido. |
+| **14** | **CRUD Utilizadores** completo (activar/desactivar) + **Página de Perfil** + **Exportação PDF universal via impressão** (`&print=1`). |
 
-- **`.htaccess`** — removido `ErrorDocument` com caminho absoluto (dependia do sub-directório). O 404 é agora tratado exclusivamente pelo router (`error/notfound`), tornando o pacote portátil entre `htdocs/`, `htdocs/pharmasys/` ou qualquer sub-pasta.
-- **`index.php`** — dispatch agora envolvido em `try/catch (\Throwable)` com página de erro estilizada (mesma linguagem visual do `install.php` e `login.php`), `error_log` estruturado e stack-trace só quando `APP_DEBUG === true`. Elimina white-screen em produção.
-- **CSS (25 módulos)** — todas as views (`pdv`, `crud`, `stock`, `purchases`, `ap_ar`, `cash`, `history`, `notifications`, `reports`, `audit`, `backup`, `margins`, `accounts`, `supplier_returns`, `app`) partilham tokens teal, `--radius-lg: 14px`, sombras suaves e hover-lift. `labels.css` e `receipt.css` mantidos neutros por serem específicos para impressão térmica.
-- **Layout global (`layouts/app.php`)** — favicon SVG inline (pílula com gradiente teal), `theme-color`, meta description, preload da Inter, header sticky 64px.
-- **`install.php` & `login.php`** — hero com logo SVG, stepper visual, inputs com focus-ring teal, botão primário em gradiente com sombra colorida.
-
-Nenhuma alteração de lógica de negócio, schema ou controllers — apenas apresentação e resiliência.
+Todos os ficheiros PHP passam `php -l` sem erros. Todas as tabelas referenciadas pelos models existem em `database.sql`. Paridade visual e funcional com o protótipo Lovable mantida.
