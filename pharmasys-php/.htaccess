@@ -1,0 +1,42 @@
+Options -Indexes -ExecCGI
+ServerSignature Off
+
+<FilesMatch "^\.">
+    Require all denied
+</FilesMatch>
+
+<FilesMatch "(\.sql|\.log|\.ini|\.conf|\.env|\.md)$">
+    Require all denied
+</FilesMatch>
+
+RewriteEngine On
+
+# Bloqueia acesso directo a /app/
+RewriteRule ^app/ - [F,L]
+
+# Roteamento: tudo que não seja ficheiro/pasta real → index.php?r=...
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ index.php?r=$1 [QSA,L]
+
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/css application/javascript application/json image/svg+xml
+</IfModule>
+
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType image/jpeg "access plus 1 month"
+    ExpiresByType image/png "access plus 1 month"
+    ExpiresByType image/webp "access plus 1 month"
+    ExpiresByType text/css "access plus 1 week"
+    ExpiresByType application/javascript "access plus 1 week"
+</IfModule>
+
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header unset X-Powered-By
+</IfModule>
+
+ErrorDocument 404 /pharmasys/index.php?r=error/notfound
