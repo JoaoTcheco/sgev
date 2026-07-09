@@ -1,0 +1,139 @@
+<?php
+class SaleModel {
+    /**
+     * Gera o próximo número de recibo (formato AAAA-NNNNNN) com lock.
+     * Chamar SEMPRE dentro de uma transacção.
+     */
+    public static function nextReceiptNumber(): string {
+        $year = (int)date('Y');
+        // upsert atómico
+        Database::query('INSERT INTO receipt_seq (year, last_value) VALUES (?, 0) ON DUPLICATE KEY UPDATE year = year', [$year]);
+        // lock e incremento
+        Database::query('UPDATE receipt_seq SET last_value = last_value + 1 WHERE year = ?', [$year]);
+        $row = Database::one('SELECT last_value FROM receipt_seq WHERE year = ?', [$year]);
+        return sprintf('%d-%06d', $year, (int)$row['last_value']);
+    }
+
+    /**
+     * Cria venda completa (header + items + consumo FEFO + movimentos + conta).
+     * $data = [customer_id?, payment_method, discount, notes?, items:[{product_id, qty, unit_price, unit_kind, unit_label?}]]
+     * Retorna o ID da venda.
+     */
+    public static function createFull(array $data): string {
+        $userId    = currentUser()['id'];
+        $session   = CashSessionModel::current();
+        if (!$session) throw new Exception('Abre uma sessão de caixa antes de vender.');
+        if (empty($data['items'])) throw new Exception('Carrinho vazio.');
+
+        $txnId = uuidv4();
+        $saleId = uuidv4();
+
+        Database::begin();
+        try {
+            // 1) valida stock e prepara consumo FEFO por item
+            $consumption = []; // [{product_id, qty, unit_price, unit_kind, unit_label, batches:[{id, take}]}]
+            $subtotal = 0;
+            foreach ($data['items'] as $it) {
+                $qty = (int)$it['qty'];
+                if ($qty <= 0) throw new Exception('Quantidade inválida.');
+                $product = ProductModel::find($it['product_id']);
+                if (!$product) throw new Exception('Produto não encontrado.');
+
+                $unitPrice = (float)$it['unit_price'];
+                $subtotal += $unitPrice * $qty;
+
+                // FEFO: acumular lotes até cobrir qty
+                $batches = BatchModel::fefo($product['id']);
+                $remaining = $qty; $picks = [];
+                foreach ($batches as $b) {
+                    if ($remaining <= 0) break;
+                    $take = min((int)$b['quantity'], $remaining);
+                    if ($take > 0) { $picks[] = ['id' => $b['id'], 'take' => $take]; $remaining -= $take; }
+                }
+                if ($remaining > 0) {
+                    throw new Exception('Stock insuficiente para ' . $product['name'] . '.');
+                }
+                $consumption[] = [
+                    'product'    => $product,
+                    'qty'        => $qty,
+                    'unit_price' => $unitPrice,
+                    'unit_kind'  => $it['unit_kind']  ?? 'pack',
+                    'unit_label' => $it['unit_label'] ?? $product['unit'],
+                    'batches'    => $picks,
+                ];
+            }
+
+            $discount = max(0, (float)($data['discount'] ?? 0));
+            $total = max(0, $subtotal - $discount);
+            $receipt = self::nextReceiptNumber();
+            $paymentMethod = $data['payment_method'] ?? 'cash';
+            $account = FinancialAccountModel::findByType($paymentMethod);
+
+            // 2) cabeçalho
+            Database::query(
+                'INSERT INTO sales (id, receipt_number, customer_id, user_id, cash_session_id, account_id,
+                                     subtotal, discount, total, payment_method, notes)
+                 VALUES (?,?,?,?,?,?,?,?,?,?,?)',
+                [$saleId, $receipt, $data['customer_id'] ?: null, $userId, $session['id'],
+                 $account['id'] ?? null, $subtotal, $discount, $total, $paymentMethod, $data['notes'] ?? null]
+            );
+
+            // 3) items + consumo de stock
+            foreach ($consumption as $c) {
+                // um sale_item por lote consumido (facilita estorno)
+                foreach ($c['batches'] as $b) {
+                    $itemId = uuidv4();
+                    $itemTotal = $b['take'] * $c['unit_price'];
+                    Database::query(
+                        'INSERT INTO sale_items
+                         (id, sale_id, product_id, batch_id, product_name, quantity, unit_price, total, unit_kind, unit_label, txn_id)
+                         VALUES (?,?,?,?,?,?,?,?,?,?,?)',
+                        [$itemId, $saleId, $c['product']['id'], $b['id'],
+                         $c['product']['name'], $b['take'], $c['unit_price'], $itemTotal,
+                         $c['unit_kind'], $c['unit_label'], $txnId]
+                    );
+                    // debitar lote
+                    BatchModel::adjustQuantity($b['id'], -$b['take']);
+                    // movimento de stock
+                    StockMovementModel::record([
+                        'batch_id'     => $b['id'],
+                        'product_id'   => $c['product']['id'],
+                        'type'         => 'out',
+                        'quantity'     => -$b['take'],
+                        'reason'       => 'Venda ' . $receipt,
+                        'reference_id' => $saleId,
+                    ], $txnId);
+                }
+            }
+
+            // 4) movimento financeiro
+            if ($account) {
+                FinancialAccountModel::credit($account['id'], $total, 'Venda ' . $receipt, $saleId, $txnId);
+            }
+
+            AuditLogModel::log('sale.create', 'sale', $saleId,
+                ['receipt' => $receipt, 'total' => $total, 'payment' => $paymentMethod], $txnId);
+
+            Database::commit();
+            return $saleId;
+        } catch (Throwable $e) {
+            Database::rollBack();
+            throw $e;
+        }
+    }
+
+    public static function find(string $id): ?array {
+        return Database::one(
+            'SELECT s.*, c.full_name AS customer_name, c.tax_id AS customer_tax_id, c.phone AS customer_phone,
+                    u.full_name AS user_name
+             FROM sales s
+             LEFT JOIN customers c ON c.id = s.customer_id
+             LEFT JOIN users u     ON u.id = s.user_id
+             WHERE s.id = ?', [$id]
+        );
+    }
+
+    public static function items(string $saleId): array {
+        return Database::all('SELECT * FROM sale_items WHERE sale_id = ? ORDER BY created_at', [$saleId]);
+    }
+}

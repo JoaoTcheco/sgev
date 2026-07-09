@@ -1,0 +1,66 @@
+/* PharmaSys — PDV */
+.pdv { display: grid; grid-template-columns: 1fr 380px; gap: 16px; height: calc(100vh - 80px); }
+
+.pdv-left { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.pdv-searchbar { position: relative; }
+.pdv-searchbar input {
+  width: 100%; padding: 14px 18px; font-size: 16px;
+  border: 2px solid #cbd5e1; border-radius: 10px; background: #fff;
+}
+.pdv-searchbar input:focus { outline: 0; border-color: #0f766e; box-shadow: 0 0 0 3px rgba(15,118,110,.15); }
+
+.pdv-results {
+  display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+  background: #fff; border: 1px solid #cbd5e1; border-radius: 10px;
+  max-height: 380px; overflow-y: auto; z-index: 20;
+  box-shadow: 0 10px 25px rgba(0,0,0,.12);
+}
+.pdv-results.show { display: block; }
+.pdv-result { padding: 10px 14px; border-bottom: 1px solid #f1f5f9; cursor: pointer;
+  display: flex; justify-content: space-between; gap: 12px; align-items: center; }
+.pdv-result:hover { background: #f0fdfa; }
+.pdv-result .r-main strong { display: block; font-size: 14px; }
+.pdv-result .r-main small { display: block; font-size: 11px; color: #64748b; }
+.pdv-result .r-price { font-weight: 700; color: #0f766e; }
+.pdv-result.empty { color: #94a3b8; cursor: default; text-align: center; }
+
+.pdv-cart { background: #fff; border-radius: 10px; padding: 14px; flex: 1; overflow: auto;
+  border: 1px solid #e2e8f0; }
+.cart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.cart-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.cart-table th { text-align: left; padding: 8px; background: #f8fafc; font-size: 12px; }
+.cart-table td { padding: 8px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+.cart-table td.empty, .cart-table tr.empty td { text-align: center; color: #94a3b8; padding: 40px; }
+.cart-table .qty-inp { width: 60px; padding: 4px 6px; border: 1px solid #cbd5e1; border-radius: 4px; }
+.cart-table .btn-remove { border: 0; background: #fee2e2; color: #991b1b; width: 26px; height: 26px;
+  border-radius: 4px; cursor: pointer; font-weight: 700; }
+.tag { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 600; }
+.tag.pack { background: #dbeafe; color: #1e40af; }
+.tag.sub  { background: #f3e8ff; color: #6b21a8; }
+.tag.red  { background: #fee2e2; color: #991b1b; margin-left: 6px; }
+.tag.orange { background: #fed7aa; color: #9a3412; margin-left: 6px; }
+
+.pdv-right { background: #fff; border-radius: 10px; padding: 18px; display: flex; flex-direction: column;
+  gap: 12px; border: 1px solid #e2e8f0; overflow-y: auto; }
+.pdv-session { background: #f0fdfa; padding: 10px 12px; border-radius: 8px;
+  display: flex; flex-direction: column; gap: 2px; }
+.pdv-session small { color: #64748b; font-size: 11px; }
+
+.pdv-totals .row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; }
+.pdv-totals .row.total { border-top: 2px solid #0f766e; margin-top: 8px; padding-top: 12px; font-size: 20px; }
+.pdv-totals .row.total strong { color: #0f766e; }
+.pdv-totals input { width: 100px; padding: 6px 8px; border: 1px solid #cbd5e1; border-radius: 4px; text-align: right; }
+
+.pay-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.pay-option { display: flex; align-items: center; gap: 6px; padding: 8px 10px;
+  border: 1px solid #cbd5e1; border-radius: 6px; cursor: pointer; font-size: 13px; }
+.pay-option input { margin: 0; }
+.pay-option:has(input:checked) { border-color: #0f766e; background: #f0fdfa; }
+
+#checkout-form label { display: block; margin-top: 8px; font-size: 12px; font-weight: 600; color: #475569; }
+#checkout-form select, #checkout-form textarea {
+  width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; margin-top: 4px;
+}
+.btn-lg { padding: 14px; font-size: 16px; margin-top: 10px; }
+
+@media (max-width: 1024px) { .pdv { grid-template-columns: 1fr; height: auto; } }

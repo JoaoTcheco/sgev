@@ -10,6 +10,10 @@
   <nav class="nav">
     <a href="<?= url('dashboard') ?>" class="nav-item <?= $r === 'dashboard' ? 'active' : '' ?>">Dashboard</a>
 
+    <div class="nav-section">Operação</div>
+    <a href="<?= url('pdv') ?>"   class="nav-item nav-item-primary <?= str_starts_with($r,'pdv')||str_starts_with($r,'sales') ? 'active' : '' ?>">🛒 PDV — Vendas</a>
+    <a href="<?= url('cash') ?>"  class="nav-item <?= str_starts_with($r,'cash') ? 'active' : '' ?>">Caixa</a>
+
     <div class="nav-section">Stock</div>
     <a href="<?= url('stock') ?>"    class="nav-item <?= str_starts_with($r,'stock')    ? 'active' : '' ?>">Estoque</a>
     <a href="<?= url('batches') ?>"  class="nav-item <?= str_starts_with($r,'batches')  ? 'active' : '' ?>">Lotes / Entradas</a>
@@ -32,8 +36,6 @@
     <?php endif; ?>
 
     <div class="nav-section">Próximos pacotes</div>
-    <span class="nav-item disabled">Vendas (PDV)</span>
-    <span class="nav-item disabled">Caixa</span>
     <span class="nav-item disabled">Histórico / Estorno</span>
     <span class="nav-item disabled">Relatórios</span>
   </nav>
