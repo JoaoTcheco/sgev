@@ -399,6 +399,7 @@ Software desenvolvido sob medida. Uso exclusivo do cliente contratante. Todos os
 | 11 | Notificações automáticas encadeadas em `AlertModel::refresh()` com dedupe por papel. |
 | 12 | Atalhos "Hoje / 7d / 30d / Mês" em Auditoria e movimentos de contas. |
 | 13 | Histórico de Vendas com **totais por método de pagamento** e KPI de líquido. |
-| **14** | **CRUD Utilizadores** completo (activar/desactivar) + **Página de Perfil** + **Exportação PDF universal via impressão** (`&print=1`). |
+| 14 | CRUD Utilizadores completo (activar/desactivar) + Página de Perfil + Exportação PDF universal via impressão (`&print=1`). |
+| **15** | **PDV com fluxo hierárquico**: grelha de categorias primeiro, depois produtos da categoria seleccionada (novo endpoint `sales/categories`, botão "← Categorias", contador de produtos, bucket "Sem categoria"). |
 
 Todos os ficheiros PHP passam `php -l` sem erros. Todas as tabelas referenciadas pelos models existem em `database.sql`. Paridade visual e funcional com o protótipo Lovable mantida.
