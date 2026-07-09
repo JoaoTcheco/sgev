@@ -37,6 +37,7 @@
     <?php if (hasRole('admin','pharmacist')): ?>
       <div class="nav-section">Compras</div>
       <a href="<?= url('purchases') ?>" class="nav-item <?= str_starts_with($r,'purchases') ? 'active' : '' ?>">Ordens de Compra</a>
+      <a href="<?= url('supplier-returns') ?>" class="nav-item <?= str_starts_with($r,'supplier-returns') ? 'active' : '' ?>">Devoluções a Fornecedor</a>
 
       <div class="nav-section">Financeiro</div>
       <a href="<?= url('accounts') ?>"    class="nav-item <?= str_starts_with($r,'accounts')    ? 'active' : '' ?>">Contas Financeiras</a>

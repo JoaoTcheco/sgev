@@ -1,0 +1,9 @@
+/* Devoluções a fornecedor */
+.sr-items .batch-sel { width: 100%; }
+.grid-2 { display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-bottom:16px; }
+@media (max-width: 800px){ .grid-2 { grid-template-columns: 1fr; } }
+.kv { display:grid; grid-template-columns: 140px 1fr; gap:6px 12px; margin:0; }
+.kv dt { color: var(--muted, #64748b); font-size: 13px; }
+.kv dd { margin:0; }
+.total-big { font-size: 28px; font-weight: 700; margin: 8px 0; }
+.po-status-cancelled { background:#fee2e2; color:#991b1b; }

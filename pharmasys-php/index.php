@@ -131,6 +131,17 @@ $router->add('purchases/delete',     'PurchaseOrderController@delete',       'PO
 $router->add('purchases/receive',    'PurchaseOrderController@receiveForm',  'GET',  true);
 $router->add('purchases/receive/submit', 'PurchaseOrderController@receive',  'POST', true);
 
+// Devoluções a Fornecedor
+$router->add('supplier-returns',         'SupplierReturnController@index',   'GET',  true);
+$router->add('supplier-returns/new',     'SupplierReturnController@form',    'GET',  true);
+$router->add('supplier-returns/edit',    'SupplierReturnController@form',    'GET',  true);
+$router->add('supplier-returns/save',    'SupplierReturnController@save',    'POST', true);
+$router->add('supplier-returns/view',    'SupplierReturnController@view',    'GET',  true);
+$router->add('supplier-returns/confirm', 'SupplierReturnController@confirm', 'POST', true);
+$router->add('supplier-returns/cancel',  'SupplierReturnController@cancel',  'POST', true);
+$router->add('supplier-returns/delete',  'SupplierReturnController@delete',  'POST', true);
+$router->add('supplier-returns/batches', 'SupplierReturnController@batches', 'GET',  true);
+
 // Notificações in-app
 $router->add('notifications',              'NotificationController@index',       'GET',  true);
 $router->add('notifications/feed',         'NotificationController@feed',        'GET',  true);
