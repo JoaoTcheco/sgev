@@ -3,29 +3,41 @@ class UserModel {
     public static function findByUsername(string $u): ?array {
         return Database::one('SELECT * FROM users WHERE username = ? AND active = 1', [$u]);
     }
-
     public static function findById(string $id): ?array {
         return Database::one('SELECT * FROM users WHERE id = ?', [$id]);
     }
-
     public static function all(): array {
         return Database::all('SELECT id, username, full_name, email, role, active, created_at FROM users ORDER BY full_name');
     }
-
     public static function create(array $d): string {
         $id = uuidv4();
         Database::query(
-            'INSERT INTO users (id, username, password_hash, full_name, email, role, active) VALUES (?,?,?,?,?,?,1)',
-            [$id, $d['username'], password_hash($d['password'], PASSWORD_BCRYPT), $d['full_name'], $d['email'] ?? null, $d['role']]
-        );
+            'INSERT INTO users (id, username, password_hash, full_name, email, role, active) VALUES (?,?,?,?,?,?,?)',
+            [$id, $d['username'], password_hash($d['password'], PASSWORD_BCRYPT),
+             $d['full_name'], $d['email'] ?: null, $d['role'],
+             isset($d['active']) ? 1 : 0]);
         return $id;
     }
-
+    public static function update(string $id, array $d): void {
+        if (!empty($d['password'])) {
+            Database::query(
+                'UPDATE users SET username=?, password_hash=?, full_name=?, email=?, role=?, active=? WHERE id=?',
+                [$d['username'], password_hash($d['password'], PASSWORD_BCRYPT),
+                 $d['full_name'], $d['email'] ?: null, $d['role'],
+                 isset($d['active']) ? 1 : 0, $id]);
+        } else {
+            Database::query(
+                'UPDATE users SET username=?, full_name=?, email=?, role=?, active=? WHERE id=?',
+                [$d['username'], $d['full_name'], $d['email'] ?: null, $d['role'],
+                 isset($d['active']) ? 1 : 0, $id]);
+        }
+    }
+    public static function delete(string $id): void {
+        Database::query('UPDATE users SET active = 0 WHERE id = ?', [$id]);
+    }
     public static function verifyPassword(array $user, string $password): bool {
         return password_verify($password, $user['password_hash']);
     }
-
-    /** Garante que existe pelo menos o admin — corre no bootstrap. */
     public static function ensureAdmin(): void {
         $count = (int)Database::one('SELECT COUNT(*) AS c FROM users')['c'];
         if ($count === 0) {

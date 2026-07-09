@@ -1,0 +1,104 @@
+/* PharmaSys — CRUD tables + forms (partilhado entre cadastros) */
+
+.crud { max-width: 1200px; }
+.crud-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 20px; gap: 12px; flex-wrap: wrap;
+}
+
+.crud-layout {
+  display: grid; grid-template-columns: 320px 1fr; gap: 20px; align-items: start;
+}
+@media (max-width: 900px) { .crud-layout { grid-template-columns: 1fr; } }
+
+/* Cards */
+.crud-form-card, .crud-table-card, .form-card {
+  background: #fff; border: 1px solid #e2e8f0; border-radius: 12px;
+  padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+.crud-form-card h3, .form-section {
+  margin: 0 0 12px; font-size: 15px; color: #0f172a; font-weight: 600;
+  padding-bottom: 8px; border-bottom: 1px solid #f1f5f9;
+}
+.form-section { margin-top: 20px; }
+
+/* Formulários */
+.form-card label, .crud-form-card label {
+  display: block; font-size: 13px; font-weight: 500;
+  color: #334155; margin: 10px 0 6px;
+}
+.form-card input[type=text],
+.form-card input[type=email],
+.form-card input[type=password],
+.form-card input[type=number],
+.form-card select,
+.form-card textarea,
+.crud-form-card input,
+.crud-form-card textarea,
+.crud-form-card select {
+  width: 100%; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 6px;
+  font-size: 14px; font-family: inherit; outline: none; background: #fff;
+  transition: border-color .15s, box-shadow .15s;
+}
+.form-card input:focus, .form-card select:focus, .form-card textarea:focus,
+.crud-form-card input:focus, .crud-form-card textarea:focus, .crud-form-card select:focus {
+  border-color: #14b8a6; box-shadow: 0 0 0 3px rgba(20,184,166,0.15);
+}
+.checkbox { display: flex; align-items: center; gap: 8px; margin: 12px 0; font-size: 14px; color: #334155; }
+.checkbox input { width: auto !important; }
+
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+@media (max-width: 700px) {
+  .grid-2, .grid-4 { grid-template-columns: 1fr; }
+}
+
+.form-actions {
+  display: flex; justify-content: flex-end; gap: 8px;
+  margin-top: 20px; padding-top: 16px; border-top: 1px solid #f1f5f9;
+}
+
+/* Botões */
+.btn {
+  display: inline-block; padding: 8px 14px; border-radius: 6px; border: 1px solid #cbd5e1;
+  font-size: 14px; font-weight: 500; cursor: pointer; background: #fff; color: #334155;
+  text-decoration: none; transition: all .15s;
+}
+.btn:hover { background: #f8fafc; }
+.btn-primary { background: #0f766e; border-color: #0f766e; color: #fff; }
+.btn-primary:hover { background: #0d5f5a; }
+.btn-danger { background: #fee2e2; border-color: #fecaca; color: #991b1b; }
+.btn-danger:hover { background: #fecaca; }
+.btn-ghost { background: transparent; border-color: #cbd5e1; }
+.btn-sm { padding: 4px 10px; font-size: 12px; }
+
+/* Tabelas */
+.table-search {
+  width: 100%; padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 6px;
+  margin-bottom: 12px; font-size: 14px; outline: none;
+}
+.data-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.data-table thead th {
+  text-align: left; padding: 10px 12px; background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0; font-weight: 600; color: #475569; font-size: 12px;
+  text-transform: uppercase; letter-spacing: 0.05em;
+}
+.data-table tbody td {
+  padding: 12px; border-bottom: 1px solid #f1f5f9; vertical-align: middle;
+}
+.data-table tbody tr:hover { background: #f8fafc; }
+.data-table td.actions { white-space: nowrap; display: flex; gap: 4px; }
+.data-table td.empty { text-align: center; color: #94a3b8; padding: 32px 12px; }
+
+/* Badges */
+.badge {
+  display: inline-block; padding: 2px 8px; border-radius: 999px;
+  font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.03em;
+}
+.badge-green  { background: #d1fae5; color: #065f46; }
+.badge-gray   { background: #e2e8f0; color: #475569; }
+.badge-blue   { background: #dbeafe; color: #1e40af; }
+.badge-orange { background: #ffedd5; color: #9a3412; margin-left: 6px; }
+
+.stock-ok  { color: #059669; font-weight: 600; }
+.stock-low { color: #dc2626; font-weight: 600; }
