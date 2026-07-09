@@ -130,11 +130,24 @@ pharmasys-php/
 - **Página de Perfil (`/profile`)** — self-service para qualquer utilizador autenticado: editar nome/email e alterar palavra-passe (verifica actual + confirma nova).
 - Protecção do último admin: `UserModel::isLastActiveAdmin()` impede despromoção/desactivação.
 
-### 3. PDV (Ponto de Venda)
-Fluxo em três passos: **Carrinho → Pagamento → Pré-visualização**.
-- Pesquisa AJAX por nome, `barcode` principal ou `sub_barcode` por unidade.
-- Carrinho reactivo: cada linha mostra preço unitário, subtotal, total actualizado ao vivo.
-- Pagamento: numerário (troco automático, atalhos 100/200/500/1000) ou electrónico (M-Pesa/e-Mola/cartão/transferência) com campo de referência.
+### 3. PDV (Ponto de Venda) — Fluxo em 2 etapas de catálogo
+Painel de vendas com **navegação hierárquica**: primeiro mostra apenas **categorias**, depois de clicar numa categoria abre a grelha de **produtos dessa categoria**.
+
+**Modo 1 — Grelha de categorias** (`GET ?r=sales/categories`)
+- Cards grandes com ícone, nome, nº de produtos e stock total agregado.
+- Filtro "Só com stock" esconde categorias vazias.
+- Bucket automático "Sem categoria" quando existem produtos órfãos.
+- Categorias sem produtos aparecem desactivadas (não clicáveis).
+
+**Modo 2 — Produtos da categoria** (`GET ?r=sales/browse&category=<id>`)
+- Cabeçalho com botão **← Categorias** para voltar, nome da categoria e contador.
+- Cards de produto com preço, stock, badges (Sem stock / Expirado / Perto de expirar / Rx).
+- Ordenados por top-vendas dos últimos 30 dias.
+- Clicar num card adiciona ao carrinho (verifica stock, prescrição, validade).
+
+**Passos de checkout**: Carrinho → Pagamento → Pré-visualização.
+- Pesquisa AJAX por nome, `barcode` ou `sub_barcode` (por unidade), disponível em qualquer modo.
+- Pagamento: numerário (troco automático, atalhos 50/100/200/500/1000) ou electrónico (M-Pesa, e-Mola, cartão, transferência) com campo de referência.
 - `SaleModel::createFull()` é atómico: valida stock, consome lotes por **FEFO**, cria `sale_items` por lote (facilita estorno), regista `stock_movements`, credita a conta financeira, escreve `audit_logs`, tudo em transacção.
 - Atalhos: **F2** finalizar · **F3** pesquisar · **Esc** voltar.
 
