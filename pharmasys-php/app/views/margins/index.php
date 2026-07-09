@@ -28,6 +28,7 @@
   <label>OK ≥ <input type="number" name="ok"   value="<?= (int)$ok   ?>" min="0" style="width:70px"> %</label>
   <button class="btn btn-primary">Filtrar</button>
   <a href="<?= url('margins') ?>" class="btn btn-ghost">Limpar</a>
+  <a href="<?= url('margins/export') ?>&<?= http_build_query(['q'=>$q,'bucket'=>$bucket,'good'=>$good,'ok'=>$ok]) ?>" class="btn btn-ghost">⬇ CSV</a>
 </form>
 
 <div class="card">
