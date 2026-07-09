@@ -20,40 +20,55 @@ $router->add('error/notfound',  'AuthController@notFound');
 // ---------- Autenticado ----------
 $router->add('dashboard',       'DashboardController@index',      'GET', true);
 
-// Categorias
+// Cadastros
 $router->add('categories',                'CategoryController@index',   'GET',  true);
 $router->add('categories/save',           'CategoryController@save',    'POST', true);
 $router->add('categories/delete',         'CategoryController@delete',  'POST', true);
 
-// Fornecedores
 $router->add('suppliers',                 'SupplierController@index',   'GET',  true);
 $router->add('suppliers/new',             'SupplierController@form',    'GET',  true);
 $router->add('suppliers/edit',            'SupplierController@form',    'GET',  true);
 $router->add('suppliers/save',            'SupplierController@save',    'POST', true);
 $router->add('suppliers/delete',          'SupplierController@delete',  'POST', true);
 
-// Clientes
 $router->add('customers',                 'CustomerController@index',   'GET',  true);
 $router->add('customers/new',             'CustomerController@form',    'GET',  true);
 $router->add('customers/edit',            'CustomerController@form',    'GET',  true);
 $router->add('customers/save',            'CustomerController@save',    'POST', true);
 $router->add('customers/delete',          'CustomerController@delete',  'POST', true);
 
-// Produtos
 $router->add('products',                  'ProductController@index',    'GET',  true);
 $router->add('products/new',              'ProductController@form',     'GET',  true);
 $router->add('products/edit',             'ProductController@form',     'GET',  true);
 $router->add('products/save',             'ProductController@save',     'POST', true);
 $router->add('products/delete',           'ProductController@delete',   'POST', true);
 
-// Utilizadores (admin only — enforcement no controller)
+// Stock — lotes e movimentos
+$router->add('stock',                     'StockController@index',      'GET',  true);
+$router->add('stock/view',                'StockController@view',       'GET',  true);
+$router->add('batches',                   'BatchController@index',      'GET',  true);
+$router->add('batches/new',               'BatchController@form',       'GET',  true);
+$router->add('batches/edit',              'BatchController@form',       'GET',  true);
+$router->add('batches/save',              'BatchController@save',       'POST', true);
+$router->add('batches/adjust',            'BatchController@adjust',     'POST', true);
+$router->add('batches/delete',            'BatchController@delete',     'POST', true);
+
+// Alertas
+$router->add('alerts',                    'AlertController@index',      'GET',  true);
+$router->add('alerts/refresh',            'AlertController@refresh',    'POST', true);
+$router->add('alerts/resolve',            'AlertController@resolve',    'POST', true);
+
+// Etiquetas
+$router->add('labels',                    'LabelController@index',      'GET',  true);
+$router->add('labels/print',              'LabelController@print',      'POST', true);
+
+// Administração
 $router->add('users',                     'UserController@index',       'GET',  true);
 $router->add('users/new',                 'UserController@form',        'GET',  true);
 $router->add('users/edit',                'UserController@form',        'GET',  true);
 $router->add('users/save',                'UserController@save',        'POST', true);
 $router->add('users/delete',              'UserController@delete',      'POST', true);
 
-// Configurações
 $router->add('settings',                  'SettingController@index',    'GET',  true);
 $router->add('settings/save',             'SettingController@save',     'POST', true);
 

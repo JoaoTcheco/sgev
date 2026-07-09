@@ -1,0 +1,12 @@
+/* PharmaSys — Stock */
+.adjust-form { display: flex; gap: 4px; align-items: center; }
+.adjust-form input {
+  padding: 4px 6px; font-size: 12px; border: 1px solid #cbd5e1; border-radius: 4px;
+}
+
+.badge-red { background: #fee2e2; color: #991b1b; }
+
+.nav-count {
+  display: inline-block; margin-left: 8px; padding: 1px 7px; border-radius: 999px;
+  background: #dc2626; color: #fff; font-size: 10px; font-weight: 700;
+}
