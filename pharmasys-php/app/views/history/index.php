@@ -91,6 +91,26 @@ foreach ($ranges as $k=>$rg) {
         </tr>
       <?php endforeach; endif; ?>
       </tbody>
+      <?php if ($items && !empty($totals['by_method'])): ?>
+      <tfoot>
+        <tr class="hist-foot">
+          <td colspan="5" style="text-align:right;"><strong>Totais por método de pagamento:</strong></td>
+          <td colspan="4">
+            <div style="display:flex;flex-wrap:wrap;gap:8px;">
+              <?php foreach ($totals['by_method'] as $m): ?>
+                <span class="badge badge-gray" title="<?= (int)$m['count'] ?> venda(s)">
+                  <?= e($m['label']) ?>: <strong><?= e(formatMZN($m['total'])) ?></strong>
+                  <small>(<?= (int)$m['count'] ?>)</small>
+                </span>
+              <?php endforeach; ?>
+              <span class="badge badge-green" style="margin-left:auto;">
+                Líquido total: <strong><?= e(formatMZN($totals['net'])) ?></strong>
+              </span>
+            </div>
+          </td>
+        </tr>
+      </tfoot>
+      <?php endif; ?>
     </table>
   </div>
 </section>
