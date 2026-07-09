@@ -19,6 +19,26 @@
 <link rel="stylesheet" href="<?= asset('css/print.css') ?>">
 </head>
 <body class="app-body<?= !empty($_GET['print']) ? ' print-mode' : '' ?>">
+<?php if (!empty($_GET['print'])): ?>
+  <div class="print-toolbar no-print">
+    <button onclick="window.print()">🖨️ Imprimir / Guardar como PDF</button>
+    <a href="<?= url($_GET['r'] ?? 'dashboard') . '&' . http_build_query(array_diff_key($_GET, ['r'=>1,'print'=>1])) ?>">← Voltar</a>
+  </div>
+  <main class="app-content" style="max-width:1100px;margin:0 auto;padding:24px;">
+    <div class="print-header">
+      <div>
+        <h1><?= e(config('site_title', 'PharmaSys')) ?></h1>
+        <small><?= e(config('pharmacy_name', '')) ?></small>
+      </div>
+      <div style="text-align:right;">
+        <small>Impresso em <?= date('d/m/Y H:i') ?></small><br>
+        <small>Por: <?= e(currentUser()['full_name'] ?? '') ?></small>
+      </div>
+    </div>
+    <?php require APP_PATH . '/views/partials/flash.php'; ?>
+    <?= $content ?>
+  </main>
+<?php else: ?>
 <div class="app-shell">
   <?php require APP_PATH . '/views/partials/sidebar.php'; ?>
   <div class="app-main">
@@ -29,6 +49,7 @@
     </main>
   </div>
 </div>
+<?php endif; ?>
 <script src="<?= asset('js/app.js') ?>"></script>
 </body>
 </html>
