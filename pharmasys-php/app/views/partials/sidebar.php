@@ -31,6 +31,9 @@
     <a href="<?= url('customers') ?>"  class="nav-item <?= str_starts_with($r,'customers')  ? 'active' : '' ?>">Clientes</a>
 
     <?php if (hasRole('admin','pharmacist')): ?>
+      <div class="nav-section">Compras</div>
+      <a href="<?= url('purchases') ?>" class="nav-item <?= str_starts_with($r,'purchases') ? 'active' : '' ?>">Ordens de Compra</a>
+
       <div class="nav-section">Análise</div>
       <a href="<?= url('reports') ?>"  class="nav-item <?= str_starts_with($r,'reports')  ? 'active' : '' ?>">Relatórios</a>
       <a href="<?= url('accounts') ?>" class="nav-item <?= str_starts_with($r,'accounts') ? 'active' : '' ?>">Contas Financeiras</a>
