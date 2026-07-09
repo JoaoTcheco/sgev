@@ -99,18 +99,14 @@ pharmasys-php/
 │   ├── css/                         # app, pdv, receipt, labels, purchases, etc.
 │   └── js/                          # app, pdv, purchases, notifications, ...
 │
-├── 📂 migrations/                   # Migrações incrementais
-│   ├── 002_purchase_orders.sql
-│   ├── 003_notifications.sql
-│   ├── 004_payables_receivables.sql
-│   ├── 005_pdv_receipt_labels.sql
-│   └── 006_supplier_returns.sql
-│
-├── 📄 database.sql                  # Schema completo inicial
+├── 📄 database.sql                  # Base de dados ÚNICA e completa (todas as tabelas + seed)
 ├── 📄 index.php                     # Front controller + rotas
 ├── 📄 .htaccess                     # Reescrita e protecção de pastas
 └── 📄 README.md                     # Este ficheiro
 ```
+
+> 💡 **Base de dados unificada**: todo o schema vive num único ficheiro `database.sql`. Já não existe pasta `migrations/` — basta importar `database.sql` numa BD vazia para ter o sistema pronto.
+
 
 ---
 
