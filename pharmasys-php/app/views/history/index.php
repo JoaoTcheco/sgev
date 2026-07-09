@@ -1,9 +1,23 @@
+<?php
+$today = date('Y-m-d');
+$ranges = [
+    'today' => ['label'=>'Hoje',    'from'=>$today, 'to'=>$today],
+    '7d'    => ['label'=>'7 dias',  'from'=>date('Y-m-d', strtotime('-6 days')),  'to'=>$today],
+    '30d'   => ['label'=>'30 dias', 'from'=>date('Y-m-d', strtotime('-29 days')), 'to'=>$today],
+    'month' => ['label'=>'Mês',     'from'=>date('Y-m-01'), 'to'=>$today],
+];
+$activeRange = '';
+foreach ($ranges as $k=>$rg) {
+    if ($filters['from']===$rg['from'] && $filters['to']===$rg['to']) { $activeRange = $k; break; }
+}
+?>
 <section class="crud">
   <div class="crud-header">
     <h1 class="page-title">Histórico de vendas</h1>
     <div class="hist-totals">
       <div><small>Vendas</small><strong><?= (int)$totals['count'] ?></strong></div>
       <div><small>Total bruto</small><strong><?= e(formatMZN($totals['gross'])) ?></strong></div>
+      <div><small>Líquido (s/ estorno)</small><strong class="green"><?= e(formatMZN($totals['net'])) ?></strong></div>
       <div><small>Com estorno</small><strong class="orange"><?= (int)$totals['refunded_count'] ?></strong></div>
     </div>
   </div>
