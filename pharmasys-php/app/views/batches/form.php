@@ -49,10 +49,18 @@
     <label>Notas</label>
     <textarea name="notes" rows="2"><?= e($editing['notes'] ?? '') ?></textarea>
 
+    <?php if (!$editing): ?>
+      <label class="checkbox" style="margin-top:8px;">
+        <input type="checkbox" name="print_labels" value="1" checked>
+        Imprimir etiquetas para este lote logo após guardar
+      </label>
+    <?php endif; ?>
+
     <div class="form-actions">
       <a class="btn btn-ghost" href="<?= url('batches') ?>">Cancelar</a>
       <button class="btn btn-primary" type="submit"><?= $editing ? 'Actualizar' : 'Registar entrada' ?></button>
     </div>
+
   </form>
 </section>
 <link rel="stylesheet" href="<?= asset('css/crud.css') ?>">
