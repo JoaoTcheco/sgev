@@ -5,7 +5,11 @@
       <h1 class="page-title">Extracto — <?= e($account['name']) ?></h1>
       <p class="page-subtitle">Saldo actual: <strong><?= formatMZN($account['balance']) ?></strong></p>
     </div>
-    <a href="<?= url('accounts') ?>" class="btn">← Contas</a>
+    <div style="display:flex;gap:8px;">
+      <a href="<?= url('accounts/movements/export') ?>&id=<?= e($account['id']) ?><?= !empty($filters['type'])?'&type='.e($filters['type']):'' ?><?= !empty($filters['date_from'])?'&date_from='.e($filters['date_from']):'' ?><?= !empty($filters['date_to'])?'&date_to='.e($filters['date_to']):'' ?>" class="btn">⬇ Exportar CSV</a>
+      <a href="<?= url('accounts') ?>" class="btn">← Contas</a>
+    </div>
+
   </div>
 
   <div class="acc-summary">
