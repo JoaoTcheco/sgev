@@ -132,39 +132,40 @@ SVG;
       $svgAct   = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>';
       $svgAlert = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/></svg>';
     ?>
-    <div class="ds-kpi tone-primary">
+    <div class="ds-kpi tone-primary" data-live-kpi="today">
       <div class="ds-kpi-body">
         <p class="ds-kpi-title">Faturado hoje</p>
-        <p class="ds-kpi-value"><?= e(formatMZN($s['today'])) ?></p>
-        <p class="ds-kpi-sub"><?= (int)$s['today_count'] ?> vendas · ticket <?= e(formatMZN($s['ticket_today'])) ?></p>
+        <p class="ds-kpi-value" data-k="today"><?= e(formatMZN($s['today'])) ?></p>
+        <p class="ds-kpi-sub"><span data-k="today_count"><?= (int)$s['today_count'] ?></span> vendas · ticket <span data-k="ticket_today"><?= e(formatMZN($s['ticket_today'])) ?></span></p>
       </div>
       <div class="ds-kpi-icon"><?= $svgCart ?></div>
     </div>
     <div class="ds-kpi tone-success">
       <div class="ds-kpi-body">
         <p class="ds-kpi-title">Últimos 7 dias</p>
-        <p class="ds-kpi-value"><?= e(formatMZN($s['total7'])) ?></p>
-        <p class="ds-kpi-sub">Média/dia <?= e(formatMZN($s['avg7'])) ?></p>
+        <p class="ds-kpi-value" data-k="total7"><?= e(formatMZN($s['total7'])) ?></p>
+        <p class="ds-kpi-sub">Média/dia <span data-k="avg7"><?= e(formatMZN($s['avg7'])) ?></span></p>
       </div>
       <div class="ds-kpi-icon"><?= $svgTrend ?></div>
     </div>
     <div class="ds-kpi tone-muted">
       <div class="ds-kpi-body">
         <p class="ds-kpi-title">Últimos 30 dias</p>
-        <p class="ds-kpi-value"><?= e(formatMZN($s['total30'])) ?></p>
-        <p class="ds-kpi-sub"><?= (int)$s['count30'] ?> vendas concluídas</p>
+        <p class="ds-kpi-value" data-k="total30"><?= e(formatMZN($s['total30'])) ?></p>
+        <p class="ds-kpi-sub"><span data-k="count30"><?= (int)$s['count30'] ?></span> vendas concluídas</p>
       </div>
       <div class="ds-kpi-icon"><?= $svgAct ?></div>
     </div>
     <div class="ds-kpi tone-warning">
       <div class="ds-kpi-body">
         <p class="ds-kpi-title">Alertas activos</p>
-        <p class="ds-kpi-value"><?= (int)$s['alerts_active'] ?></p>
-        <p class="ds-kpi-sub"><?= (int)$s['alerts_crit'] ?> críticos · <?= (int)$s['alerts_low'] ?> de stock</p>
+        <p class="ds-kpi-value" data-k="alerts_active"><?= (int)$s['alerts_active'] ?></p>
+        <p class="ds-kpi-sub"><span data-k="alerts_crit"><?= (int)$s['alerts_crit'] ?></span> críticos · <span data-k="alerts_low"><?= (int)$s['alerts_low'] ?></span> de stock</p>
       </div>
       <div class="ds-kpi-icon"><?= $svgAlert ?></div>
     </div>
   </div>
+
 
   <!-- ===== Mini-KPIs ===== -->
   <div class="ds-mini-grid">
@@ -281,3 +282,21 @@ SVG;
 
 </section>
 <link rel="stylesheet" href="<?= asset('css/dashboard-page.css') ?>">
+<script>
+(function(){
+  const url = <?= json_encode(url('dashboard/kpis')) ?>;
+  async function tick(){
+    try {
+      const r = await fetch(url, { headers: { 'X-Requested-With':'XMLHttpRequest' }, credentials:'same-origin' });
+      if (!r.ok) return;
+      const d = await r.json();
+      document.querySelectorAll('[data-k]').forEach(el => {
+        const k = el.dataset.k;
+        if (d[k] !== undefined && d[k] !== null) el.textContent = d[k];
+      });
+    } catch(e){}
+  }
+  setInterval(tick, 30000);
+})();
+</script>
+
