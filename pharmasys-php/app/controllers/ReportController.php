@@ -38,7 +38,7 @@ class ReportController extends Controller {
             $data['top']        = ReportModel::topProducts($from, $to, 10);
         }
 
-        $this->view('reports/index', $data);
+        $this->render('reports/index', $data);
     }
 
     /** Exportação CSV — ?type=sales|top|margins|payments|users */

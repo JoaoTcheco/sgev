@@ -5,12 +5,12 @@ class ProductController extends Controller {
         $items = ProductModel::all();
         // Anexar stock actual
         foreach ($items as &$p) $p['stock'] = ProductModel::currentStock($p['id']);
-        $this->view('products/index', ['items' => $items]);
+        $this->render('products/index', ['items' => $items]);
     }
     public function form(): void {
         requireAuth();
         $editing = !empty($_GET['id']) ? ProductModel::find($_GET['id']) : null;
-        $this->view('products/form', [
+        $this->render('products/form', [
             'editing'    => $editing,
             'categories' => CategoryModel::all(),
         ]);

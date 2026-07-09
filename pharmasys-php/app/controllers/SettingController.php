@@ -2,7 +2,7 @@
 class SettingController extends Controller {
     public function index(): void {
         requireRole('admin');
-        $this->view('settings/index', ['s' => SettingModel::get()]);
+        $this->render('settings/index', ['s' => SettingModel::get()]);
     }
     public function save(): void {
         requireRole('admin'); csrfVerify();

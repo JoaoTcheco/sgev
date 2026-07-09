@@ -6,7 +6,7 @@ class BatchController extends Controller {
         $filters = [];
         if (!empty($_GET['expiring'])) $filters['expiring_days'] = (int)$_GET['expiring'];
         if (!empty($_GET['product_id'])) $filters['product_id'] = $_GET['product_id'];
-        $this->view('batches/index', [
+        $this->render('batches/index', [
             'items'      => BatchModel::all($filters),
             'products'   => ProductModel::all(),
             'filter'     => $_GET,
@@ -17,7 +17,7 @@ class BatchController extends Controller {
     public function form(): void {
         requireAuth();
         $editing = !empty($_GET['id']) ? BatchModel::find($_GET['id']) : null;
-        $this->view('batches/form', [
+        $this->render('batches/form', [
             'editing'   => $editing,
             'products'  => ProductModel::all(),
             'suppliers' => SupplierModel::all(),

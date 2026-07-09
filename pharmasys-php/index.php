@@ -180,7 +180,7 @@ try {
         error_log('[PharmaSys] ' . $e->getMessage() . ' @ ' . $e->getFile() . ':' . $e->getLine());
     }
     http_response_code(500);
-    $isDebug = defined('APP_DEBUG') && APP_DEBUG === true;
+    $isDebug = defined('APP_DEBUG') && true;
     header('Content-Type: text/html; charset=utf-8');
     echo '<!doctype html><meta charset="utf-8"><title>Erro — PharmaSys</title>';
     echo '<div style="font-family:Inter,system-ui,sans-serif;max-width:640px;margin:80px auto;padding:32px;border:1px solid #e5e7eb;border-radius:14px;box-shadow:0 4px 12px rgba(15,118,110,.08)">';

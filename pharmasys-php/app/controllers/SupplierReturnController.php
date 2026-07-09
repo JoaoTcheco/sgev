@@ -12,7 +12,7 @@ class SupplierReturnController extends Controller {
         ];
         $page = max(1, (int)($_GET['page'] ?? 1));
         $data = SupplierReturnModel::paginate($f, $page);
-        $this->view('supplier_returns/index', [
+        $this->render('supplier_returns/index', [
             'data'      => $data,
             'filters'   => $f,
             'stats'     => SupplierReturnModel::stats(),
@@ -31,7 +31,7 @@ class SupplierReturnController extends Controller {
             if ($sr['status'] !== 'draft') { flash('error','Só rascunhos podem ser editados.'); redirect('supplier-returns/view&id='.$id); }
             $items = SupplierReturnModel::items($id);
         }
-        $this->view('supplier_returns/form', [
+        $this->render('supplier_returns/form', [
             'sr'        => $sr,
             'items'     => $items,
             'suppliers' => SupplierModel::all(),
@@ -72,7 +72,7 @@ class SupplierReturnController extends Controller {
         $id = $_GET['id'] ?? '';
         $sr = SupplierReturnModel::find($id);
         if (!$sr) { flash('error','Não encontrada.'); redirect('supplier-returns'); }
-        $this->view('supplier_returns/view', [
+        $this->render('supplier_returns/view', [
             'sr'      => $sr,
             'items'   => SupplierReturnModel::items($id),
             'reasons' => SupplierReturnModel::REASONS,

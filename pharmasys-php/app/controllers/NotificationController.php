@@ -15,7 +15,7 @@ class NotificationController extends Controller {
         ];
         $page = max(1, (int)($_GET['page'] ?? 1));
         $data = NotificationModel::paginate($u, $filters, $page, 30);
-        $this->view('notifications/index', [
+        $this->render('notifications/index', [
             'title'   => 'Notificações',
             'data'    => $data,
             'filters' => $filters,

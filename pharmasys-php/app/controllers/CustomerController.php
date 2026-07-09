@@ -2,12 +2,12 @@
 class CustomerController extends Controller {
     public function index(): void {
         requireAuth();
-        $this->view('customers/index', ['items' => CustomerModel::all()]);
+        $this->render('customers/index', ['items' => CustomerModel::all()]);
     }
     public function form(): void {
         requireAuth();
         $editing = !empty($_GET['id']) ? CustomerModel::find($_GET['id']) : null;
-        $this->view('customers/form', ['editing' => $editing]);
+        $this->render('customers/form', ['editing' => $editing]);
     }
     public function save(): void {
         requireAuth(); csrfVerify();

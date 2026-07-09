@@ -2,12 +2,12 @@
 class SupplierController extends Controller {
     public function index(): void {
         requireAuth();
-        $this->view('suppliers/index', ['items' => SupplierModel::all()]);
+        $this->render('suppliers/index', ['items' => SupplierModel::all()]);
     }
     public function form(): void {
         requireAuth();
         $editing = !empty($_GET['id']) ? SupplierModel::find($_GET['id']) : null;
-        $this->view('suppliers/form', ['editing' => $editing]);
+        $this->render('suppliers/form', ['editing' => $editing]);
     }
     public function save(): void {
         requireAuth(); csrfVerify();

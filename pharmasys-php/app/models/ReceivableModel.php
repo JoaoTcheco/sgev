@@ -6,7 +6,7 @@ class ReceivableModel {
 
     public static function find(string $id): ?array {
         return Database::one(
-            'SELECT r.*, c.full_name AS customer_name, s.receipt_number
+            'SELECT r.*, c.name AS customer_name, s.receipt_number
              FROM receivables r
              LEFT JOIN customers c ON c.id = r.customer_id
              LEFT JOIN sales s ON s.id = r.sale_id
@@ -19,7 +19,7 @@ class ReceivableModel {
         if (!empty($f['status']))      { $w[] = 'r.status = ?';       $p[] = $f['status']; }
         if (!empty($f['customer_id'])) { $w[] = 'r.customer_id = ?';  $p[] = $f['customer_id']; }
         if (!empty($f['q'])) {
-            $w[] = '(r.description LIKE ? OR c.full_name LIKE ?)';
+            $w[] = '(r.description LIKE ? OR c.name LIKE ?)';
             $p[] = '%'.$f['q'].'%'; $p[] = '%'.$f['q'].'%';
         }
         if (!empty($f['due_from'])) { $w[] = 'r.due_date >= ?'; $p[] = $f['due_from']; }
@@ -36,7 +36,7 @@ class ReceivableModel {
         $page = max(1, $page);
         $off = ($page-1)*$per;
         $rows = Database::all(
-            "SELECT r.*, c.full_name AS customer_name, s.receipt_number,
+            "SELECT r.*, c.name AS customer_name, s.receipt_number,
                     (r.amount - r.paid_amount) AS balance,
                     DATEDIFF(r.due_date, CURDATE()) AS days_to_due
              FROM receivables r

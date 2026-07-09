@@ -2,12 +2,12 @@
 class UserController extends Controller {
     public function index(): void {
         requireRole('admin');
-        $this->view('users/index', ['items' => UserModel::all()]);
+        $this->render('users/index', ['items' => UserModel::all()]);
     }
     public function form(): void {
         requireRole('admin');
         $editing = !empty($_GET['id']) ? UserModel::findById($_GET['id']) : null;
-        $this->view('users/form', ['editing' => $editing]);
+        $this->render('users/form', ['editing' => $editing]);
     }
     public function save(): void {
         requireRole('admin'); csrfVerify();

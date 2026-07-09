@@ -3,7 +3,7 @@ class AccountController extends Controller {
     public function index(): void {
         requireRole('admin','pharmacist');
         FinancialAccountModel::ensureSystemAccounts();
-        $this->view('accounts/index', [
+        $this->render('accounts/index', [
             'accounts' => FinancialAccountModel::all(false),
             'totals'   => FinancialAccountModel::totals(),
         ]);
@@ -16,7 +16,7 @@ class AccountController extends Controller {
             $item = FinancialAccountModel::find($_GET['id']);
             if (!$item) { flash('error', 'Conta não encontrada.'); redirect('accounts'); }
         }
-        $this->view('accounts/form', ['item' => $item]);
+        $this->render('accounts/form', ['item' => $item]);
     }
 
     public function save(): void {
@@ -71,7 +71,7 @@ class AccountController extends Controller {
 
     public function transferForm(): void {
         requireRole('admin');
-        $this->view('accounts/transfer', [
+        $this->render('accounts/transfer', [
             'accounts' => FinancialAccountModel::all(true),
         ]);
     }
@@ -102,7 +102,7 @@ class AccountController extends Controller {
             'date_from' => $_GET['date_from'] ?? '',
             'date_to'   => $_GET['date_to']   ?? '',
         ];
-        $this->view('accounts/movements', [
+        $this->render('accounts/movements', [
             'account'   => $acc,
             'filters'   => $filters,
             'movements' => FinancialAccountModel::movements($acc['id'], $filters, 300),

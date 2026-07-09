@@ -4,7 +4,7 @@ class CategoryController extends Controller {
         requireAuth();
         $editing = null;
         if (!empty($_GET['edit'])) $editing = CategoryModel::find($_GET['edit']);
-        $this->view('categories/index', [
+        $this->render('categories/index', [
             'items'   => CategoryModel::all(),
             'editing' => $editing,
         ]);

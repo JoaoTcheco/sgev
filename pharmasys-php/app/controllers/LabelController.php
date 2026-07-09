@@ -3,7 +3,7 @@ class LabelController extends Controller {
     /** Ecrã de selecção: escolher produtos e quantidade de etiquetas. */
     public function index(): void {
         requireAuth();
-        $this->view('labels/index', ['products' => ProductModel::all()]);
+        $this->render('labels/index', ['products' => ProductModel::all()]);
     }
 
     /** Impressão rápida de N etiquetas de um único produto (link direto na lista). */
@@ -12,7 +12,7 @@ class LabelController extends Controller {
         $p = ProductModel::find($_GET['id'] ?? '');
         if (!$p) { flash('error', 'Produto não encontrado.'); redirect('products'); }
         $qty = max(1, min(200, (int)($_GET['qty'] ?? 1)));
-        $this->view('labels/print', ['selection' => [['product' => $p, 'qty' => $qty]]], 'print');
+        $this->render('labels/print', ['selection' => [['product' => $p, 'qty' => $qty]]], 'print');
     }
 
     /** Página de impressão — grelha com etiquetas geradas via JsBarcode. */
@@ -30,6 +30,6 @@ class LabelController extends Controller {
             flash('error', 'Selecciona pelo menos um produto e quantidade.');
             redirect('labels');
         }
-        $this->view('labels/print', ['selection' => $selection], 'print');
+        $this->render('labels/print', ['selection' => $selection], 'print');
     }
 }
