@@ -150,4 +150,42 @@ class DashboardController extends Controller {
             'recentSales'   => $recentSales,
         ]);
     }
+
+    /** Endpoint JSON — KPIs em tempo real para o dashboard. */
+    public function kpis(): void {
+        requireAuth();
+        $today = date('Y-m-d');
+        $d7    = date('Y-m-d', strtotime('-6 days'));
+        $d30   = date('Y-m-d', strtotime('-29 days'));
+
+        $rt = Database::one("SELECT COUNT(*) c, COALESCE(SUM(total),0) t FROM sales WHERE status <> 'refunded' AND DATE(created_at) = ?", [$today]) ?: ['c'=>0,'t'=>0];
+        $r7 = Database::one("SELECT COALESCE(SUM(total),0) t FROM sales WHERE status <> 'refunded' AND DATE(created_at) >= ?", [$d7]) ?: ['t'=>0];
+        $r30= Database::one("SELECT COUNT(*) c, COALESCE(SUM(total),0) t FROM sales WHERE status <> 'refunded' AND DATE(created_at) >= ?", [$d30]) ?: ['c'=>0,'t'=>0];
+        $ra = Database::one("SELECT COUNT(*) total,
+                    SUM(CASE WHEN severity='critical' THEN 1 ELSE 0 END) critical,
+                    SUM(CASE WHEN type='low_stock' THEN 1 ELSE 0 END) low_stock
+                FROM alerts WHERE resolved = 0") ?: ['total'=>0,'critical'=>0,'low_stock'=>0];
+
+        $count = (int)$rt['c'];
+        $total = (float)$rt['t'];
+        $ticket = $count > 0 ? $total / $count : 0.0;
+        $t7 = (float)$r7['t'];
+
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode([
+            'today'        => formatMZN($total),
+            'today_count'  => $count,
+            'ticket_today' => formatMZN($ticket),
+            'total7'       => formatMZN($t7),
+            'avg7'         => formatMZN($t7 / 7),
+            'total30'      => formatMZN((float)$r30['t']),
+            'count30'      => (int)$r30['c'],
+            'alerts_active'=> (int)$ra['total'],
+            'alerts_crit'  => (int)$ra['critical'],
+            'alerts_low'   => (int)$ra['low_stock'],
+            'ts'           => date('c'),
+        ], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
 }
+
