@@ -16,6 +16,7 @@
         <button class="btn btn-primary">↻ Recalcular</button>
       </form>
       <a class="btn btn-ghost" href="<?= url('alerts/export') ?>&<?= http_build_query($filters) ?>">⬇ CSV</a>
+      <a class="btn btn-ghost" href="<?= url('alerts') ?>&print=1&<?= http_build_query($filters) ?>" target="_blank">🖨️ PDF</a>
       <?php if ($items && ($filters['status'] ?? 'open') === 'open'): ?>
         <form method="POST" action="<?= url('alerts/resolve-all') ?>" style="display:inline;"
               onsubmit="return confirm('Resolver todos os alertas filtrados?');">
