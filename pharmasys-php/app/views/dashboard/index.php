@@ -46,18 +46,22 @@ function ds_area_chart(array $series, int $w = 720, int $h = 220, int $pad = 28)
         $gy = $pad + ($innerH * $g / 4);
         $grid .= "<line x1=\"$pad\" y1=\"$gy\" x2=\"".($pad+$innerW)."\" y2=\"$gy\" stroke=\"#e8efec\" stroke-dasharray=\"3 3\"/>";
     }
-    /* Labels do eixo X */
+    /* Labels do eixo X — só mostra ~7 marcas quando são muitos pontos */
     $xl = '';
+    $labelEvery = max(1, (int)ceil($n / 7));
     foreach ($series as $i => $r) {
+        if ($i % $labelEvery !== 0 && $i !== $n-1) continue;
         $x = $pad + $i * $step;
         $xl .= "<text x=\"$x\" y=\"".($pad+$innerH+18)."\" text-anchor=\"middle\" font-size=\"11\" fill=\"#5a726c\">".htmlspecialchars($r['label'])."</text>";
     }
-    /* Marcadores + pontos */
+    /* Marcadores + pontos — quando > 14 pontos, esconde os círculos e mantém só a linha */
     $dots = '';
-    foreach ($pts as $i => $p) {
-        $val = number_format($series[$i]['total'], 2, ',', '.').' MT';
-        $dots .= "<g><circle cx=\"{$p[0]}\" cy=\"{$p[1]}\" r=\"4\" fill=\"#0f766e\" stroke=\"#fff\" stroke-width=\"2\">
-                  <title>{$series[$i]['ymd']} — $val</title></circle></g>";
+    if ($n <= 14) {
+        foreach ($pts as $i => $p) {
+            $val = number_format($series[$i]['total'], 2, ',', '.').' MT';
+            $dots .= "<g><circle cx=\"{$p[0]}\" cy=\"{$p[1]}\" r=\"4\" fill=\"#0f766e\" stroke=\"#fff\" stroke-width=\"2\">
+                      <title>{$series[$i]['ymd']} — $val</title></circle></g>";
+        }
     }
 
     return <<<SVG
@@ -184,10 +188,15 @@ SVG;
   <!-- ===== Gráficos ===== -->
   <div class="ds-charts">
     <div class="ds-card ds-card-lg">
-      <div class="ds-card-head">
+      <?php $range = ($seriesRange ?? 7) == 30 ? 30 : 7; ?>
+      <div class="ds-card-head" style="display:flex;justify-content:space-between;align-items:center;">
         <div>
-          <h2>Vendas — últimos 7 dias</h2>
+          <h2>Vendas — últimos <?= $range ?> dias</h2>
           <p>Faturação diária em MZN</p>
+        </div>
+        <div class="ds-range-toggle" style="display:inline-flex;gap:4px;background:#f1f5f4;border-radius:8px;padding:3px;">
+          <a href="<?= url('dashboard') ?>&range=7"  style="padding:6px 12px;border-radius:6px;text-decoration:none;font-size:12px;font-weight:600;<?= $range===7  ? 'background:#0f766e;color:#fff;' : 'color:#5a726c;' ?>">7d</a>
+          <a href="<?= url('dashboard') ?>&range=30" style="padding:6px 12px;border-radius:6px;text-decoration:none;font-size:12px;font-weight:600;<?= $range===30 ? 'background:#0f766e;color:#fff;' : 'color:#5a726c;' ?>">30d</a>
         </div>
       </div>
       <div class="ds-card-body ds-chart-wrap">
