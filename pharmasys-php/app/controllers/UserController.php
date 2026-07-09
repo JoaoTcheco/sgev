@@ -63,6 +63,7 @@ class UserController extends Controller {
         UserModel::delete($id);
         flash('success', 'Utilizador desactivado.');
         redirect('users');
+    }
     public function activate(): void {
         requireRole('admin'); csrfVerify();
         $id = $_POST['id'] ?? '';
@@ -70,5 +71,4 @@ class UserController extends Controller {
         flash('success', 'Utilizador reactivado.');
         redirect('users');
     }
-}
 }
