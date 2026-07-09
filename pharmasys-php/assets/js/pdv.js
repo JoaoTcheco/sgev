@@ -1,49 +1,77 @@
-/* PharmaSys PDV */
+/* PharmaSys PDV — checkout multi-etapa (Carrinho → Pagamento → Recibo) */
 (() => {
-  const search   = document.getElementById('pdv-search');
-  const results  = document.getElementById('pdv-results');
-  const cartBody = document.getElementById('cart-body');
-  const subEl    = document.getElementById('sub-total');
-  const totalEl  = document.getElementById('grand-total');
-  const discount = document.getElementById('discount');
-  const btnCheck = document.getElementById('btn-checkout');
-  const form     = document.getElementById('checkout-form');
-  const itemsInp = document.getElementById('items-payload');
-  const discInp  = document.getElementById('discount-payload');
-  const cartClear= document.getElementById('cart-clear');
+  const $ = id => document.getElementById(id);
+  const search   = $('pdv-search');
+  const results  = $('pdv-results');
+  const cartBody = $('cart-body');
+  const cartCount= $('cart-count');
+  const subEl    = $('sub-total');
+  const totalEl  = $('grand-total');
+  const discount = $('discount');
+  const cartClear= $('cart-clear');
 
-  const cart = new Map(); // key = productId|kind
+  const btnGotoPay    = $('btn-goto-pay');
+  const btnBackCart   = $('btn-back-cart');
+  const btnGotoReview = $('btn-goto-review');
+  const btnBackPay    = $('btn-back-pay');
+  const btnFinalize   = $('btn-finalize');
+  const form          = $('checkout-form');
+
+  const payTotalEl    = $('pay-total-value');
+  const amountRecv    = $('amount_received');
+  const changeEl      = $('change-value');
+  const blockCash     = $('block-cash');
+  const blockElec     = $('block-electronic');
+  const paymentRef    = $('payment_ref');
+  const customerSel   = $('customer_id');
+  const notesArea     = $('notes');
+  const reviewBody    = $('review-body');
+
+  const cart = new Map(); // productId|kind -> item
   const fmt  = v => (Math.round(v * 100) / 100).toFixed(2).replace('.', ',') + ' MT';
+  const esc  = s => (s + '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
 
-  // ---------- Pesquisa ----------
-  let timer, buffer = '', lastKey = 0;
+  // ---------- STEPPER ----------
+  const setStep = n => {
+    document.querySelectorAll('.step').forEach(el => {
+      const s = +el.dataset.step;
+      el.classList.toggle('active', s === n);
+      el.classList.toggle('done',  s <  n);
+    });
+    document.querySelectorAll('.step-panel').forEach(el => {
+      el.classList.toggle('hidden', +el.dataset.panel !== n);
+    });
+    if (n === 2) { syncPayTotal(); amountRecv.focus(); }
+    if (n === 3) renderReview();
+  };
+
+  // ---------- PESQUISA ----------
+  let timer;
   const doSearch = async q => {
     if (!q) { results.innerHTML = ''; results.classList.remove('show'); return; }
     try {
       const res = await fetch(`?r=sales/search&q=${encodeURIComponent(q)}`);
       const rows = await res.json();
-      renderResults(rows, q);
+      renderResults(rows);
     } catch (e) { console.error(e); }
   };
-  const renderResults = (rows, q) => {
+  const renderResults = rows => {
     if (!rows.length) {
       results.innerHTML = '<div class="pdv-result empty">Sem resultados</div>';
     } else {
       results.innerHTML = rows.map(r => {
-        const outOfStock = r.stock <= 0 ? '<span class="tag red">Sem stock</span>' : '';
-        const rx = +r.requires_prescription ? '<span class="tag orange">Rx</span>' : '';
-        const subInfo = r.sub_unit_price
-          ? `<small>ou ${r.sub_unit_label}: ${fmt(+r.sub_unit_price)}</small>` : '';
+        const oos = r.stock <= 0 ? '<span class="tag red">Sem stock</span>' : '';
+        const rx  = +r.requires_prescription ? '<span class="tag orange">Rx</span>' : '';
+        const sub = r.sub_unit_price ? `<small>ou ${esc(r.sub_unit_label||'')}: ${fmt(+r.sub_unit_price)}</small>` : '';
         return `<div class="pdv-result" data-id="${r.id}" data-match="${r.match}">
           <div class="r-main">
-            <strong>${escapeHtml(r.name)}</strong> ${outOfStock}${rx}
-            <small>${r.barcode || ''} · stock: ${r.stock} ${r.unit}</small>
-            ${subInfo}
+            <strong>${esc(r.name)}</strong> ${oos}${rx}
+            <small>${esc(r.barcode||'')} · stock: ${r.stock} ${esc(r.unit||'')}</small>
+            ${sub}
           </div>
           <div class="r-price">${fmt(+r.sale_price)}</div>
         </div>`;
       }).join('');
-      // guardar dados em cache para clique
       results.querySelectorAll('.pdv-result[data-id]').forEach((el, i) => {
         el.__data = rows[i];
         el.addEventListener('click', () => addToCart(rows[i], rows[i].match === 'sub' ? 'sub' : 'pack'));
@@ -51,14 +79,11 @@
     }
     results.classList.add('show');
   };
-  const escapeHtml = s => (s + '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
 
   search.addEventListener('input', e => {
     clearTimeout(timer);
     timer = setTimeout(() => doSearch(e.target.value.trim()), 180);
   });
-
-  // Enter em código: se resultado único auto-adiciona
   search.addEventListener('keydown', e => {
     if (e.key === 'Enter') {
       e.preventDefault();
@@ -67,22 +92,21 @@
         addToCart(first.__data, first.__data.match === 'sub' ? 'sub' : 'pack');
         search.value = ''; search.focus(); results.classList.remove('show');
       }
-    } else if (e.key === 'Escape') { results.classList.remove('show'); }
+    } else if (e.key === 'Escape') results.classList.remove('show');
   });
-
   document.addEventListener('click', e => {
     if (!e.target.closest('.pdv-searchbar')) results.classList.remove('show');
   });
 
-  // ---------- Carrinho ----------
+  // ---------- CARRINHO ----------
   const addToCart = (p, kind) => {
-    if (+p.stock <= 0) { alert('Produto sem stock.'); return; }
+    if (+p.stock <= 0) return alert('Produto sem stock.');
     const price = kind === 'sub' ? +p.sub_unit_price : +p.sale_price;
-    if (!price) { alert('Produto sem preço definido.'); return; }
+    if (!price) return alert('Produto sem preço definido.');
     const key = p.id + '|' + kind;
     if (cart.has(key)) {
       const it = cart.get(key);
-      if (it.qty + 1 > +p.stock) { alert('Stock insuficiente.'); return; }
+      if (it.qty + 1 > +p.stock) return alert('Stock insuficiente.');
       it.qty += 1;
     } else {
       cart.set(key, {
@@ -94,59 +118,174 @@
     render();
   };
 
+  const totals = () => {
+    let sub = 0; cart.forEach(it => sub += it.qty * it.unit_price);
+    const disc  = Math.max(0, parseFloat(discount.value) || 0);
+    const total = Math.max(0, sub - disc);
+    return { sub, disc, total };
+  };
+
   const render = () => {
     if (!cart.size) {
       cartBody.innerHTML = '<tr class="empty"><td colspan="6">Escaneie ou pesquise um produto para começar.</td></tr>';
       subEl.textContent = fmt(0); totalEl.textContent = fmt(0);
-      btnCheck.disabled = true; return;
+      btnGotoPay.disabled = true; cartCount.textContent = '0';
+      return;
     }
     let sub = 0;
     const rows = [...cart.entries()].map(([key, it]) => {
       const line = it.qty * it.unit_price; sub += line;
       return `<tr data-key="${key}">
-        <td>${escapeHtml(it.name)}</td>
-        <td><span class="tag ${it.unit_kind}">${escapeHtml(it.unit_label || '')}</span></td>
+        <td>${esc(it.name)}</td>
+        <td><span class="tag ${it.unit_kind}">${esc(it.unit_label || '')}</span></td>
         <td>${fmt(it.unit_price)}</td>
-        <td><input type="number" min="1" value="${it.qty}" class="qty-inp"></td>
+        <td>
+          <div class="qty-ctrl">
+            <button type="button" class="qty-dec">−</button>
+            <input type="number" min="1" value="${it.qty}" class="qty-inp">
+            <button type="button" class="qty-inc">+</button>
+          </div>
+        </td>
         <td><strong>${fmt(line)}</strong></td>
-        <td><button type="button" class="btn-remove">×</button></td>
+        <td><button type="button" class="btn-remove" title="Remover">×</button></td>
       </tr>`;
     }).join('');
     cartBody.innerHTML = rows;
     cartBody.querySelectorAll('tr[data-key]').forEach(tr => {
       const key = tr.dataset.key;
-      tr.querySelector('.qty-inp').addEventListener('input', e => {
-        const it = cart.get(key); const v = Math.max(1, parseInt(e.target.value) || 1);
-        if (v > it.stock) { e.target.value = it.stock; it.qty = it.stock; alert('Stock máximo: ' + it.stock); }
-        else it.qty = v;
-        render();
-      });
+      const inp = tr.querySelector('.qty-inp');
+      const set = v => {
+        const it = cart.get(key);
+        v = Math.max(1, v|0);
+        if (v > it.stock) { v = it.stock; alert('Stock máximo: ' + it.stock); }
+        it.qty = v; inp.value = v; render();
+      };
+      inp.addEventListener('input', e => set(parseInt(e.target.value) || 1));
+      tr.querySelector('.qty-inc').addEventListener('click', () => set((cart.get(key).qty|0)+1));
+      tr.querySelector('.qty-dec').addEventListener('click', () => set((cart.get(key).qty|0)-1));
       tr.querySelector('.btn-remove').addEventListener('click', () => { cart.delete(key); render(); });
     });
-    const disc = Math.max(0, parseFloat(discount.value) || 0);
-    subEl.textContent = fmt(sub);
-    totalEl.textContent = fmt(Math.max(0, sub - disc));
-    btnCheck.disabled = false;
+    const t = totals();
+    subEl.textContent   = fmt(t.sub);
+    totalEl.textContent = fmt(t.total);
+    btnGotoPay.disabled = t.total <= 0;
+    cartCount.textContent = [...cart.values()].reduce((a,x)=>a+x.qty,0);
   };
 
   discount.addEventListener('input', render);
-  cartClear.addEventListener('click', () => { cart.clear(); render(); search.focus(); });
+  cartClear.addEventListener('click', () => { if (confirm('Limpar carrinho?')) { cart.clear(); render(); search.focus(); } });
 
-  // ---------- Checkout ----------
+  // ---------- PASSO 2: PAGAMENTO ----------
+  const syncPayTotal = () => {
+    const t = totals(); payTotalEl.textContent = fmt(t.total);
+    updateChange();
+  };
+  const currentPayType = () => document.querySelector('input[name="pay_type"]:checked')?.value || 'cash';
+  const updateChange = () => {
+    const t = totals();
+    const rec = parseFloat(amountRecv.value) || 0;
+    const change = rec - t.total;
+    changeEl.textContent = fmt(Math.max(0, change));
+    changeEl.classList.toggle('short', rec > 0 && rec < t.total);
+    validatePayStep();
+  };
+  const validatePayStep = () => {
+    const t = totals();
+    if (currentPayType() === 'cash') {
+      const rec = parseFloat(amountRecv.value) || 0;
+      btnGotoReview.disabled = rec < t.total;
+    } else {
+      btnGotoReview.disabled = false;
+    }
+  };
+  document.querySelectorAll('input[name="pay_type"]').forEach(r => {
+    r.addEventListener('change', () => {
+      const isCash = currentPayType() === 'cash';
+      blockCash.classList.toggle('hidden', !isCash);
+      blockElec.classList.toggle('hidden',  isCash);
+      validatePayStep();
+      if (isCash) amountRecv.focus();
+    });
+  });
+  amountRecv.addEventListener('input', updateChange);
+  document.querySelectorAll('.quick-cash button').forEach(b => {
+    b.addEventListener('click', () => {
+      const t = totals();
+      const v = b.dataset.qc;
+      if (v === 'exact') amountRecv.value = t.total.toFixed(2);
+      else amountRecv.value = ((parseFloat(amountRecv.value)||0) + parseFloat(v)).toFixed(2);
+      updateChange();
+    });
+  });
+
+  btnGotoPay.addEventListener('click', () => setStep(2));
+  btnBackCart.addEventListener('click', () => setStep(1));
+  btnBackPay.addEventListener('click',  () => setStep(2));
+  btnGotoReview.addEventListener('click', () => setStep(3));
+
+  // ---------- PASSO 3: PRÉ-VISUALIZAÇÃO ----------
+  const renderReview = () => {
+    const t = totals();
+    const isCash = currentPayType() === 'cash';
+    const wallet = document.querySelector('input[name="wallet"]:checked')?.value || 'mpesa';
+    const rec = parseFloat(amountRecv.value) || 0;
+    const change = Math.max(0, rec - t.total);
+    const rows = [...cart.values()].map(it =>
+      `<tr><td>${esc(it.name)} <small>${esc(it.unit_label||'')}</small></td>
+           <td class="r">${it.qty} × ${fmt(it.unit_price)}</td>
+           <td class="r"><strong>${fmt(it.qty*it.unit_price)}</strong></td></tr>`).join('');
+    reviewBody.innerHTML = `
+      <table class="rv-items"><tbody>${rows}</tbody></table>
+      <div class="rv-sep"></div>
+      <div class="rv-line"><span>Subtotal</span><span>${fmt(t.sub)}</span></div>
+      ${t.disc>0?`<div class="rv-line"><span>Desconto</span><span>- ${fmt(t.disc)}</span></div>`:''}
+      <div class="rv-line rv-total"><span>TOTAL</span><span>${fmt(t.total)}</span></div>
+      <div class="rv-sep"></div>
+      <div class="rv-line"><span>Pagamento</span><span>${isCash?'💵 Espécie':'📱 '+wallet.toUpperCase()}</span></div>
+      ${isCash?`
+        <div class="rv-line"><span>Valor recebido</span><span>${fmt(rec)}</span></div>
+        <div class="rv-line rv-change"><span>Troco</span><span>${fmt(change)}</span></div>
+      `:`
+        ${paymentRef.value?`<div class="rv-line"><span>Ref.</span><span>${esc(paymentRef.value)}</span></div>`:''}
+      `}
+    `;
+  };
+
+  // ---------- SUBMIT ----------
   form.addEventListener('submit', e => {
     if (!cart.size) { e.preventDefault(); return; }
-    itemsInp.value = JSON.stringify([...cart.values()].map(it => ({
+    const t = totals();
+    const isCash = currentPayType() === 'cash';
+    const wallet = document.querySelector('input[name="wallet"]:checked')?.value || null;
+    $('items-payload').value    = JSON.stringify([...cart.values()].map(it => ({
       product_id: it.product_id, qty: it.qty, unit_price: it.unit_price,
       unit_kind: it.unit_kind, unit_label: it.unit_label,
     })));
-    discInp.value = discount.value || 0;
-    btnCheck.disabled = true;
+    $('discount-payload').value = discount.value || 0;
+    $('customer-payload').value = customerSel.value || '';
+    $('pm-payload').value       = isCash ? 'cash' : (wallet || 'card');
+    $('wallet-payload').value   = isCash ? '' : (wallet || '');
+    $('ref-payload').value      = isCash ? '' : (paymentRef.value || '');
+    $('received-payload').value = isCash ? (parseFloat(amountRecv.value)||t.total).toFixed(2) : '';
+    $('notes-payload').value    = notesArea.value || '';
+    btnFinalize.disabled = true;
+    btnFinalize.textContent = 'A processar…';
   });
 
   // Atalhos
   document.addEventListener('keydown', e => {
-    if (e.key === 'F2' && !btnCheck.disabled) { e.preventDefault(); form.requestSubmit(); }
+    if (e.key === 'F2') {
+      e.preventDefault();
+      if (!btnGotoPay.disabled && document.querySelector('.step-panel[data-panel="1"]:not(.hidden)')) setStep(2);
+      else if (!btnGotoReview.disabled && document.querySelector('.step-panel[data-panel="2"]:not(.hidden)')) setStep(3);
+      else if (document.querySelector('.step-panel[data-panel="3"]:not(.hidden)') && !btnFinalize.disabled) form.requestSubmit();
+    }
     if (e.key === 'F3') { e.preventDefault(); search.focus(); search.select(); }
+    if (e.key === 'Escape' && !document.querySelector('.step-panel[data-panel="1"]:not(.hidden)')) {
+      // volta um passo
+      if (!document.querySelector('.step-panel[data-panel="2"]').classList.contains('hidden')) setStep(1);
+      else if (!document.querySelector('.step-panel[data-panel="3"]').classList.contains('hidden')) setStep(2);
+    }
   });
 
   render();
