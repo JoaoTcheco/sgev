@@ -220,10 +220,8 @@ Chaves primárias são UUID (`CHAR(36)`), gerados por `uuidv4()`, garantindo uni
    mysql -u root -p -e "CREATE DATABASE pharmasys CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
    mysql -u root -p pharmasys < pharmasys-php/database.sql
    ```
-3. **Aplicar migrações incrementais** por ordem:
-   ```bash
-   for f in pharmasys-php/migrations/*.sql; do mysql -u root -p pharmasys < "$f"; done
-   ```
+   > Não são necessárias migrações adicionais — o `database.sql` já contém todas as tabelas (Core, PDV, Lotes, AP/AR, Notificações, Compras, Devoluções, Auditoria).
+
 4. **Configurar** `pharmasys-php/app/config.php`:
    ```php
    define('DB_HOST', 'localhost');
