@@ -148,6 +148,7 @@ class DashboardController extends Controller {
             'user'          => $u,
             'stats'         => $stats,
             'salesSeries'   => $salesSeries,
+            'seriesRange'   => $range,
             'paymentSeries' => $paymentSeries,
             'topProducts'   => $topProducts,
             'recentSales'   => $recentSales,
