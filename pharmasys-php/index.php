@@ -38,6 +38,9 @@ $router->add('cash/open/submit','CashController@open',            'POST',true, $
 $router->add('cash/close',      'CashController@closeForm',       'GET', true, $ALL);
 $router->add('cash/close/submit','CashController@close',          'POST',true, $ALL);
 $router->add('cash/view',       'CashController@view',            'GET', true, $ALL);
+$router->add('cash/sangria',    'CashController@sangria',         'POST',true, $ALL);
+$router->add('cash/reforco',    'CashController@reforco',         'POST',true, $ALL);
+
 
 $router->add('alerts',          'AlertController@index',          'GET', true, $ALL);
 $router->add('alerts/refresh',  'AlertController@refresh',        'POST',true, $ALL);
