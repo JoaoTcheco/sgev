@@ -16,8 +16,9 @@
 
 <link rel="stylesheet" href="<?= asset('css/app.css') ?>">
 <link rel="stylesheet" href="<?= asset('css/dashboard.css') ?>">
+<link rel="stylesheet" href="<?= asset('css/print.css') ?>">
 </head>
-<body class="app-body">
+<body class="app-body<?= !empty($_GET['print']) ? ' print-mode' : '' ?>">
 <div class="app-shell">
   <?php require APP_PATH . '/views/partials/sidebar.php'; ?>
   <div class="app-main">
