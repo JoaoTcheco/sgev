@@ -1,22 +1,54 @@
-/* PharmaSys — Caixa */
-.cash-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px;
-             padding: 20px; margin-bottom: 20px; }
-.cash-card-hdr { display: flex; justify-content: space-between; align-items: center;
-                 margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid #f1f5f9; }
-.cash-card-hdr small { color: #64748b; font-size: 11px; letter-spacing: 0.05em; }
-.cash-card-hdr h2 { font-size: 18px; margin-top: 4px; }
+/* PharmaSys — Caixa (Lovable teal) */
+.cash-card {
+  background: #fff;
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: var(--radius-lg, 14px);
+  padding: 22px;
+  margin-bottom: 20px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, .04);
+}
+.cash-card-hdr {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 18px; padding-bottom: 14px;
+  border-bottom: 1px solid #f1f5f9;
+}
+.cash-card-hdr small {
+  color: #64748b; font-size: 11px;
+  letter-spacing: 0.06em; text-transform: uppercase; font-weight: 600;
+}
+.cash-card-hdr h2 {
+  font-size: 20px; margin: 4px 0 0;
+  color: #0f172a; font-weight: 700; letter-spacing: -0.01em;
+}
 
-.cash-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-             gap: 10px; margin-bottom: 10px; }
-.cash-tile { background: #f8fafc; padding: 14px; border-radius: 8px; }
-.cash-tile.mini { padding: 10px; }
-.cash-tile small { display: block; color: #64748b; font-size: 11px; margin-bottom: 4px; }
-.cash-tile strong { font-size: 18px; }
+.cash-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 12px; margin-bottom: 12px;
+}
+.cash-tile {
+  background: #f8fafc; padding: 14px 16px;
+  border-radius: 10px; border: 1px solid #f1f5f9;
+  transition: background .12s;
+}
+.cash-tile:hover { background: #f1f5f9; }
+.cash-tile.mini { padding: 10px 12px; }
+.cash-tile small {
+  display: block; color: #64748b;
+  font-size: 11px; margin-bottom: 4px;
+  text-transform: uppercase; letter-spacing: .04em; font-weight: 600;
+}
+.cash-tile strong { font-size: 20px; font-weight: 800; color: #0f172a; letter-spacing: -0.01em; }
 .cash-tile.mini strong { font-size: 14px; }
-.cash-tile strong.green { color: #0f766e; }
+.cash-tile strong.green { color: var(--primary, #0f766e); }
 
-.cash-empty { background: #fff; border: 1px dashed #cbd5e1; border-radius: 10px;
-              padding: 30px; text-align: center; color: #64748b; }
-.cash-empty a { color: #0f766e; font-weight: 600; }
+.cash-empty {
+  background: #fff; border: 2px dashed #cbd5e1;
+  border-radius: var(--radius-lg, 14px);
+  padding: 40px; text-align: center; color: #64748b;
+}
+.cash-empty a {
+  color: var(--primary, #0f766e); font-weight: 700; text-decoration: none;
+}
+.cash-empty a:hover { text-decoration: underline; }
 
 .badge-blue { background: #dbeafe; color: #1e40af; }
