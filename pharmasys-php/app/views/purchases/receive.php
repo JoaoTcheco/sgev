@@ -11,7 +11,7 @@
   </div>
 </div>
 
-<form method="post" action="<?= url('purchases/receive') ?>">
+<form method="post" action="<?= url('purchases/receive/submit') ?>">
   <?= csrfField() ?>
   <input type="hidden" name="id" value="<?= e($po['id']) ?>">
 
