@@ -1,9 +1,27 @@
 <section class="pdv" data-csrf="<?= e($_SESSION['csrf'] ?? '') ?>">
-  <!-- ESQUERDA: pesquisa + carrinho -->
+  <!-- ESQUERDA: pesquisa + catálogo + carrinho -->
   <div class="pdv-left">
     <div class="pdv-searchbar">
       <input type="text" id="pdv-search" placeholder="Pesquisar por nome ou ler código de barras…" autofocus>
       <div id="pdv-results" class="pdv-results"></div>
+    </div>
+
+    <!-- Catálogo inicial (filtros + grelha) -->
+    <div class="pdv-catalog" id="pdv-catalog">
+      <div class="cat-toolbar">
+        <div class="cat-chips" id="cat-chips">
+          <button type="button" class="chip active" data-cat="">Todas</button>
+          <?php foreach ($categories as $c): ?>
+            <button type="button" class="chip" data-cat="<?= e($c['id']) ?>"><?= e($c['name']) ?></button>
+          <?php endforeach; ?>
+        </div>
+        <label class="only-stock">
+          <input type="checkbox" id="only-stock" checked> Só com stock
+        </label>
+      </div>
+      <div id="catalog-grid" class="catalog-grid">
+        <div class="catalog-loading">A carregar produtos…</div>
+      </div>
     </div>
 
     <div class="pdv-cart">
@@ -14,7 +32,7 @@
       <table class="cart-table">
         <thead><tr><th>Produto</th><th>Un.</th><th>Preço</th><th style="width:110px;">Qtd.</th><th>Total</th><th></th></tr></thead>
         <tbody id="cart-body">
-          <tr class="empty"><td colspan="6">Escaneie ou pesquise um produto para começar.</td></tr>
+          <tr class="empty"><td colspan="6">Escaneie, pesquise ou clique num produto para começar.</td></tr>
         </tbody>
       </table>
     </div>
