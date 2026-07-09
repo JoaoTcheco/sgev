@@ -385,7 +385,7 @@ Guards centralizados em `index.php` (`$router->add(..., [$roles])`) e reforçado
 
 Software desenvolvido sob medida. Uso exclusivo do cliente contratante. Todos os direitos reservados.
 
-**Versão:** 1.16.0 · **Última actualização:** Julho 2026 · **Estado:** Produção
+**Versão:** 1.17.0 · **Última actualização:** Julho 2026 · **Estado:** Produção
 
 ---
 
