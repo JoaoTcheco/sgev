@@ -99,18 +99,14 @@ pharmasys-php/
 │   ├── css/                         # app, pdv, receipt, labels, purchases, etc.
 │   └── js/                          # app, pdv, purchases, notifications, ...
 │
-├── 📂 migrations/                   # Migrações incrementais
-│   ├── 002_purchase_orders.sql
-│   ├── 003_notifications.sql
-│   ├── 004_payables_receivables.sql
-│   ├── 005_pdv_receipt_labels.sql
-│   └── 006_supplier_returns.sql
-│
-├── 📄 database.sql                  # Schema completo inicial
+├── 📄 database.sql                  # Base de dados ÚNICA e completa (todas as tabelas + seed)
 ├── 📄 index.php                     # Front controller + rotas
 ├── 📄 .htaccess                     # Reescrita e protecção de pastas
 └── 📄 README.md                     # Este ficheiro
 ```
+
+> 💡 **Base de dados unificada**: todo o schema vive num único ficheiro `database.sql`. Já não existe pasta `migrations/` — basta importar `database.sql` numa BD vazia para ter o sistema pronto.
+
 
 ---
 
@@ -224,10 +220,8 @@ Chaves primárias são UUID (`CHAR(36)`), gerados por `uuidv4()`, garantindo uni
    mysql -u root -p -e "CREATE DATABASE pharmasys CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
    mysql -u root -p pharmasys < pharmasys-php/database.sql
    ```
-3. **Aplicar migrações incrementais** por ordem:
-   ```bash
-   for f in pharmasys-php/migrations/*.sql; do mysql -u root -p pharmasys < "$f"; done
-   ```
+   > Não são necessárias migrações adicionais — o `database.sql` já contém todas as tabelas (Core, PDV, Lotes, AP/AR, Notificações, Compras, Devoluções, Auditoria).
+
 4. **Configurar** `pharmasys-php/app/config.php`:
    ```php
    define('DB_HOST', 'localhost');
@@ -300,7 +294,7 @@ Chaves primárias são UUID (`CHAR(36)`), gerados por `uuidv4()`, garantindo uni
 | Sintoma | Solução |
 |---|---|
 | `Access denied for user` ao aceder | Verificar `app/config.php` e credenciais MySQL. |
-| Sino de notificações sempre a zero | Executar `migrations/003_notifications.sql`. |
+| Sino de notificações sempre a zero | Reimportar `database.sql` (contém a tabela `notifications`). |
 | Impressão de recibo desalinhada | Ajustar `Configurações → Recibo → largura` (58/80/A4) e margem da impressora. |
 | “Stock insuficiente” inesperado | Confirmar quantidades em `Lotes`; movimentos anteriores podem estar em outra sessão. |
 | Erro ao confirmar devolução | Faltam lotes com quantidade — reveja a linha antes de confirmar. |
