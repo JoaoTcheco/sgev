@@ -294,7 +294,7 @@ Chaves primárias são UUID (`CHAR(36)`), gerados por `uuidv4()`, garantindo uni
 | Sintoma | Solução |
 |---|---|
 | `Access denied for user` ao aceder | Verificar `app/config.php` e credenciais MySQL. |
-| Sino de notificações sempre a zero | Executar `migrations/003_notifications.sql`. |
+| Sino de notificações sempre a zero | Reimportar `database.sql` (contém a tabela `notifications`). |
 | Impressão de recibo desalinhada | Ajustar `Configurações → Recibo → largura` (58/80/A4) e margem da impressora. |
 | “Stock insuficiente” inesperado | Confirmar quantidades em `Lotes`; movimentos anteriores podem estar em outra sessão. |
 | Erro ao confirmar devolução | Faltam lotes com quantidade — reveja a linha antes de confirmar. |
