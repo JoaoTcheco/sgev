@@ -21,10 +21,17 @@
           <td class="actions">
             <a href="<?= url('users/edit') ?>&id=<?= e($u['id']) ?>" class="btn btn-sm">Editar</a>
             <?php if (currentUser()['id'] !== $u['id']): ?>
-            <form method="POST" action="<?= url('users/delete') ?>" onsubmit="return confirm('Desactivar utilizador?')" style="display:inline;">
-              <?= csrfField() ?><input type="hidden" name="id" value="<?= e($u['id']) ?>">
-              <button class="btn btn-sm btn-danger">×</button>
-            </form>
+              <?php if ($u['active']): ?>
+                <form method="POST" action="<?= url('users/delete') ?>" onsubmit="return confirm('Desactivar utilizador?')" style="display:inline;">
+                  <?= csrfField() ?><input type="hidden" name="id" value="<?= e($u['id']) ?>">
+                  <button class="btn btn-sm btn-danger" title="Desactivar">×</button>
+                </form>
+              <?php else: ?>
+                <form method="POST" action="<?= url('users/activate') ?>" style="display:inline;">
+                  <?= csrfField() ?><input type="hidden" name="id" value="<?= e($u['id']) ?>">
+                  <button class="btn btn-sm btn-success" title="Reactivar">✓</button>
+                </form>
+              <?php endif; ?>
             <?php endif; ?>
           </td>
         </tr>
