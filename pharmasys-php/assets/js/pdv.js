@@ -26,10 +26,66 @@
   const customerSel   = $('customer_id');
   const notesArea     = $('notes');
   const reviewBody    = $('review-body');
+  const catalogGrid   = $('catalog-grid');
+  const catChips      = $('cat-chips');
+  const onlyStockCb   = $('only-stock');
 
   const cart = new Map(); // productId|kind -> item
   const fmt  = v => (Math.round(v * 100) / 100).toFixed(2).replace('.', ',') + ' MT';
   const esc  = s => (s + '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
+
+  // ---------- CATÁLOGO ----------
+  let currentCat = '';
+  const loadCatalog = async () => {
+    if (!catalogGrid) return;
+    const url = `?r=sales/browse&category=${encodeURIComponent(currentCat)}&stock=${onlyStockCb.checked ? 1 : 0}`;
+    catalogGrid.innerHTML = '<div class="catalog-loading">A carregar…</div>';
+    try {
+      const res = await fetch(url);
+      const rows = await res.json();
+      renderCatalog(rows);
+    } catch (e) { catalogGrid.innerHTML = '<div class="catalog-loading">Erro ao carregar produtos.</div>'; }
+  };
+  const renderCatalog = rows => {
+    if (!rows.length) {
+      catalogGrid.innerHTML = '<div class="catalog-loading">Nenhum produto encontrado nesta categoria.</div>';
+      return;
+    }
+    catalogGrid.innerHTML = rows.map(r => {
+      const oos     = +r.stock <= 0;
+      const expired = +r.expired === 1;
+      const near    = +r.near_expiry === 1 && !expired;
+      const rx      = +r.requires_prescription === 1;
+      const blocked = oos || expired;
+      const badges = [
+        oos     ? '<span class="tag red">Sem stock</span>' : '',
+        expired ? '<span class="tag red">Expirado</span>' : '',
+        near    ? '<span class="tag orange">Perto de expirar</span>' : '',
+        rx      ? '<span class="tag orange">Rx</span>' : '',
+      ].join('');
+      return `<button type="button" class="cat-card ${blocked?'disabled':''}" data-id="${r.id}" ${blocked?'disabled':''}>
+        <div class="cc-name">${esc(r.name)}</div>
+        <div class="cc-meta">${esc(r.category_name||'')} · ${r.stock} ${esc(r.unit||'')}</div>
+        <div class="cc-price">${fmt(+r.sale_price)}</div>
+        <div class="cc-badges">${badges}</div>
+      </button>`;
+    }).join('');
+    catalogGrid.querySelectorAll('.cat-card:not(.disabled)').forEach((el, i) => {
+      const row = rows.filter(r => +r.stock > 0 && +r.expired !== 1)[i] || rows.find(r => r.id === el.dataset.id);
+      el.addEventListener('click', () => {
+        const p = rows.find(r => r.id === el.dataset.id);
+        if (p) addToCart(p, 'pack');
+      });
+    });
+  };
+  if (catChips) catChips.addEventListener('click', e => {
+    const b = e.target.closest('.chip'); if (!b) return;
+    catChips.querySelectorAll('.chip').forEach(c => c.classList.toggle('active', c === b));
+    currentCat = b.dataset.cat || '';
+    loadCatalog();
+  });
+  if (onlyStockCb) onlyStockCb.addEventListener('change', loadCatalog);
+
 
   // ---------- STEPPER ----------
   const setStep = n => {
