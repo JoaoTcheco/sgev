@@ -19,6 +19,48 @@ class AlertModel {
         Database::query('UPDATE alerts SET resolved = 1, resolved_at = NOW() WHERE id = ?', [$id]);
     }
 
+    /** Pesquisa com filtros: severity, type, q (produto/msg), status (open|resolved|all). */
+    public static function search(array $f = []): array {
+        $sql = 'SELECT a.*, p.name AS product_name, b.batch_number, b.expiry_date
+                FROM alerts a
+                LEFT JOIN products p ON p.id = a.product_id
+                LEFT JOIN batches  b ON b.id = a.batch_id
+                WHERE 1=1';
+        $p = [];
+        $status = $f['status'] ?? 'open';
+        if ($status === 'open')      $sql .= ' AND a.resolved = 0';
+        elseif ($status === 'resolved') $sql .= ' AND a.resolved = 1';
+        if (!empty($f['severity'])) { $sql .= ' AND a.severity = ?'; $p[] = $f['severity']; }
+        if (!empty($f['type']))     { $sql .= ' AND a.type = ?';     $p[] = $f['type']; }
+        if (!empty($f['q'])) {
+            $sql .= ' AND (p.name LIKE ? OR a.message LIKE ? OR b.batch_number LIKE ?)';
+            $q = '%'.$f['q'].'%';
+            $p[] = $q; $p[] = $q; $p[] = $q;
+        }
+        $sql .= ' ORDER BY a.resolved ASC, FIELD(a.severity,"high","medium","low"), a.created_at DESC LIMIT 1000';
+        return Database::all($sql, $p);
+    }
+
+    public static function stats(): array {
+        $rows = Database::all("SELECT type, severity, COUNT(*) c FROM alerts WHERE resolved = 0 GROUP BY type, severity");
+        $out = ['total'=>0, 'high'=>0, 'medium'=>0, 'low'=>0, 'low_stock'=>0, 'expiring'=>0, 'expired'=>0];
+        foreach ($rows as $r) {
+            $out['total']         += (int)$r['c'];
+            $out[$r['severity']]  = ($out[$r['severity']] ?? 0) + (int)$r['c'];
+            $out[$r['type']]      = ($out[$r['type']]     ?? 0) + (int)$r['c'];
+        }
+        return $out;
+    }
+
+    public static function resolveAll(array $f = []): int {
+        $ids = array_column(array_filter(self::search($f), fn($r) => (int)$r['resolved'] === 0), 'id');
+        if (!$ids) return 0;
+        $ph = implode(',', array_fill(0, count($ids), '?'));
+        Database::query("UPDATE alerts SET resolved = 1, resolved_at = NOW() WHERE id IN ($ph)", $ids);
+        return count($ids);
+    }
+
+
     /**
      * Recalcula os alertas: apaga não resolvidos e reinsere com base no estado actual.
      * Tipos: low_stock, expiring, expired.
