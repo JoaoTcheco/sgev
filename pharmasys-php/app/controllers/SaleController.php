@@ -56,6 +56,9 @@ class SaleController extends Controller {
         $data = [
             'customer_id'    => $_POST['customer_id'] ?? '',
             'payment_method' => $_POST['payment_method'] ?? 'cash',
+            'payment_wallet' => $_POST['payment_wallet'] ?? null,
+            'payment_ref'    => trim($_POST['payment_ref'] ?? '') ?: null,
+            'amount_received'=> $_POST['amount_received'] ?? '',
             'discount'       => (float)($_POST['discount'] ?? 0),
             'notes'          => trim($_POST['notes'] ?? ''),
             'items'          => $items,
