@@ -7,7 +7,7 @@
  */
 return [
     // ---------- BASE DE DADOS (LOCAL - XAMPP) ----------
-    'db_host'    => 'localhost',
+    'db_host'    => '127.0.0.1',
     'db_name'    => 'pharmasys',
     'db_user'    => 'root',
     'db_pass'    => '',
@@ -22,7 +22,7 @@ return [
 
     // ---------- SITE ----------
     'site_title'   => 'PharmaSys — Gestão de Farmácia',
-    'site_url'     => 'http://localhost/pharmasys',
+    'site_url'     => 'http://127.0.0.1:8090',
     // 'site_url'  => 'http://pharmasys.page.gd',
 
     // ---------- LOCALIZAÇÃO ----------
