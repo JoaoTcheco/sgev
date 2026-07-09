@@ -100,4 +100,43 @@ class PayableController extends Controller {
         catch (Throwable $e) { flash('error', $e->getMessage()); }
         redirect('payables');
     }
+
+    public function export(): void {
+        $this->guard();
+        $filters = [
+            'q'           => trim($_GET['q']           ?? ''),
+            'status'      => trim($_GET['status']      ?? ''),
+            'supplier_id' => trim($_GET['supplier_id'] ?? ''),
+            'due_from'    => trim($_GET['due_from']    ?? ''),
+            'due_to'      => trim($_GET['due_to']      ?? ''),
+            'overdue'     => trim($_GET['overdue']     ?? ''),
+        ];
+        $data = PayableModel::paginate($filters, 1, 10000);
+
+        $filename = 'contas_pagar_' . date('Ymd_His') . '.csv';
+        while (ob_get_level() > 0) { @ob_end_clean(); }
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        header('Cache-Control: no-store, no-cache');
+        $out = fopen('php://output', 'w');
+        fwrite($out, "\xEF\xBB\xBF");
+        fputcsv($out, ['Emissão','Vencimento','Fornecedor','OC','Descrição','Valor','Pago','Saldo','Estado','Dias'], ';');
+        $labels = ['open'=>'Em aberto','partial'=>'Parcial','paid'=>'Pago','canceled'=>'Cancelada'];
+        foreach ($data['rows'] as $p) {
+            fputcsv($out, [
+                $p['issue_date'] ?? '',
+                $p['due_date'],
+                $p['supplier_name'] ?? '',
+                $p['po_number'] ?? '',
+                $p['description'],
+                number_format((float)$p['amount'], 2, ',', ''),
+                number_format((float)$p['paid_amount'], 2, ',', ''),
+                number_format((float)$p['balance'], 2, ',', ''),
+                $labels[$p['status']] ?? $p['status'],
+                (int)$p['days_to_due'],
+            ], ';');
+        }
+        fclose($out);
+        exit;
+    }
 }
