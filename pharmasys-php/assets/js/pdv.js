@@ -27,17 +27,70 @@
   const notesArea     = $('notes');
   const reviewBody    = $('review-body');
   const catalogGrid   = $('catalog-grid');
-  const catChips      = $('cat-chips');
+  const categoriesGrid= $('categories-grid');
+  const catMode       = $('cat-mode');
+  const prodMode      = $('prod-mode');
+  const prodTitle     = $('prod-mode-title');
+  const prodCount     = $('prod-mode-count');
+  const btnBackCats   = $('btn-back-cats');
   const onlyStockCb   = $('only-stock');
 
   const cart = new Map(); // productId|kind -> item
   const fmt  = v => (Math.round(v * 100) / 100).toFixed(2).replace('.', ',') + ' MT';
   const esc  = s => (s + '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
 
-  // ---------- CATÁLOGO ----------
-  let currentCat = '';
+  // ---------- CATÁLOGO em 2 etapas ----------
+  let currentCat = '';          // '' → mostra grelha de categorias
+  let currentCatName = '';
+
+  const showCategoriesMode = () => {
+    currentCat = ''; currentCatName = '';
+    if (catMode)  catMode.classList.remove('hidden');
+    if (prodMode) prodMode.classList.add('hidden');
+    loadCategories();
+  };
+  const showProductsMode = (catId, catName, count) => {
+    currentCat = catId; currentCatName = catName;
+    if (catMode)  catMode.classList.add('hidden');
+    if (prodMode) prodMode.classList.remove('hidden');
+    if (prodTitle) prodTitle.textContent = catName;
+    if (prodCount) prodCount.textContent = (count != null ? count + ' produto(s)' : '');
+    loadCatalog();
+  };
+
+  const loadCategories = async () => {
+    if (!categoriesGrid) return;
+    categoriesGrid.innerHTML = '<div class="catalog-loading">A carregar…</div>';
+    try {
+      const res = await fetch('?r=sales/categories');
+      const rows = await res.json();
+      const filtered = onlyStockCb.checked ? rows.filter(r => +r.total_stock > 0) : rows;
+      if (!filtered.length) {
+        categoriesGrid.innerHTML = '<div class="catalog-loading">Nenhuma categoria com produtos disponíveis.</div>';
+        return;
+      }
+      categoriesGrid.innerHTML = filtered.map(c => {
+        const empty = +c.product_count === 0;
+        const noStock = +c.total_stock <= 0;
+        return `<button type="button" class="category-card ${empty?'disabled':''}" data-id="${esc(c.id)}" data-name="${esc(c.name)}" data-count="${c.product_count}" ${empty?'disabled':''}>
+          <div class="cat-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>
+          </div>
+          <div class="cat-name">${esc(c.name)}</div>
+          <div class="cat-meta">${c.product_count} produto(s)${noStock?' · sem stock':''}</div>
+          <div class="cat-stock">${+c.total_stock} em stock</div>
+        </button>`;
+      }).join('');
+      categoriesGrid.querySelectorAll('.category-card:not(.disabled)').forEach(el => {
+        el.addEventListener('click', () => showProductsMode(el.dataset.id, el.dataset.name, +el.dataset.count));
+      });
+    } catch (e) {
+      categoriesGrid.innerHTML = '<div class="catalog-loading">Erro ao carregar categorias.</div>';
+    }
+  };
+
   const loadCatalog = async () => {
-    if (!catalogGrid) return;
+    if (!catalogGrid || !currentCat) return;
     const url = `?r=sales/browse&category=${encodeURIComponent(currentCat)}&stock=${onlyStockCb.checked ? 1 : 0}`;
     catalogGrid.innerHTML = '<div class="catalog-loading">A carregar…</div>';
     try {
@@ -70,21 +123,17 @@
         <div class="cc-badges">${badges}</div>
       </button>`;
     }).join('');
-    catalogGrid.querySelectorAll('.cat-card:not(.disabled)').forEach((el, i) => {
-      const row = rows.filter(r => +r.stock > 0 && +r.expired !== 1)[i] || rows.find(r => r.id === el.dataset.id);
+    catalogGrid.querySelectorAll('.cat-card:not(.disabled)').forEach(el => {
       el.addEventListener('click', () => {
         const p = rows.find(r => r.id === el.dataset.id);
         if (p) addToCart(p, 'pack');
       });
     });
   };
-  if (catChips) catChips.addEventListener('click', e => {
-    const b = e.target.closest('.chip'); if (!b) return;
-    catChips.querySelectorAll('.chip').forEach(c => c.classList.toggle('active', c === b));
-    currentCat = b.dataset.cat || '';
-    loadCatalog();
-  });
-  if (onlyStockCb) onlyStockCb.addEventListener('change', loadCatalog);
+  if (btnBackCats)   btnBackCats.addEventListener('click', showCategoriesMode);
+  if (onlyStockCb)   onlyStockCb.addEventListener('change', () => currentCat ? loadCatalog() : loadCategories());
+  // Inicializar
+  showCategoriesMode();
 
 
   // ---------- STEPPER ----------
