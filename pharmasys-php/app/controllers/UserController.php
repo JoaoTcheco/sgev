@@ -27,6 +27,11 @@ class UserController extends Controller {
         }
         try {
             if (!empty($_POST['id'])) {
+                // Impedir que o último admin activo seja despromovido ou desactivado
+                if (UserModel::isLastActiveAdmin($_POST['id']) && ($data['role'] !== 'admin' || !$data['active'])) {
+                    flash('error', 'Não é possível remover o papel de admin ou desactivar o último administrador.');
+                    redirect('users/edit&id=' . $_POST['id']);
+                }
                 UserModel::update($_POST['id'], $data);
                 flash('success', 'Utilizador actualizado.');
             } else {
@@ -45,12 +50,17 @@ class UserController extends Controller {
     }
     public function delete(): void {
         requireRole('admin'); csrfVerify();
+        $id = $_POST['id'] ?? '';
         $u = currentUser();
-        if ($u && $u['id'] === ($_POST['id'] ?? '')) {
+        if ($u && $u['id'] === $id) {
             flash('error', 'Não podes desactivar a tua própria conta.');
             redirect('users');
         }
-        UserModel::delete($_POST['id']);
+        if (UserModel::isLastActiveAdmin($id)) {
+            flash('error', 'Não é possível desactivar o último administrador do sistema.');
+            redirect('users');
+        }
+        UserModel::delete($id);
         flash('success', 'Utilizador desactivado.');
         redirect('users');
     }

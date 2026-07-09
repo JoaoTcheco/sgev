@@ -66,46 +66,45 @@ try { $notifCount = (int) NotificationModel::countUnread($u); } catch (Throwable
     <div class="sb-group">
       <div class="sb-group-label">Operação</div>
       <ul class="sb-menu">
-        <?= sb_item(url('pdv'),     'PDV — Vendas',        $I['cart'],   str_starts_with($r,'pdv') || in_array($r, ['sales/checkout','sales/receipt'], true)) ?>
-        <?= sb_item(url('cash'),    'Caixa',               $I['cash'],   str_starts_with($r,'cash')) ?>
-        <?= sb_item(url('history'), 'Histórico / Estorno', $I['history'],str_starts_with($r,'history')) ?>
-      </ul>
-    </div>
-
-    <div class="sb-group">
-      <div class="sb-group-label">Stock</div>
-      <ul class="sb-menu">
-        <?= sb_item(url('stock'),         'Estoque',         $I['package'], str_starts_with($r,'stock')) ?>
-        <?= sb_item(url('batches'),       'Lotes / Entradas',$I['packagep'],str_starts_with($r,'batches')) ?>
-        <?= sb_item(url('alerts'),        'Alertas',         $I['alert'],   str_starts_with($r,'alerts'),        $alertCount ? (string)$alertCount : '') ?>
-        <?= sb_item(url('notifications'), 'Notificações',    $I['bell'],    str_starts_with($r,'notifications'), $notifCount ? (string)$notifCount : '') ?>
-        <?= sb_item(url('labels'),        'Etiquetas',       $I['tag'],     str_starts_with($r,'labels')) ?>
-      </ul>
-    </div>
-
-    <div class="sb-group">
-      <div class="sb-group-label">Cadastros</div>
-      <ul class="sb-menu">
-        <?= sb_item(url('products'),   'Produtos',     $I['box'],    str_starts_with($r,'products')) ?>
-        <?= sb_item(url('categories'), 'Categorias',   $I['folder'], str_starts_with($r,'categories')) ?>
-        <?= sb_item(url('suppliers'),  'Fornecedores', $I['truck'],  str_starts_with($r,'suppliers')) ?>
-        <?= sb_item(url('customers'),  'Clientes',     $I['users'],  str_starts_with($r,'customers')) ?>
+        <?= sb_item(url('pdv'),           'PDV — Vendas', $I['cart'], str_starts_with($r,'pdv') || in_array($r, ['sales/checkout','sales/receipt'], true)) ?>
+        <?= sb_item(url('cash'),          'Caixa',        $I['cash'], str_starts_with($r,'cash')) ?>
+        <?= sb_item(url('alerts'),        'Alertas',      $I['alert'], str_starts_with($r,'alerts'), $alertCount ? (string)$alertCount : '') ?>
+        <?= sb_item(url('notifications'), 'Notificações', $I['bell'],  str_starts_with($r,'notifications'), $notifCount ? (string)$notifCount : '') ?>
       </ul>
     </div>
 
     <?php if ($isPharm): ?>
       <div class="sb-group">
+        <div class="sb-group-label">Stock</div>
+        <ul class="sb-menu">
+          <?= sb_item(url('stock'),   'Estoque',          $I['package'],  str_starts_with($r,'stock')) ?>
+          <?= sb_item(url('batches'), 'Lotes / Entradas', $I['packagep'], str_starts_with($r,'batches')) ?>
+          <?= sb_item(url('labels'),  'Etiquetas',        $I['tag'],      str_starts_with($r,'labels')) ?>
+        </ul>
+      </div>
+
+      <div class="sb-group">
+        <div class="sb-group-label">Cadastros</div>
+        <ul class="sb-menu">
+          <?= sb_item(url('products'),   'Produtos',     $I['box'],    str_starts_with($r,'products')) ?>
+          <?= sb_item(url('categories'), 'Categorias',   $I['folder'], str_starts_with($r,'categories')) ?>
+          <?= sb_item(url('suppliers'),  'Fornecedores', $I['truck'],  str_starts_with($r,'suppliers')) ?>
+          <?= sb_item(url('customers'),  'Clientes',     $I['users'],  str_starts_with($r,'customers')) ?>
+        </ul>
+      </div>
+
+      <div class="sb-group">
         <div class="sb-group-label">Compras</div>
         <ul class="sb-menu">
-          <?= sb_item(url('purchases'),        'Ordens de Compra',       $I['basket'], str_starts_with($r,'purchases')) ?>
-          <?= sb_item(url('supplier-returns'), 'Devoluções a Fornecedor',$I['return'], str_starts_with($r,'supplier-returns')) ?>
+          <?= sb_item(url('purchases'),        'Ordens de Compra',        $I['basket'], str_starts_with($r,'purchases')) ?>
+          <?= sb_item(url('supplier-returns'), 'Devoluções a Fornecedor', $I['return'], str_starts_with($r,'supplier-returns')) ?>
         </ul>
       </div>
 
       <div class="sb-group">
         <div class="sb-group-label">Financeiro</div>
         <ul class="sb-menu">
-          <?= sb_item(url('accounts'),    'Contas Financeiras', $I['wallet'],    str_starts_with($r,'accounts')) ?>
+          <?= sb_item(url('accounts'),    'Contas Financeiras', $I['wallet'],   str_starts_with($r,'accounts')) ?>
           <?= sb_item(url('payables'),    'Contas a Pagar',     $I['arrow-up'], str_starts_with($r,'payables')) ?>
           <?= sb_item(url('receivables'), 'Contas a Receber',   $I['arrow-dn'], str_starts_with($r,'receivables')) ?>
         </ul>
@@ -114,8 +113,8 @@ try { $notifCount = (int) NotificationModel::countUnread($u); } catch (Throwable
       <div class="sb-group">
         <div class="sb-group-label">Análise</div>
         <ul class="sb-menu">
-          <?= sb_item(url('reports'), 'Relatórios',      $I['chart'],   str_starts_with($r,'reports')) ?>
-          <?= sb_item(url('margins'), 'Margens & Custos',$I['percent'], str_starts_with($r,'margins')) ?>
+          <?= sb_item(url('reports'), 'Relatórios',       $I['chart'],   str_starts_with($r,'reports')) ?>
+          <?= sb_item(url('margins'), 'Margens & Custos', $I['percent'], str_starts_with($r,'margins')) ?>
         </ul>
       </div>
     <?php endif; ?>
@@ -124,6 +123,7 @@ try { $notifCount = (int) NotificationModel::countUnread($u); } catch (Throwable
       <div class="sb-group">
         <div class="sb-group-label">Administração</div>
         <ul class="sb-menu">
+          <?= sb_item(url('history'),  'Histórico de Vendas', $I['history'],  str_starts_with($r,'history')) ?>
           <?= sb_item(url('users'),    'Utilizadores',        $I['users'],    str_starts_with($r,'users')) ?>
           <?= sb_item(url('settings'), 'Configurações',       $I['settings'], str_starts_with($r,'settings')) ?>
           <?= sb_item(url('audit'),    'Auditoria / Logs',    $I['shield'],   str_starts_with($r,'audit')) ?>
@@ -141,3 +141,4 @@ try { $notifCount = (int) NotificationModel::countUnread($u); } catch (Throwable
     <a href="<?= url('logout') ?>" class="sb-logout"><?= $I['logout'] ?><span>Terminar sessão</span></a>
   </div>
 </aside>
+

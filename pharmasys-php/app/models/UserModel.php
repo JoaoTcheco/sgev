@@ -35,6 +35,16 @@ class UserModel {
     public static function delete(string $id): void {
         Database::query('UPDATE users SET active = 0 WHERE id = ?', [$id]);
     }
+    /** Nº de administradores activos (para impedir remoção do último admin). */
+    public static function countActiveAdmins(): int {
+        $row = Database::one("SELECT COUNT(*) AS c FROM users WHERE role='admin' AND active=1");
+        return (int)($row['c'] ?? 0);
+    }
+    public static function isLastActiveAdmin(string $id): bool {
+        $u = self::findById($id);
+        if (!$u || $u['role'] !== 'admin' || !$u['active']) return false;
+        return self::countActiveAdmins() <= 1;
+    }
     public static function verifyPassword(array $user, string $password): bool {
         return password_verify($password, $user['password_hash']);
     }
