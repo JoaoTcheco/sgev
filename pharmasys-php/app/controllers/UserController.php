@@ -1,0 +1,57 @@
+<?php
+class UserController extends Controller {
+    public function index(): void {
+        requireRole('admin');
+        $this->view('users/index', ['items' => UserModel::all()]);
+    }
+    public function form(): void {
+        requireRole('admin');
+        $editing = !empty($_GET['id']) ? UserModel::findById($_GET['id']) : null;
+        $this->view('users/form', ['editing' => $editing]);
+    }
+    public function save(): void {
+        requireRole('admin'); csrfVerify();
+        $data = [
+            'username'  => trim($_POST['username'] ?? ''),
+            'full_name' => trim($_POST['full_name'] ?? ''),
+            'email'     => trim($_POST['email'] ?? ''),
+            'password'  => $_POST['password'] ?? '',
+            'role'      => $_POST['role'] ?? 'cashier',
+            'active'    => isset($_POST['active']),
+        ];
+        if ($data['username'] === '' || $data['full_name'] === '') {
+            flash('error', 'Utilizador e nome completo são obrigatórios.'); redirect('users/new');
+        }
+        if (!in_array($data['role'], ['admin','pharmacist','cashier'], true)) {
+            flash('error', 'Papel inválido.'); redirect('users/new');
+        }
+        try {
+            if (!empty($_POST['id'])) {
+                UserModel::update($_POST['id'], $data);
+                flash('success', 'Utilizador actualizado.');
+            } else {
+                if (strlen($data['password']) < config('password_min_length', 8)) {
+                    flash('error', 'Senha deve ter no mínimo ' . config('password_min_length', 8) . ' caracteres.');
+                    redirect('users/new');
+                }
+                UserModel::create($data);
+                flash('success', 'Utilizador criado.');
+            }
+        } catch (PDOException $e) {
+            flash('error', strpos($e->getMessage(), 'Duplicate') !== false ? 'Nome de utilizador já existe.' : $e->getMessage());
+            redirect('users');
+        }
+        redirect('users');
+    }
+    public function delete(): void {
+        requireRole('admin'); csrfVerify();
+        $u = currentUser();
+        if ($u && $u['id'] === ($_POST['id'] ?? '')) {
+            flash('error', 'Não podes desactivar a tua própria conta.');
+            redirect('users');
+        }
+        UserModel::delete($_POST['id']);
+        flash('success', 'Utilizador desactivado.');
+        redirect('users');
+    }
+}

@@ -272,19 +272,9 @@ SET FOREIGN_KEY_CHECKS = 1;
 -- SEED — dados iniciais
 -- ============================================================
 
--- Admin: user=admin  senha=PharmaAdmin@2026 (BCRYPT)
-INSERT INTO `users` (`id`, `username`, `password_hash`, `full_name`, `role`, `active`)
-VALUES (
-  UUID(),
-  'admin',
-  '$2y$10$LnKW3XJZKvXcYQeR5cJ0kOu3xkNhcbY2eO5W2t4vX3hV7wF5nZzKu',
-  'Administrador',
-  'admin',
-  1
-);
--- Nota: o hash acima é gerado por password_hash('PharmaAdmin@2026', PASSWORD_BCRYPT).
--- Se copiares e não funcionar em algum servidor com bcrypt diferente,
--- o bootstrap.php recria o admin automaticamente na 1ª execução.
+-- Admin é criado automaticamente pelo bootstrap.php (UserModel::ensureAdmin)
+-- na 1ª execução, com password_hash() correcto do PHP local.
+-- Utilizador: admin  Senha: PharmaAdmin@2026
 
 INSERT INTO `pharmacy_settings` (`id`, `name`, `receipt_width`, `show_pharmacist`)
 VALUES (1, 'PharmaSys', '80mm', 1)
