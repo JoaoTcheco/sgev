@@ -139,4 +139,24 @@ $router->add('notifications/delete',       'NotificationController@delete',     
 $router->add('notifications/clear-read',   'NotificationController@clearRead',   'POST', true);
 $router->add('notifications/refresh',      'NotificationController@refresh',     'POST', true);
 
+// Contas a Pagar (AP)
+$router->add('payables',        'PayableController@index',  'GET',  true);
+$router->add('payables/new',    'PayableController@form',   'GET',  true);
+$router->add('payables/edit',   'PayableController@form',   'GET',  true);
+$router->add('payables/save',   'PayableController@save',   'POST', true);
+$router->add('payables/view',   'PayableController@view',   'GET',  true);
+$router->add('payables/pay',    'PayableController@pay',    'POST', true);
+$router->add('payables/cancel', 'PayableController@cancel', 'POST', true);
+$router->add('payables/delete', 'PayableController@delete', 'POST', true);
+
+// Contas a Receber (AR)
+$router->add('receivables',        'ReceivableController@index',   'GET',  true);
+$router->add('receivables/new',    'ReceivableController@form',    'GET',  true);
+$router->add('receivables/edit',   'ReceivableController@form',    'GET',  true);
+$router->add('receivables/save',   'ReceivableController@save',    'POST', true);
+$router->add('receivables/view',   'ReceivableController@view',    'GET',  true);
+$router->add('receivables/receive','ReceivableController@receive', 'POST', true);
+$router->add('receivables/cancel', 'ReceivableController@cancel',  'POST', true);
+$router->add('receivables/delete', 'ReceivableController@delete',  'POST', true);
+
 $router->dispatch($_GET['r'] ?? '');
