@@ -148,6 +148,7 @@
       <a class="btn btn-sm <?= $active?'btn-primary':'btn-ghost' ?>"
          href="<?= url('audit') ?>&<?= http_build_query($qs) ?>"><?= $lbl ?></a>
     <?php endforeach; ?>
+  </div>
 </form>
 
 <div class="card">
