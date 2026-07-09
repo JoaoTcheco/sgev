@@ -9,7 +9,7 @@ class SaleController extends Controller {
             flash('error', 'Abre uma sessão de caixa para começar a vender.');
             redirect('cash/open');
         }
-        $this->view('pdv/index', [
+        $this->render('pdv/index', [
             'session'   => $session,
             'customers' => CustomerModel::all(),
         ]);
@@ -78,7 +78,7 @@ class SaleController extends Controller {
         requireAuth();
         $sale = SaleModel::find($_GET['id'] ?? '');
         if (!$sale) { flash('error', 'Venda não encontrada.'); redirect('pdv'); }
-        $this->view('sales/receipt', [
+        $this->render('sales/receipt', [
             'sale'     => $sale,
             'items'    => SaleModel::items($sale['id']),
             'settings' => SettingModel::get(),

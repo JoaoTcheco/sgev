@@ -11,7 +11,7 @@ class SaleHistoryController extends Controller {
             'status'         => $_GET['status']         ?? '',
         ];
         $rows = SaleModel::history($filters);
-        $this->view('history/index', [
+        $this->render('history/index', [
             'items'     => $rows,
             'totals'    => SaleModel::historyTotals($rows),
             'filters'   => $filters,
@@ -23,7 +23,7 @@ class SaleHistoryController extends Controller {
         requireAuth();
         $sale = SaleModel::find($_GET['id'] ?? '');
         if (!$sale) { flash('error', 'Venda não encontrada.'); redirect('history'); }
-        $this->view('history/view', [
+        $this->render('history/view', [
             'sale'  => $sale,
             'items' => SaleModel::items($sale['id']),
         ]);

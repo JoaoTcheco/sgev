@@ -3,7 +3,7 @@
  * Controller base — render de views + JSON.
  */
 class Controller {
-    protected function view(string $view, array $data = [], string $layout = 'app'): void {
+    protected function render(string $view, array $data = [], string $layout = 'app'): void {
         extract($data);
         $viewFile   = APP_PATH . '/views/' . $view . '.php';
         $layoutFile = APP_PATH . '/views/layouts/' . $layout . '.php';

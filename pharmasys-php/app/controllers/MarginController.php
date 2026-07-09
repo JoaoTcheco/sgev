@@ -66,7 +66,7 @@ class MarginController extends Controller {
             else                $stats['good']++;
         }
 
-        $this->view('margins/index', [
+        $this->render('margins/index', [
             'rows'   => $rows,
             'stats'  => $stats,
             'good'   => $good,

@@ -14,7 +14,7 @@ class StockController extends Controller {
              GROUP BY p.id
              ORDER BY p.name'
         );
-        $this->view('stock/index', ['items' => $rows]);
+        $this->render('stock/index', ['items' => $rows]);
     }
 
     /** Detalhe de um produto: lotes + movimentos. */
@@ -22,7 +22,7 @@ class StockController extends Controller {
         requireAuth();
         $product = ProductModel::find($_GET['id'] ?? '');
         if (!$product) { flash('error', 'Produto não encontrado.'); redirect('stock'); }
-        $this->view('stock/view', [
+        $this->render('stock/view', [
             'product'   => $product,
             'batches'   => BatchModel::all(['product_id' => $product['id']]),
             'movements' => StockMovementModel::history($product['id'], 200),

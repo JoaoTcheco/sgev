@@ -14,7 +14,7 @@ class BackupController extends Controller {
             try { $r = Database::one("SELECT COUNT(*) c FROM `$t`"); $stats[$t] = (int)($r['c'] ?? 0); }
             catch (Throwable $e) { $stats[$t] = null; }
         }
-        $this->view('backup/index', [
+        $this->render('backup/index', [
             'stats'    => $stats,
             'dbName'   => config('db_name'),
             'products' => Database::one('SELECT COUNT(*) c FROM products WHERE active = 1')['c'] ?? 0,

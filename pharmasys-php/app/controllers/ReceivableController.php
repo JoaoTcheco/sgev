@@ -24,7 +24,7 @@ class ReceivableController extends Controller {
         ];
         $page = max(1, (int)($_GET['page'] ?? 1));
         $data = ReceivableModel::paginate($filters, $page, 25);
-        $this->view('receivables/index', [
+        $this->render('receivables/index', [
             'title'     => 'Contas a Receber',
             'data'      => $data,
             'filters'   => $filters,
@@ -38,7 +38,7 @@ class ReceivableController extends Controller {
         $id = $_GET['id'] ?? '';
         $item = $id ? ReceivableModel::find($id) : null;
         if ($id && !$item) { flash('error','Não encontrada.'); redirect('receivables'); }
-        $this->view('receivables/form', [
+        $this->render('receivables/form', [
             'title'     => $item ? 'Editar Conta a Receber' : 'Nova Conta a Receber',
             'item'      => $item,
             'customers' => CustomerModel::all(),
@@ -60,7 +60,7 @@ class ReceivableController extends Controller {
         $id = $_GET['id'] ?? '';
         $item = ReceivableModel::find($id);
         if (!$item) { flash('error','Não encontrada.'); redirect('receivables'); }
-        $this->view('receivables/view', [
+        $this->render('receivables/view', [
             'title'    => 'Conta a Receber — ' . $item['description'],
             'item'     => $item,
             'payments' => ReceivableModel::payments($id),

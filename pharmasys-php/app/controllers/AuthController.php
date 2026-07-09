@@ -6,7 +6,7 @@ class AuthController extends Controller {
 
     public function showLogin(): void {
         if (isAuthenticated()) redirect('dashboard');
-        $this->view('auth/login', [], 'auth');
+        $this->render('auth/login', [], 'auth');
     }
 
     public function login(): void {
@@ -48,6 +48,6 @@ class AuthController extends Controller {
 
     public function notFound(): void {
         http_response_code(404);
-        $this->view('errors/404', [], 'auth');
+        $this->render('errors/404', [], 'auth');
     }
 }

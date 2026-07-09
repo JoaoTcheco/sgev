@@ -2,7 +2,7 @@
 class AlertController extends Controller {
     public function index(): void {
         requireAuth();
-        $this->view('alerts/index', ['items' => AlertModel::open()]);
+        $this->render('alerts/index', ['items' => AlertModel::open()]);
     }
     public function refresh(): void {
         requireAuth(); csrfVerify();

@@ -24,7 +24,7 @@ class PayableController extends Controller {
         ];
         $page = max(1, (int)($_GET['page'] ?? 1));
         $data = PayableModel::paginate($filters, $page, 25);
-        $this->view('payables/index', [
+        $this->render('payables/index', [
             'title'     => 'Contas a Pagar',
             'data'      => $data,
             'filters'   => $filters,
@@ -38,7 +38,7 @@ class PayableController extends Controller {
         $id = $_GET['id'] ?? '';
         $item = $id ? PayableModel::find($id) : null;
         if ($id && !$item) { flash('error','Registo não encontrado.'); redirect('payables'); }
-        $this->view('payables/form', [
+        $this->render('payables/form', [
             'title'     => $item ? 'Editar Conta a Pagar' : 'Nova Conta a Pagar',
             'item'      => $item,
             'suppliers' => SupplierModel::all(),
@@ -60,7 +60,7 @@ class PayableController extends Controller {
         $id = $_GET['id'] ?? '';
         $item = PayableModel::find($id);
         if (!$item) { flash('error','Não encontrada.'); redirect('payables'); }
-        $this->view('payables/view', [
+        $this->render('payables/view', [
             'title'    => 'Conta a Pagar — ' . $item['description'],
             'item'     => $item,
             'payments' => PayableModel::payments($id),

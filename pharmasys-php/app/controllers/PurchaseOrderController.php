@@ -20,7 +20,7 @@ class PurchaseOrderController extends Controller {
         $page = max(1, (int)($_GET['page'] ?? 1));
         $result = PurchaseOrderModel::paginate($filters, $page, 25);
 
-        $this->view('purchases/index', [
+        $this->render('purchases/index', [
             'result'    => $result,
             'filters'   => $filters,
             'suppliers' => SupplierModel::all(),
@@ -41,7 +41,7 @@ class PurchaseOrderController extends Controller {
             }
             $items = PurchaseOrderModel::items($id);
         }
-        $this->view('purchases/form', [
+        $this->render('purchases/form', [
             'po'        => $po,
             'items'     => $items,
             'suppliers' => array_values(array_filter(SupplierModel::all(), fn($s)=>(int)$s['active']===1)),
@@ -88,7 +88,7 @@ class PurchaseOrderController extends Controller {
         $id = $_GET['id'] ?? '';
         $po = PurchaseOrderModel::find($id);
         if (!$po) { flash('error','OC não encontrada.'); redirect('purchases'); }
-        $this->view('purchases/view', [
+        $this->render('purchases/view', [
             'po'    => $po,
             'items' => PurchaseOrderModel::items($id),
         ]);
@@ -136,7 +136,7 @@ class PurchaseOrderController extends Controller {
             flash('error','Só ordens confirmadas podem ser recebidas.');
             redirect('purchases/view&id='.$id);
         }
-        $this->view('purchases/receive', [
+        $this->render('purchases/receive', [
             'po'    => $po,
             'items' => PurchaseOrderModel::items($id),
         ]);

@@ -4,7 +4,7 @@ class CashController extends Controller {
         requireAuth();
         FinancialAccountModel::ensureSystemAccounts();
         $current = CashSessionModel::current();
-        $this->view('cash/index', [
+        $this->render('cash/index', [
             'current'  => $current ? CashSessionModel::summary($current['id']) : null,
             'history'  => CashSessionModel::history(20),
             'accounts' => FinancialAccountModel::all(),
@@ -14,7 +14,7 @@ class CashController extends Controller {
     public function openForm(): void {
         requireAuth();
         if (CashSessionModel::current()) redirect('cash');
-        $this->view('cash/open');
+        $this->render('cash/open');
     }
 
     public function open(): void {
@@ -32,7 +32,7 @@ class CashController extends Controller {
         requireAuth();
         $current = CashSessionModel::current();
         if (!$current) { flash('error', 'Não há sessão aberta.'); redirect('cash'); }
-        $this->view('cash/close', ['session' => CashSessionModel::summary($current['id'])]);
+        $this->render('cash/close', ['session' => CashSessionModel::summary($current['id'])]);
     }
 
     public function close(): void {
@@ -52,6 +52,6 @@ class CashController extends Controller {
         requireAuth();
         $s = CashSessionModel::find($_GET['id'] ?? '');
         if (!$s) { flash('error', 'Sessão não encontrada.'); redirect('cash'); }
-        $this->view('cash/view', ['session' => CashSessionModel::summary($s['id'])]);
+        $this->render('cash/view', ['session' => CashSessionModel::summary($s['id'])]);
     }
 }

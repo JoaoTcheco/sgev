@@ -141,7 +141,7 @@ class DashboardController extends Controller {
             'expiring'      => $expiringSoon,
         ];
 
-        $this->view('dashboard/index', [
+        $this->render('dashboard/index', [
             'user'          => $u,
             'stats'         => $stats,
             'salesSeries'   => $salesSeries,

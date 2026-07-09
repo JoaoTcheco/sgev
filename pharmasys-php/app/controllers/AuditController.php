@@ -22,7 +22,7 @@ class AuditController extends Controller {
         $page = max(1, (int)($_GET['page'] ?? 1));
         $data = AuditLogModel::paginate($filters, $page, 50);
 
-        $this->view('audit/index', [
+        $this->render('audit/index', [
             'filters'  => $filters,
             'result'   => $data,
             'actions'  => AuditLogModel::distinctActions(),
@@ -50,7 +50,7 @@ class AuditController extends Controller {
 
         $related = $log['txn_id'] ? AuditLogModel::byTxn($log['txn_id']) : [];
 
-        $this->view('audit/view', [
+        $this->render('audit/view', [
             'log'     => $log,
             'related' => $related,
         ]);
