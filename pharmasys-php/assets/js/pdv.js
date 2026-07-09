@@ -396,5 +396,5 @@
   });
 
   render();
-  loadCatalog();
+  // Catálogo inicia em modo "categorias" (chamado por showCategoriesMode acima)
 })();
