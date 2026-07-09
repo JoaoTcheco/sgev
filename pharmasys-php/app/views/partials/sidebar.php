@@ -38,9 +38,13 @@
       <div class="nav-section">Compras</div>
       <a href="<?= url('purchases') ?>" class="nav-item <?= str_starts_with($r,'purchases') ? 'active' : '' ?>">Ordens de Compra</a>
 
+      <div class="nav-section">Financeiro</div>
+      <a href="<?= url('accounts') ?>"    class="nav-item <?= str_starts_with($r,'accounts')    ? 'active' : '' ?>">Contas Financeiras</a>
+      <a href="<?= url('payables') ?>"    class="nav-item <?= str_starts_with($r,'payables')    ? 'active' : '' ?>">Contas a Pagar</a>
+      <a href="<?= url('receivables') ?>" class="nav-item <?= str_starts_with($r,'receivables') ? 'active' : '' ?>">Contas a Receber</a>
+
       <div class="nav-section">Análise</div>
       <a href="<?= url('reports') ?>"  class="nav-item <?= str_starts_with($r,'reports')  ? 'active' : '' ?>">Relatórios</a>
-      <a href="<?= url('accounts') ?>" class="nav-item <?= str_starts_with($r,'accounts') ? 'active' : '' ?>">Contas Financeiras</a>
     <?php endif; ?>
 
     <?php if (hasRole('admin')): ?>
