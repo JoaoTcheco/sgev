@@ -1,45 +1,101 @@
-/* PharmaSys — Histórico */
+/* PharmaSys — Histórico de Vendas (Lovable teal) */
 .hist-filters {
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 10px; background: #fff; padding: 14px; border-radius: 10px;
-  border: 1px solid #e2e8f0; margin-bottom: 16px; align-items: end;
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+  background: #fff; padding: 16px;
+  border-radius: var(--radius-lg, 14px);
+  border: 1px solid var(--border, #e2e8f0);
+  margin-bottom: 18px; align-items: end;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, .04);
 }
-.hist-filters label { display: block; font-size: 11px; color: #64748b; margin-bottom: 3px; font-weight: 600; }
+.hist-filters label {
+  display: block; font-size: 11px; color: #64748b;
+  margin-bottom: 4px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: .04em;
+}
 .hist-filters input, .hist-filters select {
-  width: 100%; padding: 7px 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px;
+  width: 100%; padding: 9px 10px;
+  border: 1px solid #e2e8f0; border-radius: 8px; font-size: 13px;
+  transition: border-color .12s, box-shadow .12s;
+}
+.hist-filters input:focus, .hist-filters select:focus {
+  outline: 0; border-color: var(--primary, #0f766e);
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, .12);
 }
 
-.hist-totals { display: flex; gap: 20px; }
+.hist-totals { display: flex; gap: 24px; }
 .hist-totals div { text-align: right; }
-.hist-totals small { display: block; color: #64748b; font-size: 11px; }
-.hist-totals strong { font-size: 18px; }
+.hist-totals small {
+  display: block; color: #64748b; font-size: 11px;
+  text-transform: uppercase; letter-spacing: .04em; font-weight: 600;
+}
+.hist-totals strong { font-size: 20px; font-weight: 800; color: #0f172a; }
 .orange, .hist-totals strong.orange { color: #c2410c; }
 
-.hist-view-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+.hist-view-header {
+  display: flex; justify-content: space-between;
+  align-items: flex-start; margin-bottom: 14px;
+}
 .hist-view-actions { display: flex; gap: 8px; align-items: center; }
 
 .hist-totals-view {
-  background: #fff; border: 1px solid #e2e8f0; border-radius: 10px;
-  padding: 14px 18px; margin-top: 12px; max-width: 400px; margin-left: auto;
+  background: #fff; border: 1px solid var(--border, #e2e8f0);
+  border-radius: var(--radius-lg, 14px);
+  padding: 16px 20px; margin-top: 14px;
+  max-width: 420px; margin-left: auto;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, .04);
 }
-.hist-totals-view div { display: flex; justify-content: space-between; padding: 4px 0; }
-.hist-totals-view .grand { border-top: 2px solid #0f766e; margin-top: 6px; padding-top: 8px; font-size: 18px; }
-.hist-totals-view .grand strong { color: #0f766e; }
+.hist-totals-view div {
+  display: flex; justify-content: space-between;
+  padding: 5px 0; color: #475569; font-size: 14px;
+}
+.hist-totals-view div strong { color: #0f172a; font-weight: 600; }
+.hist-totals-view .grand {
+  border-top: 2px solid var(--primary, #0f766e);
+  margin-top: 8px; padding-top: 10px; font-size: 20px;
+}
+.hist-totals-view .grand strong { color: var(--primary, #0f766e); font-weight: 800; }
 
-.refund-inp { width: 55px; padding: 5px 6px; border: 1px solid #cbd5e1; border-radius: 4px; margin: 0 2px 2px 0; }
+.refund-inp {
+  width: 60px; padding: 6px 8px;
+  border: 1px solid #e2e8f0; border-radius: 6px;
+  margin: 0 2px 2px 0; text-align: center;
+}
+.refund-inp:focus {
+  outline: 0; border-color: var(--primary, #0f766e);
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, .12);
+}
 
 .refund-actions {
-  background: #fff7ed; border: 1px solid #fed7aa; border-radius: 10px;
-  padding: 16px; margin-top: 16px;
+  background: #fff7ed; border: 1px solid #fed7aa;
+  border-radius: var(--radius-lg, 14px);
+  padding: 18px; margin-top: 18px;
 }
-.refund-actions label { display: block; font-size: 12px; font-weight: 600; color: #7c2d12; margin-bottom: 4px; }
+.refund-actions label {
+  display: block; font-size: 12px; font-weight: 700; color: #7c2d12;
+  margin-bottom: 6px; text-transform: uppercase; letter-spacing: .04em;
+}
 .refund-actions input[name="reason"] {
-  width: 100%; padding: 8px; border: 1px solid #fdba74; border-radius: 6px; margin-bottom: 12px;
+  width: 100%; padding: 10px 12px;
+  border: 1px solid #fdba74; border-radius: 8px; margin-bottom: 14px;
+}
+.refund-actions input[name="reason"]:focus {
+  outline: 0; border-color: #ea580c;
+  box-shadow: 0 0 0 3px rgba(234, 88, 12, .15);
 }
 
-.hist-notes { margin-top: 20px; background: #f8fafc; padding: 12px; border-radius: 8px; }
-.hist-notes summary { cursor: pointer; font-weight: 600; color: #475569; }
-.hist-notes pre { margin-top: 8px; white-space: pre-wrap; font-family: inherit; font-size: 12px; color: #334155; }
+.hist-notes {
+  margin-top: 22px; background: #f8fafc;
+  padding: 14px; border-radius: 10px;
+  border: 1px solid #f1f5f9;
+}
+.hist-notes summary {
+  cursor: pointer; font-weight: 600; color: #475569; font-size: 13px;
+}
+.hist-notes pre {
+  margin-top: 10px; white-space: pre-wrap;
+  font-family: inherit; font-size: 13px; color: #334155;
+}
 
-.btn-danger { background: #dc2626; color: #fff; }
-.btn-danger:hover { background: #b91c1c; }
+.btn-danger { background: #dc2626; color: #fff; border-color: #dc2626; }
+.btn-danger:hover { background: #b91c1c; border-color: #b91c1c; color: #fff; }
