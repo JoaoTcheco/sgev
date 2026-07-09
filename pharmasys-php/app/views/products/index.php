@@ -41,6 +41,9 @@
           </td>
           <td class="actions">
             <a href="<?= url('products/edit') ?>&id=<?= e($p['id']) ?>" class="btn btn-sm">Editar</a>
+            <?php if (!empty($p['barcode'])): ?>
+              <a href="<?= url('labels/quick') ?>&id=<?= e($p['id']) ?>&qty=1" target="_blank" class="btn btn-sm" title="Imprimir etiqueta">🏷️</a>
+            <?php endif; ?>
             <form method="POST" action="<?= url('products/delete') ?>" onsubmit="return confirm('Remover?')" style="display:inline;">
               <?= csrfField() ?><input type="hidden" name="id" value="<?= e($p['id']) ?>">
               <button class="btn btn-sm btn-danger">×</button>

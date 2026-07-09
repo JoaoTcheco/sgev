@@ -61,6 +61,7 @@ $router->add('alerts/resolve',            'AlertController@resolve',    'POST', 
 // Etiquetas
 $router->add('labels',                    'LabelController@index',      'GET',  true);
 $router->add('labels/print',              'LabelController@print',      'POST', true);
+$router->add('labels/quick',              'LabelController@quick',      'GET',  true);
 
 // PDV / Vendas
 $router->add('pdv',                       'SaleController@pdv',         'GET',  true);

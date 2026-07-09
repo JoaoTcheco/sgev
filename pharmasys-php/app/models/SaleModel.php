@@ -70,12 +70,20 @@ class SaleModel {
             $account = FinancialAccountModel::findByType($paymentMethod);
 
             // 2) cabeçalho
+            $amountReceived = isset($data['amount_received']) && $data['amount_received'] !== ''
+                ? (float)$data['amount_received'] : null;
+            $changeAmount   = ($amountReceived !== null) ? max(0, $amountReceived - $total) : null;
+            $wallet         = $data['payment_wallet'] ?? null;
+            $paymentRef     = $data['payment_ref']    ?? null;
             Database::query(
                 'INSERT INTO sales (id, receipt_number, customer_id, user_id, cash_session_id, account_id,
-                                     subtotal, discount, total, payment_method, notes)
-                 VALUES (?,?,?,?,?,?,?,?,?,?,?)',
+                                     subtotal, discount, total, amount_received, change_amount,
+                                     payment_method, payment_wallet, payment_ref, notes)
+                 VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
                 [$saleId, $receipt, $data['customer_id'] ?: null, $userId, $session['id'],
-                 $account['id'] ?? null, $subtotal, $discount, $total, $paymentMethod, $data['notes'] ?? null]
+                 $account['id'] ?? null, $subtotal, $discount, $total,
+                 $amountReceived, $changeAmount,
+                 $paymentMethod, $wallet, $paymentRef, $data['notes'] ?? null]
             );
 
             // 3) items + consumo de stock
