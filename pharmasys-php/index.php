@@ -172,4 +172,25 @@ $router->add('receivables/receive','ReceivableController@receive', 'POST', true)
 $router->add('receivables/cancel', 'ReceivableController@cancel',  'POST', true);
 $router->add('receivables/delete', 'ReceivableController@delete',  'POST', true);
 
-$router->dispatch($_GET['r'] ?? '');
+try {
+    $router->dispatch($_GET['r'] ?? '');
+} catch (\Throwable $e) {
+    // Log detalhado; mensagem genérica ao utilizador (evita white-screen em produção).
+    if (function_exists('error_log')) {
+        error_log('[PharmaSys] ' . $e->getMessage() . ' @ ' . $e->getFile() . ':' . $e->getLine());
+    }
+    http_response_code(500);
+    $isDebug = defined('APP_DEBUG') && APP_DEBUG === true;
+    header('Content-Type: text/html; charset=utf-8');
+    echo '<!doctype html><meta charset="utf-8"><title>Erro — PharmaSys</title>';
+    echo '<div style="font-family:Inter,system-ui,sans-serif;max-width:640px;margin:80px auto;padding:32px;border:1px solid #e5e7eb;border-radius:14px;box-shadow:0 4px 12px rgba(15,118,110,.08)">';
+    echo '<h1 style="margin:0 0 12px;color:#0f766e;font-size:22px">Ocorreu um erro inesperado</h1>';
+    echo '<p style="color:#475569;margin:0 0 16px">O sistema não conseguiu concluir a operação. Se o problema persistir, contacte o administrador.</p>';
+    if ($isDebug) {
+        echo '<pre style="background:#0f172a;color:#f8fafc;padding:16px;border-radius:8px;overflow:auto;font-size:12px">'
+           . htmlspecialchars($e->getMessage() . "\n" . $e->getTraceAsString(), ENT_QUOTES, 'UTF-8')
+           . '</pre>';
+    }
+    echo '<a href="./" style="display:inline-block;margin-top:8px;padding:10px 16px;background:#0f766e;color:#fff;text-decoration:none;border-radius:8px;font-weight:600">← Voltar ao início</a>';
+    echo '</div>';
+}

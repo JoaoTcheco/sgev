@@ -314,4 +314,18 @@ Chaves primárias são UUID (`CHAR(36)`), gerados por `uuidv4()`, garantindo uni
 
 Software desenvolvido sob medida. Uso exclusivo do cliente contratante. Todos os direitos reservados.
 
-**Versão:** 1.14.0 · **Última actualização:** Julho 2026 · **Estado:** Produção
+**Versão:** 1.15.0 · **Última actualização:** Julho 2026 · **Estado:** Produção
+
+---
+
+## ✅ Revisão Final (v1.15.0 — Passo 10)
+
+Alinhamento visual completo com o design **Lovable-teal** (`#0f766e`) e endurecimento do front controller:
+
+- **`.htaccess`** — removido `ErrorDocument` com caminho absoluto (dependia do sub-directório). O 404 é agora tratado exclusivamente pelo router (`error/notfound`), tornando o pacote portátil entre `htdocs/`, `htdocs/pharmasys/` ou qualquer sub-pasta.
+- **`index.php`** — dispatch agora envolvido em `try/catch (\Throwable)` com página de erro estilizada (mesma linguagem visual do `install.php` e `login.php`), `error_log` estruturado e stack-trace só quando `APP_DEBUG === true`. Elimina white-screen em produção.
+- **CSS (25 módulos)** — todas as views (`pdv`, `crud`, `stock`, `purchases`, `ap_ar`, `cash`, `history`, `notifications`, `reports`, `audit`, `backup`, `margins`, `accounts`, `supplier_returns`, `app`) partilham tokens teal, `--radius-lg: 14px`, sombras suaves e hover-lift. `labels.css` e `receipt.css` mantidos neutros por serem específicos para impressão térmica.
+- **Layout global (`layouts/app.php`)** — favicon SVG inline (pílula com gradiente teal), `theme-color`, meta description, preload da Inter, header sticky 64px.
+- **`install.php` & `login.php`** — hero com logo SVG, stepper visual, inputs com focus-ring teal, botão primário em gradiente com sombra colorida.
+
+Nenhuma alteração de lógica de negócio, schema ou controllers — apenas apresentação e resiliência.
