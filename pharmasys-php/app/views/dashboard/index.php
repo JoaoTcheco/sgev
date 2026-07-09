@@ -188,10 +188,15 @@ SVG;
   <!-- ===== Gráficos ===== -->
   <div class="ds-charts">
     <div class="ds-card ds-card-lg">
-      <div class="ds-card-head">
+      <?php $range = ($seriesRange ?? 7) == 30 ? 30 : 7; ?>
+      <div class="ds-card-head" style="display:flex;justify-content:space-between;align-items:center;">
         <div>
-          <h2>Vendas — últimos 7 dias</h2>
+          <h2>Vendas — últimos <?= $range ?> dias</h2>
           <p>Faturação diária em MZN</p>
+        </div>
+        <div class="ds-range-toggle" style="display:inline-flex;gap:4px;background:#f1f5f4;border-radius:8px;padding:3px;">
+          <a href="<?= url('dashboard') ?>&range=7"  style="padding:6px 12px;border-radius:6px;text-decoration:none;font-size:12px;font-weight:600;<?= $range===7  ? 'background:#0f766e;color:#fff;' : 'color:#5a726c;' ?>">7d</a>
+          <a href="<?= url('dashboard') ?>&range=30" style="padding:6px 12px;border-radius:6px;text-decoration:none;font-size:12px;font-weight:600;<?= $range===30 ? 'background:#0f766e;color:#fff;' : 'color:#5a726c;' ?>">30d</a>
         </div>
       </div>
       <div class="ds-card-body ds-chart-wrap">
