@@ -1,0 +1,65 @@
+/* Accounts / Financial */
+.accounts .header-actions { display: flex; gap: .5rem; }
+
+.acc-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: .75rem;
+  margin: 1rem 0;
+}
+.acc-tile {
+  background: #fff; border: 1px solid #e5e7eb; border-radius: 10px;
+  padding: .9rem 1rem; display: flex; flex-direction: column; gap: .25rem;
+}
+.acc-tile .lbl { font-size: .78rem; color: #6b7280; text-transform: uppercase; letter-spacing: .04em; }
+.acc-tile .val { font-size: 1.35rem; font-weight: 700; color: #111827; }
+.acc-tile-accent { background: linear-gradient(135deg, #eef4ff, #f5f0ff); border-color: #dbe6ff; }
+
+.acc-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1rem;
+}
+.acc-card {
+  background: #fff; border: 1px solid #e5e7eb; border-radius: 12px;
+  padding: 1rem; display: flex; flex-direction: column; gap: .75rem;
+  transition: box-shadow .15s;
+}
+.acc-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,.06); }
+.acc-card.is-inactive { opacity: .6; background: #fafafa; }
+.acc-card-head { display: flex; justify-content: space-between; gap: .75rem; align-items: flex-start; }
+.acc-card h3 { margin: 0 0 .35rem; font-size: 1.05rem; color: #111827; }
+.acc-meta { display: flex; flex-wrap: wrap; gap: .25rem; }
+.acc-balance { font-size: 1.35rem; font-weight: 700; color: #059669; white-space: nowrap; }
+.acc-balance.neg { color: #dc2626; }
+.acc-notes { margin: 0; color: #6b7280; font-size: .85rem; }
+.acc-actions { display: flex; gap: .35rem; flex-wrap: wrap; margin-top: auto; }
+
+.chip {
+  display: inline-block; font-size: .7rem; padding: .18rem .5rem;
+  border-radius: 999px; background: #eef2ff; color: #3730a3; font-weight: 600;
+  text-transform: uppercase; letter-spacing: .03em;
+}
+.chip-muted { background: #f3f4f6; color: #6b7280; }
+.chip-off { background: #fee2e2; color: #991b1b; }
+.chip-pos { background: #d1fae5; color: #065f46; }
+.chip-neg { background: #fee2e2; color: #991b1b; }
+
+.acc-panels {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1rem 0;
+}
+@media (max-width: 900px) { .acc-panels { grid-template-columns: 1fr; } }
+.acc-filter, .acc-adjust {
+  background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: .75rem;
+  display: flex; gap: .5rem; align-items: end; flex-wrap: wrap;
+}
+.acc-filter label, .acc-adjust {
+  font-size: .8rem; color: #374151;
+}
+.acc-filter input, .acc-filter select,
+.acc-adjust input, .acc-adjust select {
+  display: block; margin-top: .2rem; padding: .35rem .5rem; border: 1px solid #d1d5db; border-radius: 6px;
+}
+.acc-adjust strong { align-self: center; margin-right: .25rem; }
+td.pos, .pos { color: #059669; }
+td.neg, .neg { color: #dc2626; }
