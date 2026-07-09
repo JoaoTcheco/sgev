@@ -1,0 +1,23 @@
+/* Backup & Import */
+.backup-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 1rem; margin-top: 1rem;
+}
+.backup-card {
+  background: #fff; border: 1px solid #e5e7eb; border-radius: 12px;
+  padding: 1.1rem 1.2rem; display: flex; flex-direction: column; gap: .75rem;
+}
+.backup-card h2 { margin: 0; font-size: 1.05rem; color: #111827; }
+.backup-card .hint { margin: 0; color: #6b7280; font-size: .85rem; line-height: 1.4; }
+.backup-card code { background: #f3f4f6; padding: .05rem .3rem; border-radius: 4px; font-size: .8rem; }
+.backup-card.danger { border-color: #fecaca; background: #fff5f5; }
+.backup-card.danger h2 { color: #b91c1c; }
+.backup-card form { display: flex; flex-direction: column; gap: .55rem; }
+.backup-card label { font-size: .82rem; color: #374151; display: block; }
+.backup-card input[type="file"], .backup-card input[type="text"], .backup-card input:not([type]) {
+  display: block; width: 100%; padding: .4rem .55rem;
+  border: 1px solid #d1d5db; border-radius: 6px; margin-top: .2rem;
+}
+.stats-table { width: 100%; border-collapse: collapse; font-size: .85rem; }
+.stats-table th, .stats-table td { padding: .3rem .5rem; border-bottom: 1px solid #f1f5f9; }
+.stats-table th { text-align: left; color: #6b7280; font-weight: 600; }
