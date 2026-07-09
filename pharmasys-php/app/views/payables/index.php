@@ -7,7 +7,8 @@ $statusLabels = ['open'=>'Em aberto','partial'=>'Parcial','paid'=>'Pago','cancel
       <h1 class="page-title">Contas a Pagar</h1>
       <p class="page-subtitle">Compromissos com fornecedores</p>
     </div>
-    <div class="header-actions">
+    <div class="header-actions" style="display:flex;gap:8px;">
+      <a href="<?= url('payables/export') ?>&<?= http_build_query($filters) ?>" class="btn btn-ghost">⬇ CSV</a>
       <a href="<?= url('payables/new') ?>" class="btn btn-primary">+ Nova conta</a>
     </div>
   </div>
