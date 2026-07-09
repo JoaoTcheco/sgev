@@ -24,8 +24,11 @@ class AlertController extends Controller {
     public function refresh(): void {
         requireAuth(); csrfVerify();
         $r = AlertModel::refresh();
-        flash('success', sprintf('Alertas recalculados: %d stock baixo, %d a expirar, %d expirados.',
-            $r['low_stock'], $r['expiring'], $r['expired']));
+        $n = NotificationModel::refresh();
+        flash('success', sprintf(
+            'Alertas recalculados: %d stock baixo, %d a expirar, %d expirados · %d notificação(ões) criada(s).',
+            $r['low_stock'], $r['expiring'], $r['expired'], (int)($n['created'] ?? 0)
+        ));
         redirect('alerts');
     }
 

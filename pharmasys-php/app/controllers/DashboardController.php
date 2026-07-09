@@ -4,6 +4,15 @@ class DashboardController extends Controller {
         requireAuth();
         $u = currentUser();
 
+        /* Auto-refresh de alertas + notificações (throttle: 5 min por sessão) */
+        $last = (int)($_SESSION['alerts_auto_refresh_at'] ?? 0);
+        if (time() - $last > 300) {
+            try { AlertModel::refresh(); NotificationModel::refresh(); }
+            catch (Throwable $e) { /* silencioso */ }
+            $_SESSION['alerts_auto_refresh_at'] = time();
+        }
+
+
         /* ============================================================
            KPIs — janelas: hoje, últimos 7 dias, últimos 30 dias
            ============================================================ */
