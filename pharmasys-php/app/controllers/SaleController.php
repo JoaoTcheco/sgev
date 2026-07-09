@@ -33,7 +33,7 @@ class SaleController extends Controller {
                     COALESCE((SELECT SUM(si.quantity) FROM sale_items si
                              JOIN sales s ON s.id = si.sale_id
                              WHERE si.product_id = p.id AND s.status='completed'
-                               AND s.sold_at >= (NOW() - INTERVAL 30 DAY)), 0) AS sold_30d
+                               AND s.created_at >= (NOW() - INTERVAL 30 DAY)), 0) AS sold_30d
              FROM products p
              LEFT JOIN categories c ON c.id = p.category_id
              LEFT JOIN batches b ON b.product_id = p.id
