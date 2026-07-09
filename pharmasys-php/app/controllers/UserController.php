@@ -64,4 +64,11 @@ class UserController extends Controller {
         flash('success', 'Utilizador desactivado.');
         redirect('users');
     }
+    public function activate(): void {
+        requireRole('admin'); csrfVerify();
+        $id = $_POST['id'] ?? '';
+        Database::query('UPDATE users SET active = 1 WHERE id = ?', [$id]);
+        flash('success', 'Utilizador reactivado.');
+        redirect('users');
+    }
 }

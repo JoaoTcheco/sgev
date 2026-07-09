@@ -8,6 +8,7 @@
   </div>
   <div class="page-actions">
     <a href="<?= url('audit/export') . '&' . http_build_query($filters) ?>" class="btn btn-outline">⬇ Exportar CSV</a>
+    <a href="<?= url('audit') . '&print=1&' . http_build_query($filters) ?>" target="_blank" class="btn btn-outline">🖨️ PDF</a>
   </div>
 </div>
 

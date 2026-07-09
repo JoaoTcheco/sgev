@@ -54,6 +54,7 @@ foreach ($ranges as $k=>$rg) {
     <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
       <button class="btn btn-primary">Filtrar</button>
       <a class="btn btn-ghost" href="<?= url('history/export') ?>&<?= http_build_query($filters) ?>">⬇ CSV</a>
+      <a class="btn btn-ghost" href="<?= url('history') ?>&print=1&<?= http_build_query($filters) ?>" target="_blank">🖨️ PDF</a>
       <a class="btn btn-ghost" href="<?= url('history') ?>">Limpar</a>
       <span style="width:1px;height:24px;background:var(--border);margin:0 4px;"></span>
       <?php foreach ($ranges as $k=>$rg):

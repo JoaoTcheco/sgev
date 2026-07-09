@@ -134,10 +134,10 @@ try { $notifCount = (int) NotificationModel::countUnread($u); } catch (Throwable
   </div>
 
   <div class="sb-footer">
-    <div class="sb-user">
+    <a href="<?= url('profile') ?>" class="sb-user" style="text-decoration:none;color:inherit;">
       <span class="sb-user-name"><?= e($u['full_name'] ?? 'Utilizador') ?></span>
-      <span class="sb-user-role"><?= e($u['role'] ?? '') ?></span>
-    </div>
+      <span class="sb-user-role"><?= e($u['role'] ?? '') ?> · Perfil</span>
+    </a>
     <a href="<?= url('logout') ?>" class="sb-logout"><?= $I['logout'] ?><span>Terminar sessão</span></a>
   </div>
 </aside>
