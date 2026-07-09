@@ -49,7 +49,8 @@ class SupplierReturnController extends Controller {
             'reason'      => $_POST['reason']      ?? 'other',
             'notes'       => trim($_POST['notes']  ?? ''),
         ];
-        $items = json_decode($_POST['items'] ?? '[]', true) ?: [];
+        $items = $_POST['items'] ?? [];
+        if (is_string($items)) $items = json_decode($items, true) ?: [];
         try {
             if ($id) {
                 SupplierReturnModel::update($id, $data, $items);
