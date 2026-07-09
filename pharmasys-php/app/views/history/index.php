@@ -51,9 +51,17 @@ foreach ($ranges as $k=>$rg) {
         <option value="refunded"       <?= $filters['status']==='refunded'?'selected':''       ?>>Estornada</option>
       </select>
     </div>
-    <div style="display:flex;gap:8px;">
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
       <button class="btn btn-primary">Filtrar</button>
       <a class="btn btn-ghost" href="<?= url('history/export') ?>&<?= http_build_query($filters) ?>">⬇ CSV</a>
+      <a class="btn btn-ghost" href="<?= url('history') ?>">Limpar</a>
+      <span style="width:1px;height:24px;background:var(--border);margin:0 4px;"></span>
+      <?php foreach ($ranges as $k=>$rg):
+        $qs = $filters; $qs['from']=$rg['from']; $qs['to']=$rg['to'];
+        $cls = $activeRange===$k ? 'btn btn-sm btn-primary' : 'btn btn-sm btn-ghost';
+      ?>
+        <a class="<?= $cls ?>" href="<?= url('history') ?>&<?= http_build_query($qs) ?>"><?= e($rg['label']) ?></a>
+      <?php endforeach; ?>
     </div>
   </form>
 
