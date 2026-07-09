@@ -40,6 +40,7 @@
       <div class="nav-section">Administração</div>
       <a href="<?= url('users') ?>"    class="nav-item <?= str_starts_with($r,'users')    ? 'active' : '' ?>">Utilizadores</a>
       <a href="<?= url('settings') ?>" class="nav-item <?= str_starts_with($r,'settings') ? 'active' : '' ?>">Configurações</a>
+      <a href="<?= url('audit') ?>"    class="nav-item <?= str_starts_with($r,'audit')    ? 'active' : '' ?>">Auditoria / Logs</a>
       <a href="<?= url('backup') ?>"   class="nav-item <?= str_starts_with($r,'backup')   ? 'active' : '' ?>">Backup / Importação</a>
     <?php endif; ?>
   </nav>
