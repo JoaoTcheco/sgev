@@ -10,9 +10,47 @@ class SaleController extends Controller {
             redirect('cash/open');
         }
         $this->render('pdv/index', [
-            'session'   => $session,
-            'customers' => CustomerModel::all(),
+            'session'    => $session,
+            'customers'  => CustomerModel::all(),
+            'categories' => CategoryModel::all(),
         ]);
+    }
+
+    /** Catálogo inicial do PDV (top-vendas + stock). */
+    public function browse(): void {
+        requireAuth();
+        $catId = $_GET['category'] ?? '';
+        $onlyStock = ($_GET['stock'] ?? '1') === '1';
+        $params = [];
+        $where = 'p.active = 1';
+        if ($catId !== '') { $where .= ' AND p.category_id = ?'; $params[] = $catId; }
+        $rows = Database::all(
+            "SELECT p.id, p.name, p.barcode, p.sub_barcode, p.unit, p.pack_size,
+                    p.sale_price, p.sub_unit_price, p.sub_unit_label, p.requires_prescription,
+                    p.category_id, c.name AS category_name,
+                    COALESCE(SUM(b.quantity), 0) AS stock,
+                    MIN(CASE WHEN b.quantity > 0 THEN b.expiry_date END) AS next_expiry,
+                    COALESCE((SELECT SUM(si.quantity) FROM sale_items si
+                             JOIN sales s ON s.id = si.sale_id
+                             WHERE si.product_id = p.id AND s.status='completed'
+                               AND s.sold_at >= (NOW() - INTERVAL 30 DAY)), 0) AS sold_30d
+             FROM products p
+             LEFT JOIN categories c ON c.id = p.category_id
+             LEFT JOIN batches b ON b.product_id = p.id
+             WHERE $where
+             GROUP BY p.id
+             ORDER BY sold_30d DESC, p.name
+             LIMIT 60",
+            $params
+        );
+        if ($onlyStock) $rows = array_values(array_filter($rows, fn($r) => (int)$r['stock'] > 0));
+        $today = strtotime('today');
+        foreach ($rows as &$r) {
+            $r['near_expiry'] = ($r['next_expiry'] && strtotime($r['next_expiry']) <= $today + 30*86400) ? 1 : 0;
+            $r['expired']     = ($r['next_expiry'] && strtotime($r['next_expiry']) <  $today) ? 1 : 0;
+            $r['match']       = 'pack';
+        }
+        $this->json($rows);
     }
 
     /** Pesquisa de produtos por nome ou código (AJAX). */
