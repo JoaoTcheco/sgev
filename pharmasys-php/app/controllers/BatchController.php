@@ -47,30 +47,40 @@ class BatchController extends Controller {
         }
 
         $txnId = uuidv4();
+        $newBatchId = null;
         try {
             Database::begin();
             if ($isEdit) {
                 BatchModel::update($_POST['id'], $data);
             } else {
-                $batchId = BatchModel::create($data, $txnId);
+                $newBatchId = BatchModel::create($data, $txnId);
                 StockMovementModel::record([
-                    'batch_id'     => $batchId,
+                    'batch_id'     => $newBatchId,
                     'product_id'   => $data['product_id'],
                     'type'         => 'in',
                     'quantity'     => $data['quantity'],
                     'reason'       => 'Entrada de mercadoria — lote ' . $data['batch_number'],
-                    'reference_id' => $batchId,
+                    'reference_id' => $newBatchId,
                 ], $txnId);
-                AuditLogModel::log('batch.create', 'batch', $batchId, $data, $txnId);
+                AuditLogModel::log('batch.create', 'batch', $newBatchId, $data, $txnId);
             }
             Database::commit();
             flash('success', $isEdit ? 'Lote actualizado.' : 'Entrada registada com sucesso.');
         } catch (Throwable $e) {
             Database::rollBack();
             flash('error', 'Erro: ' . $e->getMessage());
+            redirect('batches');
+        }
+
+        // Impressão automática de etiquetas após entrada nova
+        if (!$isEdit && $newBatchId && !empty($_POST['print_labels'])) {
+            redirect('labels/quick&id=' . urlencode($data['product_id'])
+                     . '&qty=' . (int)$data['quantity']
+                     . '&batch_id=' . urlencode($newBatchId));
         }
         redirect('batches');
     }
+
 
     /** Ajustar quantidade (perdas, quebras, contagem física). */
     public function adjust(): void {
