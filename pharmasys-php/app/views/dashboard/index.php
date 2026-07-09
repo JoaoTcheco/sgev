@@ -54,12 +54,14 @@ function ds_area_chart(array $series, int $w = 720, int $h = 220, int $pad = 28)
         $x = $pad + $i * $step;
         $xl .= "<text x=\"$x\" y=\"".($pad+$innerH+18)."\" text-anchor=\"middle\" font-size=\"11\" fill=\"#5a726c\">".htmlspecialchars($r['label'])."</text>";
     }
-    /* Marcadores + pontos */
+    /* Marcadores + pontos — quando > 14 pontos, esconde os círculos e mantém só a linha */
     $dots = '';
-    foreach ($pts as $i => $p) {
-        $val = number_format($series[$i]['total'], 2, ',', '.').' MT';
-        $dots .= "<g><circle cx=\"{$p[0]}\" cy=\"{$p[1]}\" r=\"4\" fill=\"#0f766e\" stroke=\"#fff\" stroke-width=\"2\">
-                  <title>{$series[$i]['ymd']} — $val</title></circle></g>";
+    if ($n <= 14) {
+        foreach ($pts as $i => $p) {
+            $val = number_format($series[$i]['total'], 2, ',', '.').' MT';
+            $dots .= "<g><circle cx=\"{$p[0]}\" cy=\"{$p[1]}\" r=\"4\" fill=\"#0f766e\" stroke=\"#fff\" stroke-width=\"2\">
+                      <title>{$series[$i]['ymd']} — $val</title></circle></g>";
+        }
     }
 
     return <<<SVG
