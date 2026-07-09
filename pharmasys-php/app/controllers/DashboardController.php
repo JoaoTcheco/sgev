@@ -63,27 +63,30 @@ class DashboardController extends Controller {
         )['c'] ?? 0);
 
         /* ============================================================
-           Série diária (7 dias) — vendas por dia
+           Série diária — 7 ou 30 dias (?range=7|30)
            ============================================================ */
+        $range = ((int)($_GET['range'] ?? 7) === 30) ? 30 : 7;
+        $dRange = date('Y-m-d', strtotime('-'.($range-1).' days'));
         $rowsSeries = Database::all(
             "SELECT DATE(created_at) d, COALESCE(SUM(total),0) t, COUNT(*) c
              FROM sales
              WHERE status <> 'refunded' AND DATE(created_at) >= ?
              GROUP BY DATE(created_at)",
-            [$d7]
+            [$dRange]
         );
         $map = [];
         foreach ($rowsSeries as $r) { $map[$r['d']] = $r; }
         $salesSeries = [];
-        for ($i = 6; $i >= 0; $i--) {
+        for ($i = $range - 1; $i >= 0; $i--) {
             $ymd = date('Y-m-d', strtotime("-$i days"));
             $salesSeries[] = [
                 'ymd'   => $ymd,
-                'label' => date('d/m', strtotime($ymd)),
+                'label' => date($range > 14 ? 'd' : 'd/m', strtotime($ymd)),
                 'total' => (float)($map[$ymd]['t'] ?? 0),
                 'count' => (int)($map[$ymd]['c'] ?? 0),
             ];
         }
+
 
         /* ============================================================
            Métodos de pagamento (7 dias)
