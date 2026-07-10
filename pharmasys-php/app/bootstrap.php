@@ -14,6 +14,9 @@ ini_set('session.use_strict_mode', 1);
 // Garante que o GC do PHP não apaga a sessão antes do tempo definido
 ini_set('session.gc_maxlifetime', $__sessLife);
 ini_set('session.cookie_lifetime', $__sessLife);
+// PERF: desliga o GC probabilístico (a varredura pode travar um request
+// do PDV por segundos quando calha). Limpeza é feita 1×/dia mais abaixo.
+ini_set('session.gc_probability', 0);
 session_set_cookie_params([
     'lifetime' => $__sessLife,
     'path'     => '/',
@@ -30,6 +33,15 @@ if (!empty($_SESSION['user'])) {
         'httponly' => true,
         'samesite' => 'Lax',
     ]);
+}
+
+
+// PERF: limpeza leve de ficheiros de sessão expirados — 1× por dia, em background.
+// Substitui o GC probabilístico do PHP (que travava requests).
+$__gcFlag = sys_get_temp_dir() . '/pharmasys_sess_gc.stamp';
+if (!file_exists($__gcFlag) || (time() - @filemtime($__gcFlag)) > 86400) {
+    @touch($__gcFlag);
+    @session_gc();
 }
 
 // Autoload + helpers
