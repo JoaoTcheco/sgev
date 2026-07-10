@@ -7,7 +7,7 @@
  */
 return [
     // ---------- BASE DE DADOS (LOCAL - XAMPP) ----------
-    'db_host'    => '127.0.0.1',
+    'db_host'    => '127.0.0.1;unix_socket=/tmp/mariadb/run/mysql.sock',
     'db_name'    => 'pharmasys',
     'db_user'    => 'root',
     'db_pass'    => '',
