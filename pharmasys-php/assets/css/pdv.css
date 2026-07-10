@@ -1,14 +1,20 @@
 /* PharmaSys — PDV (Lovable teal design) */
 .pdv {
   display: grid;
-  grid-template-columns: 1fr 440px;
+  grid-template-columns: 1fr 460px;
   gap: 18px;
   height: calc(100vh - 96px);
 }
 .hidden { display: none !important; }
 
 /* ============ LEFT ============ */
-.pdv-left { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.pdv-left { display: flex; flex-direction: column; gap: 14px; min-width: 0; min-height: 0; }
+.pdv-catalog { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+
+/* Painel direito: coluna com scroll interno para caber carrinho + steps */
+.pdv-right { display: flex; flex-direction: column; gap: 12px; min-height: 0; overflow-y: auto; }
+.pdv-right .pdv-cart { max-height: 42vh; }
+
 
 .pdv-searchbar { position: relative; }
 .pdv-searchbar input {

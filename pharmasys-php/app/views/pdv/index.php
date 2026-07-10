@@ -1,5 +1,5 @@
 <section class="pdv" data-csrf="<?= e($_SESSION['csrf'] ?? '') ?>">
-  <!-- ESQUERDA: pesquisa + catálogo + carrinho -->
+  <!-- ESQUERDA: pesquisa + catálogo (categorias → produtos) -->
   <div class="pdv-left">
     <div class="pdv-searchbar">
       <input type="text" id="pdv-search" placeholder="Pesquisar por nome ou ler código de barras…" autofocus>
@@ -33,23 +33,23 @@
         </div>
       </div>
     </div>
+  </div>
 
+  <!-- DIREITA: carrinho + stepper/pagamento -->
+  <aside class="pdv-right">
     <div class="pdv-cart">
       <div class="cart-header">
         <h3>Carrinho <span id="cart-count" class="cart-count">0</span></h3>
         <button type="button" id="cart-clear" class="btn btn-ghost btn-sm">Limpar</button>
       </div>
       <table class="cart-table">
-        <thead><tr><th>Produto</th><th>Un.</th><th>Preço</th><th style="width:110px;">Qtd.</th><th>Total</th><th></th></tr></thead>
+        <thead><tr><th>Produto</th><th>Un.</th><th>Preço</th><th style="width:96px;">Qtd.</th><th>Total</th><th></th></tr></thead>
         <tbody id="cart-body">
           <tr class="empty"><td colspan="6">Escaneie, pesquise ou clique num produto para começar.</td></tr>
         </tbody>
       </table>
     </div>
-  </div>
 
-  <!-- DIREITA: painel dinâmico (passos) -->
-  <aside class="pdv-right">
     <div class="pdv-session">
       <small>Caixa aberta desde</small>
       <strong><?= e(formatDateTime($session['opened_at'])) ?></strong>
