@@ -14,6 +14,9 @@ ini_set('session.use_strict_mode', 1);
 // Garante que o GC do PHP não apaga a sessão antes do tempo definido
 ini_set('session.gc_maxlifetime', $__sessLife);
 ini_set('session.cookie_lifetime', $__sessLife);
+// PERF: desliga o GC probabilístico (a varredura pode travar um request
+// do PDV por segundos quando calha). Limpeza é feita 1×/dia mais abaixo.
+ini_set('session.gc_probability', 0);
 session_set_cookie_params([
     'lifetime' => $__sessLife,
     'path'     => '/',
@@ -21,6 +24,11 @@ session_set_cookie_params([
     'samesite' => 'Lax',
 ]);
 session_start();
+
+// PERF CRÍTICA: liberta o lock da sessão logo após ler.
+// Sem isto, cliques rápidos no PDV (mesmo user) ficam em fila — session_start
+// bloqueia o próximo request até o anterior terminar. Reabrimos só p/ escrita.
+session_write_close();
 
 // Renova o cookie a cada request para não expirar enquanto o caixa estiver ativo
 if (!empty($_SESSION['user'])) {
@@ -30,6 +38,26 @@ if (!empty($_SESSION['user'])) {
         'httponly' => true,
         'samesite' => 'Lax',
     ]);
+}
+
+/**
+ * Helper: chama ANTES de escrever em $_SESSION (login, logout, flash, CSRF).
+ * Reabre a sessão bloqueando; fecha-se sozinha no fim do request.
+ */
+if (!function_exists('session_reopen')) {
+    function session_reopen(): void {
+        if (session_status() !== PHP_SESSION_ACTIVE) {
+            @session_start();
+        }
+    }
+}
+
+// PERF: limpeza leve de ficheiros de sessão expirados — 1× por dia, em background.
+// Substitui o GC probabilístico do PHP (que travava requests).
+$__gcFlag = sys_get_temp_dir() . '/pharmasys_sess_gc.stamp';
+if (!file_exists($__gcFlag) || (time() - @filemtime($__gcFlag)) > 86400) {
+    @touch($__gcFlag);
+    @session_gc();
 }
 
 // Autoload + helpers
