@@ -34,9 +34,7 @@
 
     <button class="auth-btn" type="submit">Entrar</button>
 
-    <p class="auth-hint">
-      Padrão: <strong>admin</strong> / <strong>PharmaAdmin@2026</strong>
-    </p>
+    <p class="auth-hint">Use as credenciais fornecidas pelo administrador.</p>
   </form>
 
   <p class="auth-footer">© <?= date('Y') ?> PharmaSys · Todos os direitos reservados</p>
