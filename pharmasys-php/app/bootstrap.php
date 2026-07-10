@@ -25,11 +25,6 @@ session_set_cookie_params([
 ]);
 session_start();
 
-// PERF CRÍTICA: liberta o lock da sessão logo após ler.
-// Sem isto, cliques rápidos no PDV (mesmo user) ficam em fila — session_start
-// bloqueia o próximo request até o anterior terminar. Reabrimos só p/ escrita.
-session_write_close();
-
 // Renova o cookie a cada request para não expirar enquanto o caixa estiver ativo
 if (!empty($_SESSION['user'])) {
     setcookie(session_name(), session_id(), [
@@ -40,17 +35,6 @@ if (!empty($_SESSION['user'])) {
     ]);
 }
 
-/**
- * Helper: chama ANTES de escrever em $_SESSION (login, logout, flash, CSRF).
- * Reabre a sessão bloqueando; fecha-se sozinha no fim do request.
- */
-if (!function_exists('session_reopen')) {
-    function session_reopen(): void {
-        if (session_status() !== PHP_SESSION_ACTIVE) {
-            @session_start();
-        }
-    }
-}
 
 // PERF: limpeza leve de ficheiros de sessão expirados — 1× por dia, em background.
 // Substitui o GC probabilístico do PHP (que travava requests).
