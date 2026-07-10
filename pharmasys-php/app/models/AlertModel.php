@@ -12,7 +12,9 @@ class AlertModel {
     }
 
     public static function countOpen(): int {
-        return (int)(Database::one('SELECT COUNT(*) c FROM alerts WHERE resolved = 0')['c'] ?? 0);
+        static $c = null;
+        if ($c !== null) return $c;
+        return $c = (int)(Database::one('SELECT COUNT(*) c FROM alerts WHERE resolved = 0')['c'] ?? 0);
     }
 
     public static function resolve(string $id): void {
