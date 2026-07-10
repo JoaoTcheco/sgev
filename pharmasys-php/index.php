@@ -6,6 +6,9 @@ define('ROOT_PATH', __DIR__);
 define('APP_PATH', __DIR__ . '/app');
 define('ASSETS_URL', './assets');
 
+// Compressão + output buffering (envia HTML mais rápido, reduz bytes ~70%).
+if (!ob_start('ob_gzhandler')) ob_start();
+
 require APP_PATH . '/bootstrap.php';
 
 $router = new Router();
