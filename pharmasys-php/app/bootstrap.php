@@ -84,7 +84,9 @@ if (empty($_SESSION['__boot_migrated'])) {
     } catch (Throwable $e) { /* tabela ainda não existe: instalador irá criar */ }
 
     UserModel::ensureAdmin();
+    session_reopen();
     $_SESSION['__boot_migrated'] = 1;
+    session_write_close();
 }
 
 // Config disponível globalmente
