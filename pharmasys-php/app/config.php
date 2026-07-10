@@ -32,7 +32,8 @@ return [
     'currency_symbol' => 'MT',
 
     // ---------- SEGURANÇA ----------
-    'session_lifetime'    => 3600,
+    // 12 horas — o caixa pode ficar aberto o turno inteiro sem ser deslogado
+    'session_lifetime'    => 12 * 3600,
     'csrf_token_name'     => 'csrf_token',
     'password_min_length' => 8,
     'login_attempts'      => 5,
