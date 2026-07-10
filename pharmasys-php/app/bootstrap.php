@@ -7,16 +7,30 @@ $CONFIG = require APP_PATH . '/config.php';
 // Fuso horário
 date_default_timezone_set($CONFIG['timezone']);
 
-// Sessão segura
+// Sessão segura — dura o turno inteiro (12h por defeito, ver config.php)
+$__sessLife = (int)($CONFIG['session_lifetime'] ?? 43200);
 ini_set('session.cookie_httponly', 1);
 ini_set('session.use_strict_mode', 1);
+// Garante que o GC do PHP não apaga a sessão antes do tempo definido
+ini_set('session.gc_maxlifetime', $__sessLife);
+ini_set('session.cookie_lifetime', $__sessLife);
 session_set_cookie_params([
-    'lifetime' => $CONFIG['session_lifetime'],
+    'lifetime' => $__sessLife,
     'path'     => '/',
     'httponly' => true,
     'samesite' => 'Lax',
 ]);
 session_start();
+
+// Renova o cookie a cada request para não expirar enquanto o caixa estiver ativo
+if (!empty($_SESSION['user'])) {
+    setcookie(session_name(), session_id(), [
+        'expires'  => time() + $__sessLife,
+        'path'     => '/',
+        'httponly' => true,
+        'samesite' => 'Lax',
+    ]);
+}
 
 // Autoload + helpers
 require APP_PATH . '/core/Autoload.php';
