@@ -24,24 +24,26 @@ require APP_PATH . '/core/Autoload.php';
 // PDO singleton pronto a usar
 Database::init($CONFIG);
 
-// Micro-migrações idempotentes (colunas novas em instalações antigas)
-try {
-    $cols  = Database::all("SHOW COLUMNS FROM pharmacy_settings");
-    $names = array_column($cols, 'Field');
-    $migrations = [
-        'label_gap_mm'      => "ALTER TABLE pharmacy_settings ADD COLUMN label_gap_mm INT NOT NULL DEFAULT 3",
-        'label_show_price'  => "ALTER TABLE pharmacy_settings ADD COLUMN label_show_price TINYINT(1) NOT NULL DEFAULT 1",
-        'label_show_cost'   => "ALTER TABLE pharmacy_settings ADD COLUMN label_show_cost TINYINT(1) NOT NULL DEFAULT 0",
-        'label_show_batch'  => "ALTER TABLE pharmacy_settings ADD COLUMN label_show_batch TINYINT(1) NOT NULL DEFAULT 1",
-        'label_show_expiry' => "ALTER TABLE pharmacy_settings ADD COLUMN label_show_expiry TINYINT(1) NOT NULL DEFAULT 1",
-    ];
-    foreach ($migrations as $col => $sql) {
-        if (!in_array($col, $names, true)) Database::query($sql);
-    }
-} catch (Throwable $e) { /* tabela ainda não existe: instalador irá criar */ }
+// Micro-migrações + admin inicial: executam apenas 1× por sessão (perf)
+if (empty($_SESSION['__boot_migrated'])) {
+    try {
+        $cols  = Database::all("SHOW COLUMNS FROM pharmacy_settings");
+        $names = array_column($cols, 'Field');
+        $migrations = [
+            'label_gap_mm'      => "ALTER TABLE pharmacy_settings ADD COLUMN label_gap_mm INT NOT NULL DEFAULT 3",
+            'label_show_price'  => "ALTER TABLE pharmacy_settings ADD COLUMN label_show_price TINYINT(1) NOT NULL DEFAULT 1",
+            'label_show_cost'   => "ALTER TABLE pharmacy_settings ADD COLUMN label_show_cost TINYINT(1) NOT NULL DEFAULT 0",
+            'label_show_batch'  => "ALTER TABLE pharmacy_settings ADD COLUMN label_show_batch TINYINT(1) NOT NULL DEFAULT 1",
+            'label_show_expiry' => "ALTER TABLE pharmacy_settings ADD COLUMN label_show_expiry TINYINT(1) NOT NULL DEFAULT 1",
+        ];
+        foreach ($migrations as $col => $sql) {
+            if (!in_array($col, $names, true)) Database::query($sql);
+        }
+    } catch (Throwable $e) { /* tabela ainda não existe: instalador irá criar */ }
 
-// Garantir admin inicial (recria se seed do SQL falhar)
-UserModel::ensureAdmin();
+    UserModel::ensureAdmin();
+    $_SESSION['__boot_migrated'] = 1;
+}
 
 // Config disponível globalmente
 $GLOBALS['CONFIG'] = $CONFIG;

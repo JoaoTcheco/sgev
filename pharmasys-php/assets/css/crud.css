@@ -96,34 +96,7 @@
   margin-top: 24px; padding-top: 18px; border-top: 1px solid #f1f5f9;
 }
 
-/* ============ Buttons ============ */
-.btn {
-  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-  padding: 9px 16px; border-radius: 8px;
-  border: 1px solid #e2e8f0;
-  font-size: 13px; font-weight: 600; cursor: pointer;
-  background: #fff; color: #475569;
-  text-decoration: none; transition: all .15s;
-  line-height: 1.2;
-}
-.btn:hover { background: #f8fafc; color: #0f172a; border-color: #cbd5e1; }
-.btn-primary {
-  background: var(--primary, #0f766e);
-  border-color: var(--primary, #0f766e);
-  color: #fff;
-  box-shadow: 0 2px 8px rgba(15, 118, 110, .2);
-}
-.btn-primary:hover {
-  background: #0d5f5a; border-color: #0d5f5a; color: #fff;
-  box-shadow: 0 4px 12px rgba(15, 118, 110, .3);
-}
-.btn-danger {
-  background: #fff; border-color: #fecaca; color: #dc2626;
-}
-.btn-danger:hover { background: #fef2f2; border-color: #fca5a5; color: #b91c1c; }
-.btn-ghost { background: transparent; border-color: #e2e8f0; color: #475569; }
-.btn-ghost:hover { background: #f8fafc; }
-.btn-sm { padding: 6px 10px; font-size: 12px; border-radius: 6px; }
+/* Buttons definidos globalmente em app.css */
 
 /* ============ Tables ============ */
 .table-search {
