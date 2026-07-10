@@ -233,3 +233,38 @@ input:focus, select:focus, textarea:focus {
 input:disabled, select:disabled, textarea:disabled { background: var(--muted); cursor: not-allowed; }
 
 /* Cache HTTP para assets estáticos: tratado pelo servidor; aqui garantimos consistência visual */
+
+/* ================================================================
+   Animações globais — entrada suave de páginas e cartões
+   ================================================================ */
+@keyframes appFadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.app-content { animation: appFadeIn .28s ease-out; }
+
+/* Micro-interação em cartões / linhas clicáveis */
+.card, .crud-card, .kpi-card, .dash-card {
+  transition: transform .15s ease, box-shadow .2s ease, border-color .15s ease;
+}
+.card:hover, .crud-card:hover, .kpi-card:hover, .dash-card:hover {
+  box-shadow: var(--shadow);
+}
+
+/* Cabeçalho de página + acções (padrão para todas as listagens) */
+.page-actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+
+/* Ripple/press feedback em qualquer <button> sem classe .btn */
+button:not(.btn):not(.flash-close):not([class*="wallet"]):not([class*="pt-opt"]) {
+  font-family: inherit;
+  transition: filter .12s ease, transform .05s ease;
+}
+button:not(.btn):not(.flash-close):active { transform: translateY(1px); }
+
+/* Foco acessível em links dentro do conteúdo */
+.app-content a:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
