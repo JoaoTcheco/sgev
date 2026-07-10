@@ -62,12 +62,16 @@ class NotificationModel {
     }
 
     public static function countUnread(array $u): int {
+        // Cache por request — sidebar + header chamam o mesmo count no mesmo pedido.
+        static $cache = [];
+        $key = ($u['id'] ?? '') . '|' . ($u['role'] ?? '');
+        if (isset($cache[$key])) return $cache[$key];
         [$w, $p] = self::visibleWhere($u);
         $r = Database::one(
             "SELECT COUNT(*) c FROM notifications n
              WHERE $w AND n.read_at IS NULL", $p
         );
-        return (int)($r['c'] ?? 0);
+        return $cache[$key] = (int)($r['c'] ?? 0);
     }
 
     public static function paginate(array $u, array $f = [], int $page = 1, int $per = 30): array {
