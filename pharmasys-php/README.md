@@ -202,7 +202,7 @@ Fluxo `draft → confirmed`. Ao confirmar: debita stock (lote escolhido ou FEFO)
 
 ## 🗄️ Modelo de Dados (`database.sql`)
 
-Base única, 27 tabelas, todas InnoDB / utf8mb4, com FKs, índices e chaves compostas onde necessário.
+Base única, 26 tabelas, todas InnoDB / utf8mb4, com FKs, índices e chaves compostas onde necessário.
 
 | Grupo | Tabelas |
 |---|---|
@@ -385,7 +385,7 @@ Guards centralizados em `index.php` (`$router->add(..., [$roles])`) e reforçado
 
 Software desenvolvido sob medida. Uso exclusivo do cliente contratante. Todos os direitos reservados.
 
-**Versão:** 1.17.0 · **Última actualização:** Julho 2026 · **Estado:** Produção
+**Versão:** 1.17.1 · **Última actualização:** Julho 2026 · **Estado:** Produção
 
 ---
 
@@ -400,6 +400,7 @@ Software desenvolvido sob medida. Uso exclusivo do cliente contratante. Todos os
 | 12 | Atalhos "Hoje / 7d / 30d / Mês" em Auditoria e movimentos de contas. |
 | 13 | Histórico de Vendas com **totais por método de pagamento** e KPI de líquido. |
 | 14 | CRUD Utilizadores completo (activar/desactivar) + Página de Perfil + Exportação PDF universal via impressão (`&print=1`). |
-| **15** | **PDV com fluxo hierárquico**: grelha de categorias primeiro, depois produtos da categoria seleccionada (novo endpoint `sales/categories`, botão "← Categorias", contador de produtos, bucket "Sem categoria"). |
+| 15 | **PDV com fluxo hierárquico**: grelha de categorias primeiro, depois produtos da categoria seleccionada (endpoint `sales/categories`, botão "← Categorias", contador de produtos, bucket "Sem categoria"). |
+| **15.1** | **Layout do PDV alinhado ao Lovable**: catálogo à esquerda (`1fr`), carrinho + pagamento à direita (`440px`, idêntico ao `grid-cols-[1fr_440px]` do Lovable). |
 
-Todos os ficheiros PHP passam `php -l` sem erros. Todas as tabelas referenciadas pelos models existem em `database.sql`. Paridade visual e funcional com o protótipo Lovable mantida.
+Todos os ficheiros PHP passam `php -l` sem erros. Todas as 26 tabelas referenciadas pelos models existem em `database.sql`. Paridade visual e funcional com o protótipo Lovable mantida.
