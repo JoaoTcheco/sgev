@@ -323,6 +323,15 @@ class SupplierReturnModel {
                 ['sr_number'=>$sr['sr_number'],'total'=>(float)$sr['total'],'credit_payable_id'=>$creditId], $txn);
 
             Database::commit();
+            // Devolução ao fornecedor debita stock — pode disparar alerta de stock baixo.
+            try {
+                $seen = [];
+                foreach ($items as $it) {
+                    if (isset($seen[$it['product_id']])) continue;
+                    $seen[$it['product_id']] = true;
+                    AlertModel::checkProduct($it['product_id']);
+                }
+            } catch (Throwable $ignore) {}
         } catch (Throwable $e) {
             Database::rollBack();
             throw $e;
