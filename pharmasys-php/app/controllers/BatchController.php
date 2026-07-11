@@ -65,6 +65,7 @@ class BatchController extends Controller {
                 AuditLogModel::log('batch.create', 'batch', $newBatchId, $data, $txnId);
             }
             Database::commit();
+            try { AlertModel::checkProduct($data['product_id']); } catch (Throwable $ignore) {}
             flash('success', $isEdit ? 'Lote actualizado.' : 'Entrada registada com sucesso.');
         } catch (Throwable $e) {
             Database::rollBack();
