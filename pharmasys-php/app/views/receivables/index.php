@@ -58,7 +58,7 @@ $statusLabels = ['open'=>'Em aberto','partial'=>'Parcial','paid'=>'Recebido','ca
               <?php if ($isOverdue): ?><span class="chip chip-danger">+<?= abs((int)$p['days_to_due']) ?>d</span>
               <?php elseif ($isSoon): ?><span class="chip chip-warning"><?= (int)$p['days_to_due'] ?>d</span><?php endif; ?>
             </td>
-            <td><?= e($p['customer_name'] ?? '—') ?><?php if ($p['receipt_number']): ?><br><small><?= e($p['receipt_number']) ?></small><?php endif; ?></td>
+            <td><?= e($p['receipt_number'] ?? '—') ?></td>
             <td><?= e($p['description']) ?></td>
             <td class="right"><?= formatMZN($p['amount']) ?></td>
             <td class="right"><?= formatMZN($p['paid_amount']) ?></td>
