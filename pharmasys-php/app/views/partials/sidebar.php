@@ -94,7 +94,6 @@ try { $alertCount = (int) AlertModel::countOpen(); } catch (Throwable $e) {}
       <div class="sb-group">
         <div class="sb-group-label">Compras</div>
         <ul class="sb-menu">
-          <?= sb_item(url('purchases'),        'Ordens de Compra',        $I['basket'], str_starts_with($r,'purchases')) ?>
           <?= sb_item(url('supplier-returns'), 'Devoluções a Fornecedor', $I['return'], str_starts_with($r,'supplier-returns')) ?>
         </ul>
       </div>
