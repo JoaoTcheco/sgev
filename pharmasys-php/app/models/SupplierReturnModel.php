@@ -303,9 +303,9 @@ class SupplierReturnModel {
             $desc = 'Crédito por devolução '.$sr['sr_number'];
             Database::query(
                 'INSERT INTO payables
-                 (id, supplier_id, po_id, description, amount, issue_date, due_date, notes, status, created_by)
-                 VALUES (?,?,?,?,?,?,?,?, "open", ?)',
-                [$creditId, $sr['supplier_id'], $sr['po_id'],
+                 (id, supplier_id, description, amount, issue_date, due_date, notes, status, created_by)
+                 VALUES (?,?,?,?,?,?,?, "open", ?)',
+                [$creditId, $sr['supplier_id'],
                  $desc, -1 * (float)$sr['total'],
                  date('Y-m-d'), date('Y-m-d'),
                  'Gerado automaticamente pela devolução '.$sr['sr_number'],
