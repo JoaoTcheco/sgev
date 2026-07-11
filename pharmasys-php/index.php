@@ -88,17 +88,8 @@ $router->add('labels',           'LabelController@index',     'GET', true, $MGR)
 $router->add('labels/print',     'LabelController@print',     'POST',true, $MGR);
 $router->add('labels/quick',     'LabelController@quick',     'GET', true, $MGR);
 
-// Compras
-$router->add('purchases',            'PurchaseOrderController@index',        'GET', true, $MGR);
-$router->add('purchases/new',        'PurchaseOrderController@form',         'GET', true, $MGR);
-$router->add('purchases/edit',       'PurchaseOrderController@form',         'GET', true, $MGR);
-$router->add('purchases/save',       'PurchaseOrderController@save',         'POST',true, $MGR);
-$router->add('purchases/view',       'PurchaseOrderController@view',         'GET', true, $MGR);
-$router->add('purchases/confirm',    'PurchaseOrderController@confirm',      'POST',true, $MGR);
-$router->add('purchases/cancel',     'PurchaseOrderController@cancel',       'POST',true, $MGR);
-$router->add('purchases/delete',     'PurchaseOrderController@delete',       'POST',true, $MGR);
-$router->add('purchases/receive',    'PurchaseOrderController@receiveForm',  'GET', true, $MGR);
-$router->add('purchases/receive/submit','PurchaseOrderController@receive',   'POST',true, $MGR);
+
+
 
 // Devoluções a Fornecedor
 $router->add('supplier-returns',         'SupplierReturnController@index',   'GET', true, $MGR);
