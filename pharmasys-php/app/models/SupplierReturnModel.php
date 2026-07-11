@@ -125,9 +125,9 @@ class SupplierReturnModel {
 
             Database::query(
                 'INSERT INTO supplier_returns
-                 (id, sr_number, supplier_id, po_id, user_id, status, reason, subtotal, total, notes)
-                 VALUES (?,?,?,?,?, "draft", ?,?,?,?)',
-                [$id, $number, $d['supplier_id'], $d['po_id'] ?: null,
+                 (id, sr_number, supplier_id, user_id, status, reason, subtotal, total, notes)
+                 VALUES (?,?,?,?, "draft", ?,?,?,?)',
+                [$id, $number, $d['supplier_id'],
                  currentUser()['id'] ?? null,
                  $d['reason'] ?: 'other', $sub, $total, $d['notes'] ?: null]
             );
