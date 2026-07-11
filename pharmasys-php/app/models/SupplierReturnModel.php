@@ -55,12 +55,11 @@ class SupplierReturnModel {
         $off = ($page-1)*$per;
 
         $rows = Database::all(
-            "SELECT sr.*, s.legal_name AS supplier_name, u.full_name AS user_name, po.po_number,
+            "SELECT sr.*, s.legal_name AS supplier_name, u.full_name AS user_name,
                     (SELECT COUNT(*) FROM supplier_return_items i WHERE i.sr_id = sr.id) AS item_count
              FROM supplier_returns sr
-             LEFT JOIN suppliers s        ON s.id  = sr.supplier_id
-             LEFT JOIN users u            ON u.id  = sr.user_id
-             LEFT JOIN purchase_orders po ON po.id = sr.po_id
+             LEFT JOIN suppliers s ON s.id = sr.supplier_id
+             LEFT JOIN users u     ON u.id = sr.user_id
              WHERE $where
              ORDER BY sr.created_at DESC
              LIMIT $per OFFSET $off", $p
