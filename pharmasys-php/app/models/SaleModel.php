@@ -161,20 +161,18 @@ class SaleModel {
         return Database::all('SELECT * FROM sale_items WHERE sale_id = ? ORDER BY created_at', [$saleId]);
     }
 
-    /** Histórico com filtros: from, to, receipt, customer_id, payment_method, status, user_id. */
+    /** Histórico com filtros: from, to, receipt, payment_method, status, user_id. */
     public static function history(array $f = []): array {
-        $sql = 'SELECT s.*, c.name AS customer_name, u.full_name AS user_name,
+        $sql = 'SELECT s.*, u.full_name AS user_name,
                        (SELECT COALESCE(SUM(quantity),0)     FROM sale_items WHERE sale_id = s.id) AS total_qty,
                        (SELECT COALESCE(SUM(refunded_qty),0) FROM sale_items WHERE sale_id = s.id) AS refunded_qty
                 FROM sales s
-                LEFT JOIN customers c ON c.id = s.customer_id
-                LEFT JOIN users u     ON u.id = s.user_id
+                LEFT JOIN users u ON u.id = s.user_id
                 WHERE 1=1';
         $p = [];
         if (!empty($f['from']))           { $sql .= ' AND s.created_at >= ?'; $p[] = $f['from'] . ' 00:00:00'; }
         if (!empty($f['to']))             { $sql .= ' AND s.created_at <= ?'; $p[] = $f['to']   . ' 23:59:59'; }
         if (!empty($f['receipt']))        { $sql .= ' AND s.receipt_number LIKE ?'; $p[] = '%' . $f['receipt'] . '%'; }
-        if (!empty($f['customer_id']))    { $sql .= ' AND s.customer_id = ?'; $p[] = $f['customer_id']; }
         if (!empty($f['payment_method'])) { $sql .= ' AND s.payment_method = ?'; $p[] = $f['payment_method']; }
         if (!empty($f['status']))         { $sql .= ' AND s.status = ?'; $p[] = $f['status']; }
         if (!empty($f['user_id']))        { $sql .= ' AND s.user_id = ?'; $p[] = $f['user_id']; }
