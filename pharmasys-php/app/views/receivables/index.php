@@ -29,12 +29,6 @@ $statusLabels = ['open'=>'Em aberto','partial'=>'Parcial','paid'=>'Recebido','ca
         <option value="<?= $k ?>" <?= $filters['status']===$k?'selected':'' ?>><?= $v ?></option>
       <?php endforeach; ?>
     </select>
-    <select name="customer_id">
-      <option value="">Todos os clientes</option>
-      <?php foreach ($customers as $c): ?>
-        <option value="<?= e($c['id']) ?>" <?= $filters['customer_id']===$c['id']?'selected':'' ?>><?= e($c['full_name']) ?></option>
-      <?php endforeach; ?>
-    </select>
     <input type="date" name="due_from" value="<?= e($filters['due_from']) ?>">
     <input type="date" name="due_to"   value="<?= e($filters['due_to']) ?>">
     <label class="chk"><input type="checkbox" name="overdue" value="1" <?= $filters['overdue']?'checked':'' ?>> Só vencidas</label>
