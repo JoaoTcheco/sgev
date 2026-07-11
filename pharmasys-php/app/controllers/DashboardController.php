@@ -61,9 +61,8 @@ class DashboardController extends Controller {
              FROM alerts WHERE resolved = 0"
         ) ?: ['total'=>0,'critical'=>0,'low_stock'=>0,'expiry'=>0];
 
-        // Produtos activos, clientes, lotes a expirar (60d)
+        // Produtos activos, lotes a expirar (60d)
         $productsActive  = (int)(Database::one("SELECT COUNT(*) c FROM products WHERE active = 1")['c'] ?? 0);
-        $customersCount  = (int)(Database::one("SELECT COUNT(*) c FROM customers")['c'] ?? 0);
         $expiringSoon    = (int)(Database::one(
             "SELECT COUNT(*) c FROM batches
              WHERE quantity > 0
