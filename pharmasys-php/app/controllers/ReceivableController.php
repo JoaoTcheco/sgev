@@ -103,7 +103,7 @@ class ReceivableController extends Controller {
         $filters = [
             'q'           => trim($_GET['q']           ?? ''),
             'status'      => trim($_GET['status']      ?? ''),
-            'customer_id' => trim($_GET['customer_id'] ?? ''),
+            
             'due_from'    => trim($_GET['due_from']    ?? ''),
             'due_to'      => trim($_GET['due_to']      ?? ''),
             'overdue'     => trim($_GET['overdue']     ?? ''),
