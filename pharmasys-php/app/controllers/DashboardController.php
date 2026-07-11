@@ -148,7 +148,7 @@ class DashboardController extends Controller {
             'alerts_low'    => (int)$rowAlerts['low_stock'],
             'alerts_exp'    => (int)$rowAlerts['expiry'],
             'products'      => $productsActive,
-            'customers'     => $customersCount,
+            
             'expiring'      => $expiringSoon,
         ];
 
