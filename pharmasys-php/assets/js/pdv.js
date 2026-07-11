@@ -306,15 +306,27 @@
       btnGotoReview.disabled = false;
     }
   };
+  // Auto-selecionar conta correspondente ao tipo de pagamento (o operador pode alterar).
+  const suggestAccountFor = (methodType) => {
+    if (!accountSel) return;
+    const opt = [...accountSel.options].find(o => o.dataset.type === methodType);
+    if (opt) accountSel.value = opt.value;
+  };
   document.querySelectorAll('input[name="pay_type"]').forEach(r => {
     r.addEventListener('change', () => {
       const isCash = currentPayType() === 'cash';
       blockCash.classList.toggle('hidden', !isCash);
       blockElec.classList.toggle('hidden',  isCash);
+      suggestAccountFor(isCash ? 'cash' : (document.querySelector('input[name="wallet"]:checked')?.value || 'mpesa'));
       validatePayStep();
       if (isCash) amountRecv.focus();
     });
   });
+  document.querySelectorAll('input[name="wallet"]').forEach(r => {
+    r.addEventListener('change', () => suggestAccountFor(r.value));
+  });
+  // Sugestão inicial
+  suggestAccountFor('cash');
   amountRecv.addEventListener('input', updateChange);
   document.querySelectorAll('.quick-cash button').forEach(b => {
     b.addEventListener('click', () => {
