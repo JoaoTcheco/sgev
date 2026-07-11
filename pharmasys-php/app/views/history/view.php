@@ -16,7 +16,6 @@ $canRefund = hasRole('admin','pharmacist') && $sale['status'] !== 'refunded';
       <h1 class="page-title">Recibo <?= e($sale['receipt_number']) ?></h1>
       <p class="page-subtitle">
         <?= e(formatDateTime($sale['created_at'])) ?> · Atendente <?= e($sale['user_name']) ?>
-        <?php if ($sale['customer_name']): ?> · Cliente <?= e($sale['customer_name']) ?><?php endif; ?>
       </p>
     </div>
     <div class="hist-view-actions">
