@@ -63,7 +63,7 @@ foreach ($ranges as $k=>$rg) {
       <thead><tr><th>Recibo</th><th>Data</th><th>Atendente</th><th>Itens</th><th>Total</th><th>Pagamento</th><th>Estado</th><th style="width:120px;">Acções</th></tr></thead>
       <tbody>
       <?php if (!$items): ?>
-        <tr><td colspan="9" class="empty">Sem vendas para os filtros seleccionados.</td></tr>
+        <tr><td colspan="8" class="empty">Sem vendas para os filtros seleccionados.</td></tr>
       <?php else: foreach ($items as $s):
         $badge = ['completed'=>'badge-green','partial_refund'=>'badge-orange','refunded'=>'badge-red'][$s['status']] ?? 'badge-gray';
         $label = ['completed'=>'OK','partial_refund'=>'Parcial','refunded'=>'Estornada'][$s['status']] ?? $s['status'];
@@ -71,7 +71,6 @@ foreach ($ranges as $k=>$rg) {
         <tr>
           <td><strong><?= e($s['receipt_number']) ?></strong></td>
           <td><small><?= e(formatDateTime($s['created_at'])) ?></small></td>
-          <td><?= e($s['customer_name'] ?: '—') ?></td>
           <td><?= e($s['user_name']) ?></td>
           <td><?= (int)$s['total_qty'] ?><?= $s['refunded_qty']>0 ? ' <small class="orange">(-'.(int)$s['refunded_qty'].')</small>' : '' ?></td>
           <td><strong><?= e(formatMZN($s['total'])) ?></strong></td>
