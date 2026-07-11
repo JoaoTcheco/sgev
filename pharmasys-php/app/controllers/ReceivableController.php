@@ -39,7 +39,6 @@ class ReceivableController extends Controller {
         $this->render('receivables/form', [
             'title'     => $item ? 'Editar Conta a Receber' : 'Nova Conta a Receber',
             'item'      => $item,
-            'customers' => CustomerModel::all(),
         ]);
     }
 
