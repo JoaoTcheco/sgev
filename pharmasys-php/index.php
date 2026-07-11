@@ -52,14 +52,6 @@ $router->add('alerts/resolve',     'AlertController@resolve',    'POST',true, $A
 $router->add('alerts/resolve-all', 'AlertController@resolveAll', 'POST',true, $ALL);
 $router->add('alerts/export',      'AlertController@export',     'GET', true, $ALL);
 
-$router->add('notifications',            'NotificationController@index',       'GET', true, $ALL);
-$router->add('notifications/feed',       'NotificationController@feed',        'GET', true, $ALL);
-$router->add('notifications/read',       'NotificationController@markRead',    'POST',true, $ALL);
-$router->add('notifications/read-all',   'NotificationController@markAllRead', 'POST',true, $ALL);
-$router->add('notifications/delete',     'NotificationController@delete',      'POST',true, $ALL);
-$router->add('notifications/clear-read', 'NotificationController@clearRead',   'POST',true, $ALL);
-$router->add('notifications/refresh',    'NotificationController@refresh',     'POST',true, $ALL);
-
 // ---------- Gestão (admin + pharmacist) ----------
 // Cadastros
 $router->add('categories',       'CategoryController@index',  'GET', true, $MGR);
