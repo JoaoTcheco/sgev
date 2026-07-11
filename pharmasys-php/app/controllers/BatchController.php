@@ -105,6 +105,7 @@ class BatchController extends Controller {
             ], $txnId);
             AuditLogModel::log('batch.adjust', 'batch', $batch['id'], ['delta' => $delta, 'reason' => $reason], $txnId);
             Database::commit();
+            try { AlertModel::checkProduct($batch['product_id']); } catch (Throwable $ignore) {}
             flash('success', 'Stock ajustado.');
         } catch (Throwable $e) {
             Database::rollBack();
