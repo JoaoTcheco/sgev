@@ -38,13 +38,12 @@ class SaleHistoryController extends Controller {
         $out = fopen('php://output', 'w');
         // BOM UTF-8 para Excel
         fwrite($out, "\xEF\xBB\xBF");
-        fputcsv($out, ['Recibo','Data','Cliente','Atendente','Itens','Estornados','Subtotal','Desconto','Total','Pagamento','Estado'], ';');
+        fputcsv($out, ['Recibo','Data','Atendente','Itens','Estornados','Subtotal','Desconto','Total','Pagamento','Estado'], ';');
         $labels = ['completed'=>'Concluída','partial_refund'=>'Estorno parcial','refunded'=>'Estornada'];
         foreach ($rows as $s) {
             fputcsv($out, [
                 $s['receipt_number'],
                 formatDateTime($s['created_at']),
-                $s['customer_name'] ?: '',
                 $s['user_name'] ?? '',
                 (int)$s['total_qty'],
                 (int)$s['refunded_qty'],
