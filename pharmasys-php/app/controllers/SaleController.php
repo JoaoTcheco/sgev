@@ -11,7 +11,6 @@ class SaleController extends Controller {
         }
         $this->render('pdv/index', [
             'session'    => $session,
-            'customers'  => CustomerModel::all(),
             'categories' => CategoryModel::all(),
             'accounts'   => FinancialAccountModel::all(true),
         ]);
