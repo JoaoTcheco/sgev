@@ -6,7 +6,6 @@ class SaleHistoryController extends Controller {
             'from'           => $_GET['from']           ?? date('Y-m-01'),
             'to'             => $_GET['to']             ?? date('Y-m-d'),
             'receipt'        => trim($_GET['receipt']   ?? ''),
-            'customer_id'    => $_GET['customer_id']    ?? '',
             'payment_method' => $_GET['payment_method'] ?? '',
             'status'         => $_GET['status']         ?? '',
         ];
@@ -15,7 +14,6 @@ class SaleHistoryController extends Controller {
             'items'     => $rows,
             'totals'    => SaleModel::historyTotals($rows),
             'filters'   => $filters,
-            'customers' => CustomerModel::all(),
         ]);
     }
 
