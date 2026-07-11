@@ -70,11 +70,10 @@ class SupplierReturnModel {
     public static function find(string $id): ?array {
         return Database::one(
             'SELECT sr.*, s.legal_name AS supplier_name, s.contact_name, s.phone, s.email,
-                    u.full_name AS user_name, po.po_number
+                    u.full_name AS user_name
              FROM supplier_returns sr
-             LEFT JOIN suppliers s        ON s.id  = sr.supplier_id
-             LEFT JOIN users u            ON u.id  = sr.user_id
-             LEFT JOIN purchase_orders po ON po.id = sr.po_id
+             LEFT JOIN suppliers s ON s.id = sr.supplier_id
+             LEFT JOIN users u     ON u.id = sr.user_id
              WHERE sr.id = ?', [$id]
         );
     }
