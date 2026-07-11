@@ -64,11 +64,8 @@ $router->add('suppliers/edit',   'SupplierController@form',   'GET', true, $MGR)
 $router->add('suppliers/save',   'SupplierController@save',   'POST',true, $MGR);
 $router->add('suppliers/delete', 'SupplierController@delete', 'POST',true, $MGR);
 
-$router->add('customers',        'CustomerController@index',  'GET', true, $MGR);
-$router->add('customers/new',    'CustomerController@form',   'GET', true, $MGR);
-$router->add('customers/edit',   'CustomerController@form',   'GET', true, $MGR);
-$router->add('customers/save',   'CustomerController@save',   'POST',true, $MGR);
-$router->add('customers/delete', 'CustomerController@delete', 'POST',true, $MGR);
+
+
 
 $router->add('products',         'ProductController@index',   'GET', true, $MGR);
 $router->add('products/new',     'ProductController@form',    'GET', true, $MGR);
