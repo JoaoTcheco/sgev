@@ -165,7 +165,7 @@
           <?= csrfField() ?>
           <input type="hidden" name="items"           id="items-payload">
           <input type="hidden" name="discount"        id="discount-payload">
-          <input type="hidden" name="customer_id"     id="customer-payload">
+          
           <input type="hidden" name="payment_method"  id="pm-payload">
           <input type="hidden" name="account_id"      id="account-payload">
           <input type="hidden" name="payment_wallet"  id="wallet-payload">
