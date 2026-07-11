@@ -87,13 +87,8 @@
         <strong id="pay-total-value">0,00 MT</strong>
       </div>
 
-      <label class="lbl">Cliente</label>
-      <select id="customer_id">
-        <option value="">— Consumidor final —</option>
-        <?php foreach ($customers as $c): ?>
-          <option value="<?= e($c['id']) ?>"><?= e($c['name']) ?></option>
-        <?php endforeach; ?>
-      </select>
+
+
 
       <label class="lbl">Conta que recebe o valor</label>
       <select id="account_id" data-accounts='<?= e(json_encode(array_map(fn($a)=>[
