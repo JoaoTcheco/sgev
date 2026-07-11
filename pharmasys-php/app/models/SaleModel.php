@@ -67,7 +67,15 @@ class SaleModel {
             $total = max(0, $subtotal - $discount);
             $receipt = self::nextReceiptNumber();
             $paymentMethod = $data['payment_method'] ?? 'cash';
-            $account = FinancialAccountModel::findByType($paymentMethod);
+            // Prefer explicit account selected by cashier; fall back to the account matching payment type.
+            $account = null;
+            if (!empty($data['account_id'])) {
+                $account = FinancialAccountModel::find($data['account_id']);
+                if (!$account || (int)$account['active'] !== 1) {
+                    throw new Exception('Conta destino inválida.');
+                }
+            }
+            if (!$account) $account = FinancialAccountModel::findByType($paymentMethod);
 
             // 2) cabeçalho
             $amountReceived = isset($data['amount_received']) && $data['amount_received'] !== ''
