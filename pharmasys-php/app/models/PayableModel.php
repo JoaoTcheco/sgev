@@ -88,10 +88,9 @@ class PayableModel {
         if (!$p) throw new RuntimeException('Conta a pagar não encontrada.');
         if ($p['status'] === 'paid') throw new RuntimeException('Conta já liquidada — não pode ser editada.');
         Database::query(
-            'UPDATE payables SET supplier_id=?, po_id=?, description=?, amount=?, issue_date=?, due_date=?, notes=?
+            'UPDATE payables SET supplier_id=?, description=?, amount=?, issue_date=?, due_date=?, notes=?
              WHERE id = ?',
             [$d['supplier_id'] ?: null,
-             $d['po_id'] ?: null,
              trim($d['description']),
              (float)$d['amount'],
              $d['issue_date'],
