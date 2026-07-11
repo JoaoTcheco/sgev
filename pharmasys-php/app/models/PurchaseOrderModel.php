@@ -290,6 +290,17 @@ class PurchaseOrderModel {
                 ['po_number'=>$po['po_number'], 'status'=>$newStatus, 'items_received'=>count($receipts)], $txn);
 
             Database::commit();
+            // Receção repõe stock — actualiza alertas dos produtos recebidos.
+            try {
+                $seen = [];
+                foreach ($items as $it) {
+                    $r = $receipts[$it['id']] ?? null;
+                    if (!$r || (int)($r['qty'] ?? 0) <= 0) continue;
+                    if (isset($seen[$it['product_id']])) continue;
+                    $seen[$it['product_id']] = true;
+                    AlertModel::checkProduct($it['product_id']);
+                }
+            } catch (Throwable $ignore) {}
         } catch (Throwable $e) {
             Database::rollBack();
             throw $e;

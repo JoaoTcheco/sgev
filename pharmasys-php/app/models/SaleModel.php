@@ -280,6 +280,17 @@ class SaleModel {
                 ['refunds' => $refunds, 'value' => $refundValue, 'reason' => $reason, 'new_status' => $newStatus], $txnId);
 
             Database::commit();
+            // Estorno repõe stock — resolve/actualiza alertas dos produtos envolvidos.
+            try {
+                $seen = [];
+                foreach ($refunds as $itemId => $qty) {
+                    if (!isset($itemsById[$itemId])) continue;
+                    $pid = $itemsById[$itemId]['product_id'];
+                    if (isset($seen[$pid])) continue;
+                    $seen[$pid] = true;
+                    AlertModel::checkProduct($pid);
+                }
+            } catch (Throwable $ignore) {}
         } catch (Throwable $e) {
             Database::rollBack();
             throw $e;
