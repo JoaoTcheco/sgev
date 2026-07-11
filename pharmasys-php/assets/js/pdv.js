@@ -362,6 +362,7 @@
       <div class="rv-line rv-total"><span>TOTAL</span><span>${fmt(t.total)}</span></div>
       <div class="rv-sep"></div>
       <div class="rv-line"><span>Pagamento</span><span>${isCash?'💵 Espécie':'📱 '+wallet.toUpperCase()}</span></div>
+      ${accountSel && accountSel.selectedOptions[0] ? `<div class="rv-line"><span>Conta</span><span>${esc(accountSel.selectedOptions[0].textContent.trim())}</span></div>` : ''}
       ${isCash?`
         <div class="rv-line"><span>Valor recebido</span><span>${fmt(rec)}</span></div>
         <div class="rv-line rv-change"><span>Troco</span><span>${fmt(change)}</span></div>
