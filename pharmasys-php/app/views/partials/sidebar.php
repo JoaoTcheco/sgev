@@ -87,7 +87,7 @@ try { $alertCount = (int) AlertModel::countOpen(); } catch (Throwable $e) {}
           <?= sb_item(url('products'),   'Produtos',     $I['box'],    str_starts_with($r,'products')) ?>
           <?= sb_item(url('categories'), 'Categorias',   $I['folder'], str_starts_with($r,'categories')) ?>
           <?= sb_item(url('suppliers'),  'Fornecedores', $I['truck'],  str_starts_with($r,'suppliers')) ?>
-          <?= sb_item(url('customers'),  'Clientes',     $I['users'],  str_starts_with($r,'customers')) ?>
+          
         </ul>
       </div>
 
