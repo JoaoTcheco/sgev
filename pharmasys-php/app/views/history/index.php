@@ -86,7 +86,7 @@ foreach ($ranges as $k=>$rg) {
       <?php if ($items && !empty($totals['by_method'])): ?>
       <tfoot>
         <tr class="hist-foot">
-          <td colspan="5" style="text-align:right;"><strong>Totais por método de pagamento:</strong></td>
+          <td colspan="4" style="text-align:right;"><strong>Totais por método de pagamento:</strong></td>
           <td colspan="4">
             <div style="display:flex;flex-wrap:wrap;gap:8px;">
               <?php foreach ($totals['by_method'] as $m): ?>
