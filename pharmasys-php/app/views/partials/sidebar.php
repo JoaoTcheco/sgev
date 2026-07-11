@@ -67,7 +67,7 @@ try { $alertCount = (int) AlertModel::countOpen(); } catch (Throwable $e) {}
         <?= sb_item(url('pdv'),           'PDV — Vendas', $I['cart'], str_starts_with($r,'pdv') || in_array($r, ['sales/checkout','sales/receipt'], true)) ?>
         <?= sb_item(url('cash'),          'Caixa',        $I['cash'], str_starts_with($r,'cash')) ?>
         <?= sb_item(url('alerts'),        'Alertas',      $I['alert'], str_starts_with($r,'alerts'), $alertCount ? (string)$alertCount : '') ?>
-        <?= sb_item(url('notifications'), 'Notificações', $I['bell'],  str_starts_with($r,'notifications'), $notifCount ? (string)$notifCount : '') ?>
+        
       </ul>
     </div>
 
