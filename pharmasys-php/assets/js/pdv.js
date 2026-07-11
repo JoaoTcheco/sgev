@@ -24,6 +24,7 @@
   const blockElec     = $('block-electronic');
   const paymentRef    = $('payment_ref');
   const customerSel   = $('customer_id');
+  const accountSel    = $('account_id');
   const notesArea     = $('notes');
   const reviewBody    = $('review-body');
   const catalogGrid   = $('catalog-grid');
