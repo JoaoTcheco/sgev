@@ -8,9 +8,8 @@ $canPay  = in_array($item['status'], ['open','partial'], true);
     <div>
       <h1 class="page-title"><?= e($item['description']) ?></h1>
       <p class="page-subtitle">
-        <?= e($item['customer_name'] ?? '—') ?>
-        <?php if ($item['receipt_number']): ?> · Venda <?= e($item['receipt_number']) ?><?php endif; ?>
-        · Vencimento <?= e(date('d/m/Y', strtotime($item['due_date']))) ?>
+        <?php if ($item['receipt_number']): ?>Venda <?= e($item['receipt_number']) ?> · <?php endif; ?>
+        Vencimento <?= e(date('d/m/Y', strtotime($item['due_date']))) ?>
       </p>
     </div>
     <div class="header-actions">
