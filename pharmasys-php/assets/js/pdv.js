@@ -384,6 +384,7 @@
     $('discount-payload').value = discount.value || 0;
     $('customer-payload').value = customerSel.value || '';
     $('pm-payload').value       = isCash ? 'cash' : (wallet || 'card');
+    $('account-payload').value  = accountSel ? (accountSel.value || '') : '';
     $('wallet-payload').value   = isCash ? '' : (wallet || '');
     $('ref-payload').value      = isCash ? '' : (paymentRef.value || '');
     $('received-payload').value = isCash ? (parseFloat(amountRecv.value)||t.total).toFixed(2) : '';
