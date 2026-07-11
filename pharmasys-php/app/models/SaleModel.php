@@ -67,7 +67,15 @@ class SaleModel {
             $total = max(0, $subtotal - $discount);
             $receipt = self::nextReceiptNumber();
             $paymentMethod = $data['payment_method'] ?? 'cash';
-            $account = FinancialAccountModel::findByType($paymentMethod);
+            // Prefer explicit account selected by cashier; fall back to the account matching payment type.
+            $account = null;
+            if (!empty($data['account_id'])) {
+                $account = FinancialAccountModel::find($data['account_id']);
+                if (!$account || (int)$account['active'] !== 1) {
+                    throw new Exception('Conta destino inválida.');
+                }
+            }
+            if (!$account) $account = FinancialAccountModel::findByType($paymentMethod);
 
             // 2) cabeçalho
             $amountReceived = isset($data['amount_received']) && $data['amount_received'] !== ''
@@ -123,6 +131,16 @@ class SaleModel {
                 ['receipt' => $receipt, 'total' => $total, 'payment' => $paymentMethod], $txnId);
 
             Database::commit();
+            // Após commit: sincroniza alertas de stock para os produtos vendidos.
+            try {
+                $seen = [];
+                foreach ($consumption as $c) {
+                    $pid = $c['product']['id'];
+                    if (isset($seen[$pid])) continue;
+                    $seen[$pid] = true;
+                    AlertModel::checkProduct($pid);
+                }
+            } catch (Throwable $ignore) { /* alertas não bloqueiam a venda */ }
             return $saleId;
         } catch (Throwable $e) {
             Database::rollBack();

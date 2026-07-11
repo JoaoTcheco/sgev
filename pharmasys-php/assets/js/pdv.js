@@ -24,6 +24,7 @@
   const blockElec     = $('block-electronic');
   const paymentRef    = $('payment_ref');
   const customerSel   = $('customer_id');
+  const accountSel    = $('account_id');
   const notesArea     = $('notes');
   const reviewBody    = $('review-body');
   const catalogGrid   = $('catalog-grid');
@@ -305,15 +306,27 @@
       btnGotoReview.disabled = false;
     }
   };
+  // Auto-selecionar conta correspondente ao tipo de pagamento (o operador pode alterar).
+  const suggestAccountFor = (methodType) => {
+    if (!accountSel) return;
+    const opt = [...accountSel.options].find(o => o.dataset.type === methodType);
+    if (opt) accountSel.value = opt.value;
+  };
   document.querySelectorAll('input[name="pay_type"]').forEach(r => {
     r.addEventListener('change', () => {
       const isCash = currentPayType() === 'cash';
       blockCash.classList.toggle('hidden', !isCash);
       blockElec.classList.toggle('hidden',  isCash);
+      suggestAccountFor(isCash ? 'cash' : (document.querySelector('input[name="wallet"]:checked')?.value || 'mpesa'));
       validatePayStep();
       if (isCash) amountRecv.focus();
     });
   });
+  document.querySelectorAll('input[name="wallet"]').forEach(r => {
+    r.addEventListener('change', () => suggestAccountFor(r.value));
+  });
+  // Sugestão inicial
+  suggestAccountFor('cash');
   amountRecv.addEventListener('input', updateChange);
   document.querySelectorAll('.quick-cash button').forEach(b => {
     b.addEventListener('click', () => {
@@ -349,6 +362,7 @@
       <div class="rv-line rv-total"><span>TOTAL</span><span>${fmt(t.total)}</span></div>
       <div class="rv-sep"></div>
       <div class="rv-line"><span>Pagamento</span><span>${isCash?'💵 Espécie':'📱 '+wallet.toUpperCase()}</span></div>
+      ${accountSel && accountSel.selectedOptions[0] ? `<div class="rv-line"><span>Conta</span><span>${esc(accountSel.selectedOptions[0].textContent.trim())}</span></div>` : ''}
       ${isCash?`
         <div class="rv-line"><span>Valor recebido</span><span>${fmt(rec)}</span></div>
         <div class="rv-line rv-change"><span>Troco</span><span>${fmt(change)}</span></div>
@@ -371,6 +385,7 @@
     $('discount-payload').value = discount.value || 0;
     $('customer-payload').value = customerSel.value || '';
     $('pm-payload').value       = isCash ? 'cash' : (wallet || 'card');
+    $('account-payload').value  = accountSel ? (accountSel.value || '') : '';
     $('wallet-payload').value   = isCash ? '' : (wallet || '');
     $('ref-payload').value      = isCash ? '' : (paymentRef.value || '');
     $('received-payload').value = isCash ? (parseFloat(amountRecv.value)||t.total).toFixed(2) : '';

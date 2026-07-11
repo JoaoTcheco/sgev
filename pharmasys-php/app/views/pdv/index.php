@@ -93,6 +93,17 @@
         <?php endforeach; ?>
       </select>
 
+      <label class="lbl">Conta que recebe o valor</label>
+      <select id="account_id" data-accounts='<?= e(json_encode(array_map(fn($a)=>[
+          "id"=>$a["id"],"name"=>$a["name"],"type"=>$a["type"]], $accounts))) ?>'>
+        <?php foreach ($accounts as $a): ?>
+          <option value="<?= e($a['id']) ?>" data-type="<?= e($a['type']) ?>">
+            <?= e($a['name']) ?> <?php if ($a['is_system']): ?>· sistema<?php endif; ?>
+          </option>
+        <?php endforeach; ?>
+      </select>
+
+
       <label class="lbl">Tipo de pagamento</label>
       <div class="pay-type">
         <label class="pt-opt">
@@ -159,6 +170,7 @@
           <input type="hidden" name="discount"        id="discount-payload">
           <input type="hidden" name="customer_id"     id="customer-payload">
           <input type="hidden" name="payment_method"  id="pm-payload">
+          <input type="hidden" name="account_id"      id="account-payload">
           <input type="hidden" name="payment_wallet"  id="wallet-payload">
           <input type="hidden" name="payment_ref"     id="ref-payload">
           <input type="hidden" name="amount_received" id="received-payload">
