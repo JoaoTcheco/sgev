@@ -9,7 +9,7 @@ $canPay  = in_array($item['status'], ['open','partial'], true);
       <h1 class="page-title"><?= e($item['description']) ?></h1>
       <p class="page-subtitle">
         <?= e($item['supplier_name'] ?? '—') ?>
-        <?php if ($item['po_number']): ?> · OC <?= e($item['po_number']) ?><?php endif; ?>
+        
         · Vencimento <?= e(date('d/m/Y', strtotime($item['due_date']))) ?>
       </p>
     </div>
