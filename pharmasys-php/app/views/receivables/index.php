@@ -40,7 +40,7 @@ $statusLabels = ['open'=>'Em aberto','partial'=>'Parcial','paid'=>'Recebido','ca
     <table>
       <thead>
         <tr>
-          <th>Vencimento</th><th>Cliente</th><th>Descrição</th>
+          <th>Vencimento</th><th>Recibo</th><th>Descrição</th>
           <th class="right">Valor</th><th class="right">Recebido</th><th class="right">Saldo</th>
           <th>Estado</th><th></th>
         </tr>
