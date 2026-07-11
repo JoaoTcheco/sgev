@@ -21,6 +21,38 @@ class AlertModel {
         Database::query('UPDATE alerts SET resolved = 1, resolved_at = NOW() WHERE id = ?', [$id]);
     }
 
+    /**
+     * Verificação leve por produto (chamar após venda ou entrada de stock).
+     * - Se stock <= min_stock e não existe alerta aberto → cria alerta low_stock.
+     * - Se stock > min_stock e existe alerta aberto → resolve-o.
+     */
+    public static function checkProduct(string $productId): void {
+        $p = Database::one(
+            'SELECT p.id, p.name, p.min_stock, COALESCE(SUM(b.quantity),0) AS stock
+             FROM products p LEFT JOIN batches b ON b.product_id = p.id
+             WHERE p.id = ? AND p.active = 1
+             GROUP BY p.id', [$productId]
+        );
+        if (!$p) return;
+        $stock = (int)$p['stock']; $min = (int)$p['min_stock'];
+        $open = Database::one(
+            "SELECT id FROM alerts WHERE product_id = ? AND type = 'low_stock' AND resolved = 0 LIMIT 1",
+            [$productId]
+        );
+        if ($stock <= $min) {
+            if (!$open) {
+                $sev = $stock == 0 ? 'high' : 'medium';
+                Database::query(
+                    'INSERT INTO alerts (id, type, severity, product_id, message) VALUES (?,?,?,?,?)',
+                    [uuidv4(), 'low_stock', $sev, $productId,
+                     sprintf('Stock baixo: %s (%d/%d)', $p['name'], $stock, $min)]
+                );
+            }
+        } elseif ($open) {
+            Database::query('UPDATE alerts SET resolved = 1, resolved_at = NOW() WHERE id = ?', [$open['id']]);
+        }
+    }
+
     /** Pesquisa com filtros: severity, type, q (produto/msg), status (open|resolved|all). */
     public static function search(array $f = []): array {
         $sql = 'SELECT a.*, p.name AS product_name, b.batch_number, b.expiry_date
