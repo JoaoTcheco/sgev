@@ -150,11 +150,9 @@ class SaleModel {
 
     public static function find(string $id): ?array {
         return Database::one(
-            'SELECT s.*, c.name AS customer_name, c.nuit AS customer_tax_id, c.phone AS customer_phone,
-                    u.full_name AS user_name
+            'SELECT s.*, u.full_name AS user_name
              FROM sales s
-             LEFT JOIN customers c ON c.id = s.customer_id
-             LEFT JOIN users u     ON u.id = s.user_id
+             LEFT JOIN users u ON u.id = s.user_id
              WHERE s.id = ?', [$id]
         );
     }
