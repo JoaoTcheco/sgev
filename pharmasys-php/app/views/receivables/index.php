@@ -29,12 +29,6 @@ $statusLabels = ['open'=>'Em aberto','partial'=>'Parcial','paid'=>'Recebido','ca
         <option value="<?= $k ?>" <?= $filters['status']===$k?'selected':'' ?>><?= $v ?></option>
       <?php endforeach; ?>
     </select>
-    <select name="customer_id">
-      <option value="">Todos os clientes</option>
-      <?php foreach ($customers as $c): ?>
-        <option value="<?= e($c['id']) ?>" <?= $filters['customer_id']===$c['id']?'selected':'' ?>><?= e($c['full_name']) ?></option>
-      <?php endforeach; ?>
-    </select>
     <input type="date" name="due_from" value="<?= e($filters['due_from']) ?>">
     <input type="date" name="due_to"   value="<?= e($filters['due_to']) ?>">
     <label class="chk"><input type="checkbox" name="overdue" value="1" <?= $filters['overdue']?'checked':'' ?>> Só vencidas</label>
@@ -46,7 +40,7 @@ $statusLabels = ['open'=>'Em aberto','partial'=>'Parcial','paid'=>'Recebido','ca
     <table>
       <thead>
         <tr>
-          <th>Vencimento</th><th>Cliente</th><th>Descrição</th>
+          <th>Vencimento</th><th>Recibo</th><th>Descrição</th>
           <th class="right">Valor</th><th class="right">Recebido</th><th class="right">Saldo</th>
           <th>Estado</th><th></th>
         </tr>
@@ -64,7 +58,7 @@ $statusLabels = ['open'=>'Em aberto','partial'=>'Parcial','paid'=>'Recebido','ca
               <?php if ($isOverdue): ?><span class="chip chip-danger">+<?= abs((int)$p['days_to_due']) ?>d</span>
               <?php elseif ($isSoon): ?><span class="chip chip-warning"><?= (int)$p['days_to_due'] ?>d</span><?php endif; ?>
             </td>
-            <td><?= e($p['customer_name'] ?? '—') ?><?php if ($p['receipt_number']): ?><br><small><?= e($p['receipt_number']) ?></small><?php endif; ?></td>
+            <td><?= e($p['receipt_number'] ?? '—') ?></td>
             <td><?= e($p['description']) ?></td>
             <td class="right"><?= formatMZN($p['amount']) ?></td>
             <td class="right"><?= formatMZN($p['paid_amount']) ?></td>

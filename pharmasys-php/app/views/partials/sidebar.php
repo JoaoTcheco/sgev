@@ -43,9 +43,7 @@ $I = [
 ];
 
 $alertCount = 0;
-$notifCount = 0;
 try { $alertCount = (int) AlertModel::countOpen(); } catch (Throwable $e) {}
-try { $notifCount = (int) NotificationModel::countUnread($u); } catch (Throwable $e) {}
 ?>
 <aside class="app-sidebar">
   <div class="sb-header">
@@ -69,7 +67,7 @@ try { $notifCount = (int) NotificationModel::countUnread($u); } catch (Throwable
         <?= sb_item(url('pdv'),           'PDV — Vendas', $I['cart'], str_starts_with($r,'pdv') || in_array($r, ['sales/checkout','sales/receipt'], true)) ?>
         <?= sb_item(url('cash'),          'Caixa',        $I['cash'], str_starts_with($r,'cash')) ?>
         <?= sb_item(url('alerts'),        'Alertas',      $I['alert'], str_starts_with($r,'alerts'), $alertCount ? (string)$alertCount : '') ?>
-        <?= sb_item(url('notifications'), 'Notificações', $I['bell'],  str_starts_with($r,'notifications'), $notifCount ? (string)$notifCount : '') ?>
+        
       </ul>
     </div>
 
@@ -89,14 +87,13 @@ try { $notifCount = (int) NotificationModel::countUnread($u); } catch (Throwable
           <?= sb_item(url('products'),   'Produtos',     $I['box'],    str_starts_with($r,'products')) ?>
           <?= sb_item(url('categories'), 'Categorias',   $I['folder'], str_starts_with($r,'categories')) ?>
           <?= sb_item(url('suppliers'),  'Fornecedores', $I['truck'],  str_starts_with($r,'suppliers')) ?>
-          <?= sb_item(url('customers'),  'Clientes',     $I['users'],  str_starts_with($r,'customers')) ?>
+          
         </ul>
       </div>
 
       <div class="sb-group">
         <div class="sb-group-label">Compras</div>
         <ul class="sb-menu">
-          <?= sb_item(url('purchases'),        'Ordens de Compra',        $I['basket'], str_starts_with($r,'purchases')) ?>
           <?= sb_item(url('supplier-returns'), 'Devoluções a Fornecedor', $I['return'], str_starts_with($r,'supplier-returns')) ?>
         </ul>
       </div>

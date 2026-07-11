@@ -11,7 +11,6 @@ class SaleController extends Controller {
         }
         $this->render('pdv/index', [
             'session'    => $session,
-            'customers'  => CustomerModel::all(),
             'categories' => CategoryModel::all(),
             'accounts'   => FinancialAccountModel::all(true),
         ]);
@@ -123,7 +122,6 @@ class SaleController extends Controller {
             flash('error', 'Carrinho vazio.'); redirect('pdv');
         }
         $data = [
-            'customer_id'    => $_POST['customer_id'] ?? '',
             'account_id'     => $_POST['account_id'] ?? '',
             'payment_method' => $_POST['payment_method'] ?? 'cash',
             'payment_wallet' => $_POST['payment_wallet'] ?? null,

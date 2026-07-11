@@ -6,7 +6,6 @@ class SaleHistoryController extends Controller {
             'from'           => $_GET['from']           ?? date('Y-m-01'),
             'to'             => $_GET['to']             ?? date('Y-m-d'),
             'receipt'        => trim($_GET['receipt']   ?? ''),
-            'customer_id'    => $_GET['customer_id']    ?? '',
             'payment_method' => $_GET['payment_method'] ?? '',
             'status'         => $_GET['status']         ?? '',
         ];
@@ -15,7 +14,6 @@ class SaleHistoryController extends Controller {
             'items'     => $rows,
             'totals'    => SaleModel::historyTotals($rows),
             'filters'   => $filters,
-            'customers' => CustomerModel::all(),
         ]);
     }
 
@@ -25,7 +23,7 @@ class SaleHistoryController extends Controller {
             'from'           => $_GET['from']           ?? date('Y-m-01'),
             'to'             => $_GET['to']             ?? date('Y-m-d'),
             'receipt'        => trim($_GET['receipt']   ?? ''),
-            'customer_id'    => $_GET['customer_id']    ?? '',
+            
             'payment_method' => $_GET['payment_method'] ?? '',
             'status'         => $_GET['status']         ?? '',
         ];
@@ -40,13 +38,12 @@ class SaleHistoryController extends Controller {
         $out = fopen('php://output', 'w');
         // BOM UTF-8 para Excel
         fwrite($out, "\xEF\xBB\xBF");
-        fputcsv($out, ['Recibo','Data','Cliente','Atendente','Itens','Estornados','Subtotal','Desconto','Total','Pagamento','Estado'], ';');
+        fputcsv($out, ['Recibo','Data','Atendente','Itens','Estornados','Subtotal','Desconto','Total','Pagamento','Estado'], ';');
         $labels = ['completed'=>'Concluída','partial_refund'=>'Estorno parcial','refunded'=>'Estornada'];
         foreach ($rows as $s) {
             fputcsv($out, [
                 $s['receipt_number'],
                 formatDateTime($s['created_at']),
-                $s['customer_name'] ?: '',
                 $s['user_name'] ?? '',
                 (int)$s['total_qty'],
                 (int)$s['refunded_qty'],

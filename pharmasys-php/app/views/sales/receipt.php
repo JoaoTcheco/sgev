@@ -52,10 +52,6 @@ $bcHeight = $width === '58mm' ? 26  : ($width === 'a4' ? 50  : 36);
     <?php if (!empty($settings['show_pharmacist']) && !empty($settings['pharmacist_name'])): ?>
       Farmacêutico: <?= e($settings['pharmacist_name']) ?><br>
     <?php endif; ?>
-    <?php if ($sale['customer_name']): ?>
-      Cliente: <?= e($sale['customer_name']) ?>
-      <?= $sale['customer_tax_id'] ? '<br>NUIT: '.e($sale['customer_tax_id']) : '' ?><br>
-    <?php endif; ?>
   </p>
 
   <div class="sep"></div>

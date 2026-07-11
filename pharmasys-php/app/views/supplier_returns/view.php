@@ -1,5 +1,5 @@
 <?php /** @var array $sr */ /** @var array $items */ /** @var array $reasons */ ?>
-<link rel="stylesheet" href="<?= asset('css/purchases.css') ?>">
+
 <link rel="stylesheet" href="<?= asset('css/supplier_returns.css') ?>">
 
 <div class="page-header">
@@ -41,7 +41,6 @@
     <dl class="kv">
       <dt>Fornecedor</dt><dd><?= e($sr['supplier_name']) ?></dd>
       <dt>Motivo</dt><dd><?= e($reasons[$sr['reason']] ?? $sr['reason']) ?></dd>
-      <?php if ($sr['po_number']): ?><dt>OC associada</dt><dd><?= e($sr['po_number']) ?></dd><?php endif; ?>
       <dt>Responsável</dt><dd><?= e($sr['user_name'] ?? '—') ?></dd>
       <?php if ($sr['confirmed_at']): ?><dt>Confirmada em</dt><dd><?= formatDateTime($sr['confirmed_at']) ?></dd><?php endif; ?>
       <?php if ($sr['notes']): ?><dt>Notas</dt><dd><?= nl2br(e($sr['notes'])) ?></dd><?php endif; ?>

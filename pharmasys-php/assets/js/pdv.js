@@ -23,7 +23,7 @@
   const blockCash     = $('block-cash');
   const blockElec     = $('block-electronic');
   const paymentRef    = $('payment_ref');
-  const customerSel   = $('customer_id');
+  
   const accountSel    = $('account_id');
   const notesArea     = $('notes');
   const reviewBody    = $('review-body');
@@ -383,7 +383,7 @@
       unit_kind: it.unit_kind, unit_label: it.unit_label,
     })));
     $('discount-payload').value = discount.value || 0;
-    $('customer-payload').value = customerSel.value || '';
+    
     $('pm-payload').value       = isCash ? 'cash' : (wallet || 'card');
     $('account-payload').value  = accountSel ? (accountSel.value || '') : '';
     $('wallet-payload').value   = isCash ? '' : (wallet || '');

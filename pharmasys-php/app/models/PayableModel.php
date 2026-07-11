@@ -6,10 +6,9 @@ class PayableModel {
 
     public static function find(string $id): ?array {
         return Database::one(
-            'SELECT p.*, s.legal_name AS supplier_name, po.po_number
+            'SELECT p.*, s.legal_name AS supplier_name
              FROM payables p
              LEFT JOIN suppliers s ON s.id = p.supplier_id
-             LEFT JOIN purchase_orders po ON po.id = p.po_id
              WHERE p.id = ?', [$id]
         );
     }
@@ -36,12 +35,11 @@ class PayableModel {
         $page = max(1, $page);
         $off = ($page-1)*$per;
         $rows = Database::all(
-            "SELECT p.*, s.legal_name AS supplier_name, po.po_number,
+            "SELECT p.*, s.legal_name AS supplier_name,
                     (p.amount - p.paid_amount) AS balance,
                     DATEDIFF(p.due_date, CURDATE()) AS days_to_due
              FROM payables p
              LEFT JOIN suppliers s ON s.id = p.supplier_id
-             LEFT JOIN purchase_orders po ON po.id = p.po_id
              WHERE $where
              ORDER BY (p.status IN ('open','partial')) DESC, p.due_date ASC
              LIMIT $per OFFSET $off", $p
@@ -70,11 +68,10 @@ class PayableModel {
         $id = uuidv4();
         Database::query(
             'INSERT INTO payables
-             (id, supplier_id, po_id, description, amount, issue_date, due_date, notes, created_by)
-             VALUES (?,?,?,?,?,?,?,?,?)',
+             (id, supplier_id, description, amount, issue_date, due_date, notes, created_by)
+             VALUES (?,?,?,?,?,?,?,?)',
             [$id,
              $d['supplier_id'] ?: null,
-             $d['po_id'] ?: null,
              trim($d['description']),
              (float)$d['amount'],
              $d['issue_date'],
@@ -91,10 +88,9 @@ class PayableModel {
         if (!$p) throw new RuntimeException('Conta a pagar não encontrada.');
         if ($p['status'] === 'paid') throw new RuntimeException('Conta já liquidada — não pode ser editada.');
         Database::query(
-            'UPDATE payables SET supplier_id=?, po_id=?, description=?, amount=?, issue_date=?, due_date=?, notes=?
+            'UPDATE payables SET supplier_id=?, description=?, amount=?, issue_date=?, due_date=?, notes=?
              WHERE id = ?',
             [$d['supplier_id'] ?: null,
-             $d['po_id'] ?: null,
              trim($d['description']),
              (float)$d['amount'],
              $d['issue_date'],

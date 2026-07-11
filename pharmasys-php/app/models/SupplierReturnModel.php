@@ -55,12 +55,11 @@ class SupplierReturnModel {
         $off = ($page-1)*$per;
 
         $rows = Database::all(
-            "SELECT sr.*, s.legal_name AS supplier_name, u.full_name AS user_name, po.po_number,
+            "SELECT sr.*, s.legal_name AS supplier_name, u.full_name AS user_name,
                     (SELECT COUNT(*) FROM supplier_return_items i WHERE i.sr_id = sr.id) AS item_count
              FROM supplier_returns sr
-             LEFT JOIN suppliers s        ON s.id  = sr.supplier_id
-             LEFT JOIN users u            ON u.id  = sr.user_id
-             LEFT JOIN purchase_orders po ON po.id = sr.po_id
+             LEFT JOIN suppliers s ON s.id = sr.supplier_id
+             LEFT JOIN users u     ON u.id = sr.user_id
              WHERE $where
              ORDER BY sr.created_at DESC
              LIMIT $per OFFSET $off", $p
@@ -71,11 +70,10 @@ class SupplierReturnModel {
     public static function find(string $id): ?array {
         return Database::one(
             'SELECT sr.*, s.legal_name AS supplier_name, s.contact_name, s.phone, s.email,
-                    u.full_name AS user_name, po.po_number
+                    u.full_name AS user_name
              FROM supplier_returns sr
-             LEFT JOIN suppliers s        ON s.id  = sr.supplier_id
-             LEFT JOIN users u            ON u.id  = sr.user_id
-             LEFT JOIN purchase_orders po ON po.id = sr.po_id
+             LEFT JOIN suppliers s ON s.id = sr.supplier_id
+             LEFT JOIN users u     ON u.id = sr.user_id
              WHERE sr.id = ?', [$id]
         );
     }
@@ -127,9 +125,9 @@ class SupplierReturnModel {
 
             Database::query(
                 'INSERT INTO supplier_returns
-                 (id, sr_number, supplier_id, po_id, user_id, status, reason, subtotal, total, notes)
-                 VALUES (?,?,?,?,?, "draft", ?,?,?,?)',
-                [$id, $number, $d['supplier_id'], $d['po_id'] ?: null,
+                 (id, sr_number, supplier_id, user_id, status, reason, subtotal, total, notes)
+                 VALUES (?,?,?,?, "draft", ?,?,?,?)',
+                [$id, $number, $d['supplier_id'],
                  currentUser()['id'] ?? null,
                  $d['reason'] ?: 'other', $sub, $total, $d['notes'] ?: null]
             );
@@ -157,9 +155,9 @@ class SupplierReturnModel {
         try {
             [$sub,$total] = self::computeTotals($clean);
             Database::query(
-                'UPDATE supplier_returns SET supplier_id=?, po_id=?, reason=?, subtotal=?, total=?, notes=?
+                'UPDATE supplier_returns SET supplier_id=?, reason=?, subtotal=?, total=?, notes=?
                  WHERE id = ?',
-                [$d['supplier_id'], $d['po_id'] ?: null,
+                [$d['supplier_id'],
                  $d['reason'] ?: 'other', $sub, $total, $d['notes'] ?: null, $id]
             );
             Database::query('DELETE FROM supplier_return_items WHERE sr_id = ?', [$id]);
@@ -305,9 +303,9 @@ class SupplierReturnModel {
             $desc = 'Crédito por devolução '.$sr['sr_number'];
             Database::query(
                 'INSERT INTO payables
-                 (id, supplier_id, po_id, description, amount, issue_date, due_date, notes, status, created_by)
-                 VALUES (?,?,?,?,?,?,?,?, "open", ?)',
-                [$creditId, $sr['supplier_id'], $sr['po_id'],
+                 (id, supplier_id, description, amount, issue_date, due_date, notes, status, created_by)
+                 VALUES (?,?,?,?,?,?,?, "open", ?)',
+                [$creditId, $sr['supplier_id'],
                  $desc, -1 * (float)$sr['total'],
                  date('Y-m-d'), date('Y-m-d'),
                  'Gerado automaticamente pela devolução '.$sr['sr_number'],

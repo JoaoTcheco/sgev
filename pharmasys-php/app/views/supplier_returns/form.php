@@ -1,5 +1,5 @@
 <?php /** @var ?array $sr */ /** @var array $items */ /** @var array $suppliers */ /** @var array $products */ /** @var array $reasons */ ?>
-<link rel="stylesheet" href="<?= asset('css/purchases.css') ?>">
+
 <link rel="stylesheet" href="<?= asset('css/supplier_returns.css') ?>">
 
 <div class="page-header">

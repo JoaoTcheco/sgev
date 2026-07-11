@@ -45,7 +45,6 @@ class SupplierReturnController extends Controller {
         $id    = $_POST['id'] ?? '';
         $data  = [
             'supplier_id' => $_POST['supplier_id'] ?? '',
-            'po_id'       => $_POST['po_id']       ?? '',
             'reason'      => $_POST['reason']      ?? 'other',
             'notes'       => trim($_POST['notes']  ?? ''),
         ];

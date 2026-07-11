@@ -27,14 +27,6 @@ foreach ($ranges as $k=>$rg) {
     <div><label>De</label>   <input type="date" name="from" value="<?= e($filters['from']) ?>"></div>
     <div><label>Até</label>  <input type="date" name="to"   value="<?= e($filters['to'])   ?>"></div>
     <div><label>Recibo</label><input type="text" name="receipt" value="<?= e($filters['receipt']) ?>" placeholder="ex: 2026-000123"></div>
-    <div><label>Cliente</label>
-      <select name="customer_id">
-        <option value="">— Todos —</option>
-        <?php foreach ($customers as $c): ?>
-          <option value="<?= e($c['id']) ?>" <?= $filters['customer_id']===$c['id']?'selected':'' ?>><?= e($c['full_name']) ?></option>
-        <?php endforeach; ?>
-      </select>
-    </div>
     <div><label>Pagamento</label>
       <select name="payment_method">
         <option value="">— Todos —</option>
@@ -68,10 +60,10 @@ foreach ($ranges as $k=>$rg) {
 
   <div class="crud-table-card">
     <table class="data-table">
-      <thead><tr><th>Recibo</th><th>Data</th><th>Cliente</th><th>Atendente</th><th>Itens</th><th>Total</th><th>Pagamento</th><th>Estado</th><th style="width:120px;">Acções</th></tr></thead>
+      <thead><tr><th>Recibo</th><th>Data</th><th>Atendente</th><th>Itens</th><th>Total</th><th>Pagamento</th><th>Estado</th><th style="width:120px;">Acções</th></tr></thead>
       <tbody>
       <?php if (!$items): ?>
-        <tr><td colspan="9" class="empty">Sem vendas para os filtros seleccionados.</td></tr>
+        <tr><td colspan="8" class="empty">Sem vendas para os filtros seleccionados.</td></tr>
       <?php else: foreach ($items as $s):
         $badge = ['completed'=>'badge-green','partial_refund'=>'badge-orange','refunded'=>'badge-red'][$s['status']] ?? 'badge-gray';
         $label = ['completed'=>'OK','partial_refund'=>'Parcial','refunded'=>'Estornada'][$s['status']] ?? $s['status'];
@@ -79,7 +71,6 @@ foreach ($ranges as $k=>$rg) {
         <tr>
           <td><strong><?= e($s['receipt_number']) ?></strong></td>
           <td><small><?= e(formatDateTime($s['created_at'])) ?></small></td>
-          <td><?= e($s['customer_name'] ?: '—') ?></td>
           <td><?= e($s['user_name']) ?></td>
           <td><?= (int)$s['total_qty'] ?><?= $s['refunded_qty']>0 ? ' <small class="orange">(-'.(int)$s['refunded_qty'].')</small>' : '' ?></td>
           <td><strong><?= e(formatMZN($s['total'])) ?></strong></td>
@@ -95,7 +86,7 @@ foreach ($ranges as $k=>$rg) {
       <?php if ($items && !empty($totals['by_method'])): ?>
       <tfoot>
         <tr class="hist-foot">
-          <td colspan="5" style="text-align:right;"><strong>Totais por método de pagamento:</strong></td>
+          <td colspan="4" style="text-align:right;"><strong>Totais por método de pagamento:</strong></td>
           <td colspan="4">
             <div style="display:flex;flex-wrap:wrap;gap:8px;">
               <?php foreach ($totals['by_method'] as $m): ?>

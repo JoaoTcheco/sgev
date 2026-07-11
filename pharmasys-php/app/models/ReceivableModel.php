@@ -6,9 +6,8 @@ class ReceivableModel {
 
     public static function find(string $id): ?array {
         return Database::one(
-            'SELECT r.*, c.name AS customer_name, s.receipt_number
+            'SELECT r.*, s.receipt_number
              FROM receivables r
-             LEFT JOIN customers c ON c.id = r.customer_id
              LEFT JOIN sales s ON s.id = r.sale_id
              WHERE r.id = ?', [$id]
         );
@@ -17,10 +16,9 @@ class ReceivableModel {
     public static function paginate(array $f = [], int $page = 1, int $per = 25): array {
         $w = ['1=1']; $p = [];
         if (!empty($f['status']))      { $w[] = 'r.status = ?';       $p[] = $f['status']; }
-        if (!empty($f['customer_id'])) { $w[] = 'r.customer_id = ?';  $p[] = $f['customer_id']; }
         if (!empty($f['q'])) {
-            $w[] = '(r.description LIKE ? OR c.name LIKE ?)';
-            $p[] = '%'.$f['q'].'%'; $p[] = '%'.$f['q'].'%';
+            $w[] = 'r.description LIKE ?';
+            $p[] = '%'.$f['q'].'%';
         }
         if (!empty($f['due_from'])) { $w[] = 'r.due_date >= ?'; $p[] = $f['due_from']; }
         if (!empty($f['due_to']))   { $w[] = 'r.due_date <= ?'; $p[] = $f['due_to']; }
@@ -28,19 +26,16 @@ class ReceivableModel {
 
         $where = implode(' AND ', $w);
         $total = (int)Database::one(
-            "SELECT COUNT(*) c FROM receivables r
-             LEFT JOIN customers c ON c.id = r.customer_id
-             WHERE $where", $p
+            "SELECT COUNT(*) c FROM receivables r WHERE $where", $p
         )['c'];
         $per = max(10, min(100, $per));
         $page = max(1, $page);
         $off = ($page-1)*$per;
         $rows = Database::all(
-            "SELECT r.*, c.name AS customer_name, s.receipt_number,
+            "SELECT r.*, s.receipt_number,
                     (r.amount - r.paid_amount) AS balance,
                     DATEDIFF(r.due_date, CURDATE()) AS days_to_due
              FROM receivables r
-             LEFT JOIN customers c ON c.id = r.customer_id
              LEFT JOIN sales s ON s.id = r.sale_id
              WHERE $where
              ORDER BY (r.status IN ('open','partial')) DESC, r.due_date ASC
@@ -70,11 +65,10 @@ class ReceivableModel {
         $id = uuidv4();
         Database::query(
             'INSERT INTO receivables
-             (id, customer_id, sale_id, description, amount, issue_date, due_date, notes, created_by)
-             VALUES (?,?,?,?,?,?,?,?,?)',
+             (id, sale_id, description, amount, issue_date, due_date, notes, created_by)
+             VALUES (?,?,?,?,?,?,?,?)',
             [$id,
-             $d['customer_id'] ?: null,
-             $d['sale_id'] ?: null,
+             $d['sale_id'] ?? null ?: null,
              trim($d['description']),
              (float)$d['amount'],
              $d['issue_date'],
@@ -91,10 +85,9 @@ class ReceivableModel {
         if (!$r) throw new RuntimeException('Conta a receber não encontrada.');
         if ($r['status'] === 'paid') throw new RuntimeException('Conta já liquidada — não pode ser editada.');
         Database::query(
-            'UPDATE receivables SET customer_id=?, sale_id=?, description=?, amount=?, issue_date=?, due_date=?, notes=?
+            'UPDATE receivables SET sale_id=?, description=?, amount=?, issue_date=?, due_date=?, notes=?
              WHERE id = ?',
-            [$d['customer_id'] ?: null,
-             $d['sale_id'] ?: null,
+            [$d['sale_id'] ?? null ?: null,
              trim($d['description']),
              (float)$d['amount'],
              $d['issue_date'],

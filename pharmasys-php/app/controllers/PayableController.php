@@ -120,14 +120,13 @@ class PayableController extends Controller {
         header('Cache-Control: no-store, no-cache');
         $out = fopen('php://output', 'w');
         fwrite($out, "\xEF\xBB\xBF");
-        fputcsv($out, ['Emissão','Vencimento','Fornecedor','OC','Descrição','Valor','Pago','Saldo','Estado','Dias'], ';');
+        fputcsv($out, ['Emissão','Vencimento','Fornecedor','Descrição','Valor','Pago','Saldo','Estado','Dias'], ';');
         $labels = ['open'=>'Em aberto','partial'=>'Parcial','paid'=>'Pago','canceled'=>'Cancelada'];
         foreach ($data['rows'] as $p) {
             fputcsv($out, [
                 $p['issue_date'] ?? '',
                 $p['due_date'],
                 $p['supplier_name'] ?? '',
-                $p['po_number'] ?? '',
                 $p['description'],
                 number_format((float)$p['amount'], 2, ',', ''),
                 number_format((float)$p['paid_amount'], 2, ',', ''),

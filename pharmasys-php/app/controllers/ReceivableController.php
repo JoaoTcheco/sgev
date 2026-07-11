@@ -17,7 +17,6 @@ class ReceivableController extends Controller {
         $filters = [
             'q'           => trim($_GET['q']           ?? ''),
             'status'      => trim($_GET['status']      ?? ''),
-            'customer_id' => trim($_GET['customer_id'] ?? ''),
             'due_from'    => trim($_GET['due_from']    ?? ''),
             'due_to'      => trim($_GET['due_to']      ?? ''),
             'overdue'     => trim($_GET['overdue']     ?? ''),
@@ -29,7 +28,6 @@ class ReceivableController extends Controller {
             'data'      => $data,
             'filters'   => $filters,
             'kpis'      => ReceivableModel::kpis(),
-            'customers' => CustomerModel::all(),
         ]);
     }
 
@@ -41,7 +39,6 @@ class ReceivableController extends Controller {
         $this->render('receivables/form', [
             'title'     => $item ? 'Editar Conta a Receber' : 'Nova Conta a Receber',
             'item'      => $item,
-            'customers' => CustomerModel::all(),
         ]);
     }
 
@@ -106,7 +103,7 @@ class ReceivableController extends Controller {
         $filters = [
             'q'           => trim($_GET['q']           ?? ''),
             'status'      => trim($_GET['status']      ?? ''),
-            'customer_id' => trim($_GET['customer_id'] ?? ''),
+            
             'due_from'    => trim($_GET['due_from']    ?? ''),
             'due_to'      => trim($_GET['due_to']      ?? ''),
             'overdue'     => trim($_GET['overdue']     ?? ''),
@@ -120,13 +117,12 @@ class ReceivableController extends Controller {
         header('Cache-Control: no-store, no-cache');
         $out = fopen('php://output', 'w');
         fwrite($out, "\xEF\xBB\xBF");
-        fputcsv($out, ['Emissão','Vencimento','Cliente','Recibo','Descrição','Valor','Recebido','Saldo','Estado','Dias'], ';');
+        fputcsv($out, ['Emissão','Vencimento','Recibo','Descrição','Valor','Recebido','Saldo','Estado','Dias'], ';');
         $labels = ['open'=>'Em aberto','partial'=>'Parcial','paid'=>'Recebido','canceled'=>'Cancelada'];
         foreach ($data['rows'] as $r) {
             fputcsv($out, [
                 $r['issue_date'] ?? '',
                 $r['due_date'],
-                $r['customer_name'] ?? '',
                 $r['receipt_number'] ?? '',
                 $r['description'],
                 number_format((float)$r['amount'], 2, ',', ''),

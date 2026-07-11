@@ -4,10 +4,10 @@ class DashboardController extends Controller {
         requireAuth();
         $u = currentUser();
 
-        /* Auto-refresh de alertas + notificações (throttle: 5 min por sessão) */
+        /* Auto-refresh de alertas (throttle: 5 min por sessão) */
         $last = (int)($_SESSION['alerts_auto_refresh_at'] ?? 0);
         if (time() - $last > 300) {
-            try { AlertModel::refresh(); NotificationModel::refresh(); }
+            try { AlertModel::refresh(); }
             catch (Throwable $e) { /* silencioso */ }
             $_SESSION['alerts_auto_refresh_at'] = time();
         }
@@ -61,9 +61,8 @@ class DashboardController extends Controller {
              FROM alerts WHERE resolved = 0"
         ) ?: ['total'=>0,'critical'=>0,'low_stock'=>0,'expiry'=>0];
 
-        // Produtos activos, clientes, lotes a expirar (60d)
+        // Produtos activos, lotes a expirar (60d)
         $productsActive  = (int)(Database::one("SELECT COUNT(*) c FROM products WHERE active = 1")['c'] ?? 0);
-        $customersCount  = (int)(Database::one("SELECT COUNT(*) c FROM customers")['c'] ?? 0);
         $expiringSoon    = (int)(Database::one(
             "SELECT COUNT(*) c FROM batches
              WHERE quantity > 0
@@ -149,7 +148,7 @@ class DashboardController extends Controller {
             'alerts_low'    => (int)$rowAlerts['low_stock'],
             'alerts_exp'    => (int)$rowAlerts['expiry'],
             'products'      => $productsActive,
-            'customers'     => $customersCount,
+            
             'expiring'      => $expiringSoon,
         ];
 

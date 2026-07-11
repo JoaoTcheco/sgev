@@ -10,14 +10,6 @@
     <?php if ($item): ?><input type="hidden" name="id" value="<?= e($item['id']) ?>"><?php endif; ?>
 
     <div class="grid-2">
-      <label>Cliente
-        <select name="customer_id">
-          <option value="">— Nenhum —</option>
-          <?php foreach ($customers as $c): ?>
-            <option value="<?= e($c['id']) ?>" <?= ($item['customer_id'] ?? '')===$c['id']?'selected':'' ?>><?= e($c['full_name']) ?></option>
-          <?php endforeach; ?>
-        </select>
-      </label>
       <label>Descrição *
         <input type="text" name="description" required value="<?= e($item['description'] ?? '') ?>">
       </label>

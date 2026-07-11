@@ -1,10 +1,10 @@
 <?php
 class BackupController extends Controller {
     private array $tables = [
-        'users','pharmacy_settings','categories','suppliers','customers',
+        'users','pharmacy_settings','categories','suppliers',
         'products','batches','financial_accounts','cash_sessions',
         'sales','sale_items','stock_movements','account_movements',
-        'alerts','audit_log',
+        'alerts','audit_logs',
     ];
 
     public function index(): void {

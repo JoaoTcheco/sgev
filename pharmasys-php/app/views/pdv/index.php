@@ -50,11 +50,13 @@
       </table>
     </div>
 
+    <?php if (hasRole('admin')): ?>
     <div class="pdv-session">
       <small>Caixa aberta desde</small>
       <strong><?= e(formatDateTime($session['opened_at'])) ?></strong>
       <small>Abertura: <?= e(formatMZN($session['opening_amount'])) ?></small>
     </div>
+    <?php endif; ?>
 
     <!-- STEPPER -->
     <div class="stepper">
@@ -85,13 +87,8 @@
         <strong id="pay-total-value">0,00 MT</strong>
       </div>
 
-      <label class="lbl">Cliente</label>
-      <select id="customer_id">
-        <option value="">— Consumidor final —</option>
-        <?php foreach ($customers as $c): ?>
-          <option value="<?= e($c['id']) ?>"><?= e($c['name']) ?></option>
-        <?php endforeach; ?>
-      </select>
+
+
 
       <label class="lbl">Conta que recebe o valor</label>
       <select id="account_id" data-accounts='<?= e(json_encode(array_map(fn($a)=>[
@@ -168,7 +165,7 @@
           <?= csrfField() ?>
           <input type="hidden" name="items"           id="items-payload">
           <input type="hidden" name="discount"        id="discount-payload">
-          <input type="hidden" name="customer_id"     id="customer-payload">
+          
           <input type="hidden" name="payment_method"  id="pm-payload">
           <input type="hidden" name="account_id"      id="account-payload">
           <input type="hidden" name="payment_wallet"  id="wallet-payload">
