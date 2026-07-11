@@ -50,11 +50,13 @@
       </table>
     </div>
 
+    <?php if (hasRole('admin')): ?>
     <div class="pdv-session">
       <small>Caixa aberta desde</small>
       <strong><?= e(formatDateTime($session['opened_at'])) ?></strong>
       <small>Abertura: <?= e(formatMZN($session['opening_amount'])) ?></small>
     </div>
+    <?php endif; ?>
 
     <!-- STEPPER -->
     <div class="stepper">
