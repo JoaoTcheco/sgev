@@ -68,11 +68,10 @@ class PayableModel {
         $id = uuidv4();
         Database::query(
             'INSERT INTO payables
-             (id, supplier_id, po_id, description, amount, issue_date, due_date, notes, created_by)
-             VALUES (?,?,?,?,?,?,?,?,?)',
+             (id, supplier_id, description, amount, issue_date, due_date, notes, created_by)
+             VALUES (?,?,?,?,?,?,?,?)',
             [$id,
              $d['supplier_id'] ?: null,
-             $d['po_id'] ?: null,
              trim($d['description']),
              (float)$d['amount'],
              $d['issue_date'],
