@@ -27,14 +27,6 @@ foreach ($ranges as $k=>$rg) {
     <div><label>De</label>   <input type="date" name="from" value="<?= e($filters['from']) ?>"></div>
     <div><label>Até</label>  <input type="date" name="to"   value="<?= e($filters['to'])   ?>"></div>
     <div><label>Recibo</label><input type="text" name="receipt" value="<?= e($filters['receipt']) ?>" placeholder="ex: 2026-000123"></div>
-    <div><label>Cliente</label>
-      <select name="customer_id">
-        <option value="">— Todos —</option>
-        <?php foreach ($customers as $c): ?>
-          <option value="<?= e($c['id']) ?>" <?= $filters['customer_id']===$c['id']?'selected':'' ?>><?= e($c['full_name']) ?></option>
-        <?php endforeach; ?>
-      </select>
-    </div>
     <div><label>Pagamento</label>
       <select name="payment_method">
         <option value="">— Todos —</option>
