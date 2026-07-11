@@ -6,10 +6,9 @@ class PayableModel {
 
     public static function find(string $id): ?array {
         return Database::one(
-            'SELECT p.*, s.legal_name AS supplier_name, po.po_number
+            'SELECT p.*, s.legal_name AS supplier_name
              FROM payables p
              LEFT JOIN suppliers s ON s.id = p.supplier_id
-             LEFT JOIN purchase_orders po ON po.id = p.po_id
              WHERE p.id = ?', [$id]
         );
     }
