@@ -131,6 +131,16 @@ class SaleModel {
                 ['receipt' => $receipt, 'total' => $total, 'payment' => $paymentMethod], $txnId);
 
             Database::commit();
+            // Após commit: sincroniza alertas de stock para os produtos vendidos.
+            try {
+                $seen = [];
+                foreach ($consumption as $c) {
+                    $pid = $c['product']['id'];
+                    if (isset($seen[$pid])) continue;
+                    $seen[$pid] = true;
+                    AlertModel::checkProduct($pid);
+                }
+            } catch (Throwable $ignore) { /* alertas não bloqueiam a venda */ }
             return $saleId;
         } catch (Throwable $e) {
             Database::rollBack();
