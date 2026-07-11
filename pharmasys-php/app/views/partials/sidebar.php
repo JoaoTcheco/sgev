@@ -43,9 +43,7 @@ $I = [
 ];
 
 $alertCount = 0;
-$notifCount = 0;
 try { $alertCount = (int) AlertModel::countOpen(); } catch (Throwable $e) {}
-try { $notifCount = (int) NotificationModel::countUnread($u); } catch (Throwable $e) {}
 ?>
 <aside class="app-sidebar">
   <div class="sb-header">
