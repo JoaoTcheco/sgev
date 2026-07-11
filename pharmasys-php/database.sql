@@ -6,12 +6,15 @@
 --   2) USE pharmasys;
 --   3) Importar este ficheiro (database.sql).
 --
--- Este ficheiro substitui a antiga pasta /migrations e contém
--- TODAS as tabelas do sistema (Core, PDV, Lotes, AP/AR,
--- Notificações, Ordens de Compra, Devoluções, Auditoria).
+-- Este ficheiro contém TODAS as tabelas do sistema
+-- (Núcleo, Catálogo, Stock, Financeiro, PDV/Vendas,
+--  Devoluções, AP/AR, Alertas, Auditoria).
 --
--- O utilizador administrador (admin / PharmaAdmin@2026) é criado
--- automaticamente pelo bootstrap.php na 1ª execução da aplicação.
+-- Módulos REMOVIDOS nesta versão:
+--   • Clientes  • Notificações  • Ordens de Compra
+--
+-- Utilizador admin (admin / PharmaAdmin@2026) é criado
+-- automaticamente pelo bootstrap.php na 1ª execução.
 -- ============================================================
 
 SET NAMES utf8mb4;
@@ -67,7 +70,7 @@ CREATE TABLE IF NOT EXISTS `pharmacy_settings` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ============================================================
--- 2. CATÁLOGO — Categorias, Fornecedores, Clientes, Produtos
+-- 2. CATÁLOGO — Categorias, Fornecedores, Produtos
 -- ============================================================
 
 CREATE TABLE IF NOT EXISTS `categories` (
@@ -89,18 +92,6 @@ CREATE TABLE IF NOT EXISTS `suppliers` (
   `active` TINYINT(1) NOT NULL DEFAULT 1,
   `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
-CREATE TABLE IF NOT EXISTS `customers` (
-  `id` CHAR(36) PRIMARY KEY,
-  `name` VARCHAR(160) NOT NULL,
-  `phone` VARCHAR(64),
-  `email` VARCHAR(160),
-  `nuit` VARCHAR(32),
-  `address` VARCHAR(255),
-  `notes` TEXT,
-  `active` TINYINT(1) NOT NULL DEFAULT 1,
-  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS `products` (
@@ -206,7 +197,6 @@ CREATE TABLE IF NOT EXISTS `sales` (
   `id` CHAR(36) PRIMARY KEY,
   `sale_number` INT NOT NULL DEFAULT 0,
   `receipt_number` VARCHAR(32) UNIQUE NOT NULL,
-  `customer_id` CHAR(36),
   `user_id` CHAR(36) NOT NULL,
   `cash_session_id` CHAR(36),
   `account_id` CHAR(36),
@@ -223,10 +213,9 @@ CREATE TABLE IF NOT EXISTS `sales` (
   `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   INDEX `idx_sales_created` (`created_at`),
   INDEX `idx_sales_user` (`user_id`),
-  FOREIGN KEY (`customer_id`) REFERENCES `customers`(`id`) ON DELETE SET NULL,
   FOREIGN KEY (`user_id`) REFERENCES `users`(`id`),
   FOREIGN KEY (`cash_session_id`) REFERENCES `cash_sessions`(`id`),
-  FOREIGN KEY (`account_id`) REFERENCES `financial_accounts`(`id`)
+  FOREIGN KEY (`account_id`) REFERENCES `financial_accounts`(`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS `sale_items` (
@@ -271,63 +260,13 @@ CREATE TABLE IF NOT EXISTS `account_movements` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ============================================================
--- 6. COMPRAS — Ordens de Compra (Purchase Orders)
--- ============================================================
-
-CREATE TABLE IF NOT EXISTS `purchase_orders` (
-  `id` CHAR(36) PRIMARY KEY,
-  `po_number` VARCHAR(32) UNIQUE NOT NULL,
-  `supplier_id` CHAR(36) NOT NULL,
-  `user_id` CHAR(36) NOT NULL,
-  `status` ENUM('draft','confirmed','partial','received','cancelled') NOT NULL DEFAULT 'draft',
-  `subtotal` DECIMAL(12,2) NOT NULL DEFAULT 0,
-  `discount` DECIMAL(12,2) NOT NULL DEFAULT 0,
-  `total` DECIMAL(12,2) NOT NULL DEFAULT 0,
-  `expected_date` DATE,
-  `confirmed_at` DATETIME,
-  `received_at` DATETIME,
-  `notes` TEXT,
-  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  INDEX `idx_po_supplier` (`supplier_id`),
-  INDEX `idx_po_status` (`status`),
-  INDEX `idx_po_created` (`created_at`),
-  FOREIGN KEY (`supplier_id`) REFERENCES `suppliers`(`id`),
-  FOREIGN KEY (`user_id`) REFERENCES `users`(`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
-CREATE TABLE IF NOT EXISTS `purchase_order_items` (
-  `id` CHAR(36) PRIMARY KEY,
-  `po_id` CHAR(36) NOT NULL,
-  `product_id` CHAR(36) NOT NULL,
-  `product_name` VARCHAR(200) NOT NULL,
-  `quantity_ordered` INT NOT NULL DEFAULT 0,
-  `quantity_received` INT NOT NULL DEFAULT 0,
-  `unit_cost` DECIMAL(12,2) NOT NULL DEFAULT 0,
-  `total` DECIMAL(12,2) NOT NULL DEFAULT 0,
-  `batch_number` VARCHAR(64),
-  `expiry_date` DATE,
-  `notes` VARCHAR(255),
-  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  INDEX `idx_poi_po` (`po_id`),
-  FOREIGN KEY (`po_id`) REFERENCES `purchase_orders`(`id`) ON DELETE CASCADE,
-  FOREIGN KEY (`product_id`) REFERENCES `products`(`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
-CREATE TABLE IF NOT EXISTS `po_seq` (
-  `year` INT PRIMARY KEY,
-  `last_value` INT NOT NULL DEFAULT 0
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
--- ============================================================
--- 7. DEVOLUÇÕES A FORNECEDOR (Supplier Returns / RMA)
+-- 6. DEVOLUÇÕES A FORNECEDOR (Supplier Returns / RMA)
 -- ============================================================
 
 CREATE TABLE IF NOT EXISTS `supplier_returns` (
   `id` CHAR(36) NOT NULL,
   `sr_number` VARCHAR(24) NOT NULL UNIQUE,
   `supplier_id` CHAR(36) NOT NULL,
-  `po_id` CHAR(36) NULL,
   `user_id` CHAR(36) NULL,
   `status` ENUM('draft','confirmed','cancelled') NOT NULL DEFAULT 'draft',
   `reason` VARCHAR(60) NOT NULL DEFAULT 'other',
@@ -342,7 +281,6 @@ CREATE TABLE IF NOT EXISTS `supplier_returns` (
   KEY `idx_sr_status` (`status`),
   KEY `idx_sr_created` (`created_at`),
   CONSTRAINT `fk_sr_supplier` FOREIGN KEY (`supplier_id`) REFERENCES `suppliers`(`id`),
-  CONSTRAINT `fk_sr_po` FOREIGN KEY (`po_id`) REFERENCES `purchase_orders`(`id`) ON DELETE SET NULL,
   CONSTRAINT `fk_sr_user` FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -373,13 +311,12 @@ CREATE TABLE IF NOT EXISTS `sr_seq` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ============================================================
--- 8. CONTAS A PAGAR / A RECEBER (AP / AR)
+-- 7. CONTAS A PAGAR / A RECEBER (AP / AR)
 -- ============================================================
 
 CREATE TABLE IF NOT EXISTS `payables` (
   `id` CHAR(36) NOT NULL PRIMARY KEY,
   `supplier_id` CHAR(36) NULL,
-  `po_id` CHAR(36) NULL,
   `description` VARCHAR(255) NOT NULL,
   `amount` DECIMAL(12,2) NOT NULL DEFAULT 0,
   `paid_amount` DECIMAL(12,2) NOT NULL DEFAULT 0,
@@ -393,13 +330,11 @@ CREATE TABLE IF NOT EXISTS `payables` (
   KEY `idx_pay_supplier` (`supplier_id`),
   KEY `idx_pay_status` (`status`),
   KEY `idx_pay_due` (`due_date`),
-  CONSTRAINT `fk_pay_supplier` FOREIGN KEY (`supplier_id`) REFERENCES `suppliers`(`id`) ON DELETE SET NULL,
-  CONSTRAINT `fk_pay_po` FOREIGN KEY (`po_id`) REFERENCES `purchase_orders`(`id`) ON DELETE SET NULL
+  CONSTRAINT `fk_pay_supplier` FOREIGN KEY (`supplier_id`) REFERENCES `suppliers`(`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS `receivables` (
   `id` CHAR(36) NOT NULL PRIMARY KEY,
-  `customer_id` CHAR(36) NULL,
   `sale_id` CHAR(36) NULL,
   `description` VARCHAR(255) NOT NULL,
   `amount` DECIMAL(12,2) NOT NULL DEFAULT 0,
@@ -411,10 +346,8 @@ CREATE TABLE IF NOT EXISTS `receivables` (
   `created_by` CHAR(36) NULL,
   `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  KEY `idx_rec_customer` (`customer_id`),
   KEY `idx_rec_status` (`status`),
   KEY `idx_rec_due` (`due_date`),
-  CONSTRAINT `fk_rec_customer` FOREIGN KEY (`customer_id`) REFERENCES `customers`(`id`) ON DELETE SET NULL,
   CONSTRAINT `fk_rec_sale` FOREIGN KEY (`sale_id`) REFERENCES `sales`(`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -436,7 +369,7 @@ CREATE TABLE IF NOT EXISTS `ar_ap_payments` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ============================================================
--- 9. ALERTAS, NOTIFICAÇÕES & AUDITORIA
+-- 8. ALERTAS & AUDITORIA
 -- ============================================================
 
 CREATE TABLE IF NOT EXISTS `alerts` (
@@ -451,26 +384,6 @@ CREATE TABLE IF NOT EXISTS `alerts` (
   `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (`product_id`) REFERENCES `products`(`id`) ON DELETE CASCADE,
   FOREIGN KEY (`batch_id`) REFERENCES `batches`(`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
-CREATE TABLE IF NOT EXISTS `notifications` (
-  `id` CHAR(36) PRIMARY KEY,
-  `user_id` CHAR(36) NULL,
-  `role_scope` VARCHAR(32) NULL,
-  `type` VARCHAR(64) NOT NULL,
-  `severity` ENUM('info','low','medium','high') NOT NULL DEFAULT 'info',
-  `title` VARCHAR(200) NOT NULL,
-  `message` TEXT NOT NULL,
-  `link` VARCHAR(255) NULL,
-  `entity` VARCHAR(64) NULL,
-  `entity_id` VARCHAR(64) NULL,
-  `dedupe_key` VARCHAR(120) NULL,
-  `read_at` DATETIME NULL,
-  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  INDEX `idx_notif_user` (`user_id`, `read_at`),
-  INDEX `idx_notif_role` (`role_scope`, `read_at`),
-  INDEX `idx_notif_dedupe` (`dedupe_key`),
-  INDEX `idx_notif_created` (`created_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS `audit_logs` (
@@ -490,11 +403,6 @@ SET FOREIGN_KEY_CHECKS = 1;
 
 -- ============================================================
 -- SEED — dados iniciais mínimos
--- ------------------------------------------------------------
--- O utilizador administrador é criado pelo bootstrap.php
--- (UserModel::ensureAdmin) na primeira execução, com password
--- gerada via password_hash() do PHP.
---   Utilizador: admin      Senha: PharmaAdmin@2026
 -- ============================================================
 
 INSERT INTO `pharmacy_settings` (`id`, `name`, `receipt_width`, `show_pharmacist`)
