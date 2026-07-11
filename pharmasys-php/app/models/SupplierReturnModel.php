@@ -155,9 +155,9 @@ class SupplierReturnModel {
         try {
             [$sub,$total] = self::computeTotals($clean);
             Database::query(
-                'UPDATE supplier_returns SET supplier_id=?, po_id=?, reason=?, subtotal=?, total=?, notes=?
+                'UPDATE supplier_returns SET supplier_id=?, reason=?, subtotal=?, total=?, notes=?
                  WHERE id = ?',
-                [$d['supplier_id'], $d['po_id'] ?: null,
+                [$d['supplier_id'],
                  $d['reason'] ?: 'other', $sub, $total, $d['notes'] ?: null, $id]
             );
             Database::query('DELETE FROM supplier_return_items WHERE sr_id = ?', [$id]);
