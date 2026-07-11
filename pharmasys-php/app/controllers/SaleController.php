@@ -13,6 +13,7 @@ class SaleController extends Controller {
             'session'    => $session,
             'customers'  => CustomerModel::all(),
             'categories' => CategoryModel::all(),
+            'accounts'   => FinancialAccountModel::all(true),
         ]);
     }
 
