@@ -60,7 +60,7 @@ foreach ($ranges as $k=>$rg) {
 
   <div class="crud-table-card">
     <table class="data-table">
-      <thead><tr><th>Recibo</th><th>Data</th><th>Cliente</th><th>Atendente</th><th>Itens</th><th>Total</th><th>Pagamento</th><th>Estado</th><th style="width:120px;">Acções</th></tr></thead>
+      <thead><tr><th>Recibo</th><th>Data</th><th>Atendente</th><th>Itens</th><th>Total</th><th>Pagamento</th><th>Estado</th><th style="width:120px;">Acções</th></tr></thead>
       <tbody>
       <?php if (!$items): ?>
         <tr><td colspan="9" class="empty">Sem vendas para os filtros seleccionados.</td></tr>
