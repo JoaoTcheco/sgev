@@ -35,12 +35,11 @@ class PayableModel {
         $page = max(1, $page);
         $off = ($page-1)*$per;
         $rows = Database::all(
-            "SELECT p.*, s.legal_name AS supplier_name, po.po_number,
+            "SELECT p.*, s.legal_name AS supplier_name,
                     (p.amount - p.paid_amount) AS balance,
                     DATEDIFF(p.due_date, CURDATE()) AS days_to_due
              FROM payables p
              LEFT JOIN suppliers s ON s.id = p.supplier_id
-             LEFT JOIN purchase_orders po ON po.id = p.po_id
              WHERE $where
              ORDER BY (p.status IN ('open','partial')) DESC, p.due_date ASC
              LIMIT $per OFFSET $off", $p
