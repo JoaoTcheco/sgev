@@ -84,11 +84,11 @@ class SaleModel {
             $wallet         = $data['payment_wallet'] ?? null;
             $paymentRef     = $data['payment_ref']    ?? null;
             Database::query(
-                'INSERT INTO sales (id, receipt_number, customer_id, user_id, cash_session_id, account_id,
+                'INSERT INTO sales (id, receipt_number, user_id, cash_session_id, account_id,
                                      subtotal, discount, total, amount_received, change_amount,
                                      payment_method, payment_wallet, payment_ref, notes)
-                 VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
-                [$saleId, $receipt, $data['customer_id'] ?: null, $userId, $session['id'],
+                 VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
+                [$saleId, $receipt, $userId, $session['id'],
                  $account['id'] ?? null, $subtotal, $discount, $total,
                  $amountReceived, $changeAmount,
                  $paymentMethod, $wallet, $paymentRef, $data['notes'] ?? null]
