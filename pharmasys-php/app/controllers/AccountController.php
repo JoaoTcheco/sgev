@@ -2,7 +2,11 @@
 class AccountController extends Controller {
     public function index(): void {
         requireRole('admin','pharmacist');
-        FinancialAccountModel::ensureSystemAccounts();
+        // Só cria as contas padrão se não existir NENHUMA conta (primeira instalação).
+        // Assim, se o admin apagar uma conta do sistema, ela não é recriada.
+        if (empty(FinancialAccountModel::all(false))) {
+            FinancialAccountModel::ensureSystemAccounts();
+        }
         $this->render('accounts/index', [
             'accounts' => FinancialAccountModel::all(false),
             'totals'   => FinancialAccountModel::totals(),

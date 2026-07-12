@@ -88,8 +88,9 @@ class FinancialAccountModel {
     public static function delete(string $id): void {
         $acc = self::find($id);
         if (!$acc) throw new RuntimeException('Conta não encontrada.');
-        if ($acc['is_system']) throw new RuntimeException('Contas do sistema não podem ser eliminadas.');
         if ((float)$acc['balance'] != 0.0) throw new RuntimeException('Zere o saldo antes de eliminar a conta.');
+        // Remove movimentos históricos associados (auditoria fica no audit_log geral).
+        Database::query('DELETE FROM account_movements WHERE account_id = ?', [$id]);
         Database::query('DELETE FROM financial_accounts WHERE id = ?', [$id]);
     }
 
