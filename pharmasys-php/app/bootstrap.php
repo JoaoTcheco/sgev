@@ -103,6 +103,24 @@ if (empty($_SESSION['__boot_migrated'])) {
     $_SESSION['__boot_migrated'] = 1;
 }
 
+// Sessão obsoleta: se o utilizador em sessão já não existe na BD
+// (ex.: BD recriada / user apagado), força logout para evitar erros de FK.
+if (!empty($_SESSION['user']['id'])) {
+    try {
+        $__u = Database::one('SELECT id, active FROM users WHERE id = ?', [$_SESSION['user']['id']]);
+        if (!$__u || (int)$__u['active'] !== 1) {
+            $_SESSION = [];
+            if (ini_get('session.use_cookies')) {
+                $p = session_get_cookie_params();
+                setcookie(session_name(), '', time() - 42000, $p['path'], $p['domain'], $p['secure'], $p['httponly']);
+            }
+            session_destroy();
+            session_start();
+            $_SESSION['flash'] = ['type' => 'error', 'message' => 'A sua sessão expirou (utilizador inválido). Inicie sessão novamente.'];
+        }
+    } catch (Throwable $e) { /* tabela users pode não existir no primeiro arranque */ }
+}
+
 // Config disponível globalmente
 $GLOBALS['CONFIG'] = $CONFIG;
 
