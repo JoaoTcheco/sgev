@@ -4,7 +4,10 @@
       <h1 class="page-title">Fornecedores</h1>
       <p class="page-subtitle"><?= count($items) ?> fornecedor(es) registados</p>
     </div>
-    <a href="<?= url('suppliers/new') ?>" class="btn btn-primary">+ Novo fornecedor</a>
+    <div style="display:flex;gap:8px;">
+      <a href="<?= url('nfe') ?>" class="btn">⬆ Importar NF-e (XML)</a>
+      <a href="<?= url('suppliers/new') ?>" class="btn btn-primary">+ Novo fornecedor</a>
+    </div>
   </div>
 
   <div class="crud-table-card">
@@ -27,6 +30,7 @@
           <td><?= e($s['email'] ?: '—') ?></td>
           <td><span class="badge <?= $s['active'] ? 'badge-green' : 'badge-gray' ?>"><?= $s['active'] ? 'Activo' : 'Inactivo' ?></span></td>
           <td class="actions">
+            <a href="<?= url('suppliers/view') ?>&id=<?= e($s['id']) ?>" class="btn btn-sm btn-primary">Ver</a>
             <a href="<?= url('suppliers/edit') ?>&id=<?= e($s['id']) ?>" class="btn btn-sm">Editar</a>
             <form method="POST" action="<?= url('suppliers/delete') ?>" onsubmit="return confirm('Remover?')" style="display:inline;">
               <?= csrfField() ?><input type="hidden" name="id" value="<?= e($s['id']) ?>">

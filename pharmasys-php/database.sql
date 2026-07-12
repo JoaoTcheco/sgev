@@ -127,6 +127,7 @@ CREATE TABLE IF NOT EXISTS `batches` (
   `id` CHAR(36) PRIMARY KEY,
   `product_id` CHAR(36) NOT NULL,
   `supplier_id` CHAR(36),
+  `invoice_id` CHAR(36) NULL,
   `batch_number` VARCHAR(64) NOT NULL,
   `expiry_date` DATE NOT NULL,
   `quantity` INT NOT NULL DEFAULT 0,
@@ -137,8 +138,32 @@ CREATE TABLE IF NOT EXISTS `batches` (
   `txn_id` CHAR(36),
   INDEX `idx_batches_product` (`product_id`),
   INDEX `idx_batches_expiry` (`expiry_date`),
+  INDEX `idx_batches_supplier` (`supplier_id`, `created_at`),
+  INDEX `idx_batches_invoice` (`invoice_id`),
   FOREIGN KEY (`product_id`) REFERENCES `products`(`id`) ON DELETE CASCADE,
   FOREIGN KEY (`supplier_id`) REFERENCES `suppliers`(`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- ------------------------------------------------------------
+-- 3b. Faturas de fornecedor importadas via XML (NF-e)
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `supplier_invoices` (
+  `id` CHAR(36) PRIMARY KEY,
+  `supplier_id` CHAR(36),
+  `invoice_number` VARCHAR(64),
+  `invoice_series` VARCHAR(16),
+  `invoice_key` VARCHAR(64) UNIQUE,
+  `issue_date` DATE,
+  `total` DECIMAL(12,2) NOT NULL DEFAULT 0,
+  `items_count` INT NOT NULL DEFAULT 0,
+  `xml_content` LONGTEXT,
+  `imported_by` CHAR(36),
+  `imported_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `notes` TEXT,
+  INDEX `idx_si_supplier` (`supplier_id`, `issue_date`),
+  INDEX `idx_si_imported` (`imported_at`),
+  FOREIGN KEY (`supplier_id`) REFERENCES `suppliers`(`id`) ON DELETE SET NULL,
+  FOREIGN KEY (`imported_by`) REFERENCES `users`(`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS `stock_movements` (

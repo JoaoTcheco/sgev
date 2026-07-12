@@ -67,6 +67,32 @@ if (empty($_SESSION['__boot_migrated'])) {
         }
     } catch (Throwable $e) { /* tabela ainda não existe: instalador irá criar */ }
 
+    // Micro-migração: importação NF-e (supplier_invoices + batches.invoice_id)
+    try {
+        $bcols = array_column(Database::all("SHOW COLUMNS FROM batches"), 'Field');
+        if (!in_array('invoice_id', $bcols, true)) {
+            Database::query("ALTER TABLE batches ADD COLUMN invoice_id CHAR(36) NULL AFTER supplier_id");
+            Database::query("ALTER TABLE batches ADD INDEX idx_batches_invoice (invoice_id)");
+            Database::query("ALTER TABLE batches ADD INDEX idx_batches_supplier (supplier_id, created_at)");
+        }
+        Database::query("CREATE TABLE IF NOT EXISTS `supplier_invoices` (
+          `id` CHAR(36) PRIMARY KEY,
+          `supplier_id` CHAR(36),
+          `invoice_number` VARCHAR(64),
+          `invoice_series` VARCHAR(16),
+          `invoice_key` VARCHAR(64) UNIQUE,
+          `issue_date` DATE,
+          `total` DECIMAL(12,2) NOT NULL DEFAULT 0,
+          `items_count` INT NOT NULL DEFAULT 0,
+          `xml_content` LONGTEXT,
+          `imported_by` CHAR(36),
+          `imported_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          `notes` TEXT,
+          INDEX `idx_si_supplier` (`supplier_id`, `issue_date`),
+          INDEX `idx_si_imported` (`imported_at`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    } catch (Throwable $e) { /* não bloqueia arranque */ }
+
     UserModel::ensureAdmin();
     $_SESSION['__boot_migrated'] = 1;
 }
