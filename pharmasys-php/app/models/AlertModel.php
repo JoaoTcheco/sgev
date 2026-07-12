@@ -53,9 +53,13 @@ class AlertModel {
         }
     }
 
-    /** Pesquisa com filtros: severity, type, q (produto/msg), status (open|resolved|all). */
+    /** Pesquisa com filtros: severity, type, q, status, product_id, from, to. */
     public static function search(array $f = []): array {
-        $sql = 'SELECT a.*, p.name AS product_name, b.batch_number, b.expiry_date
+        $sql = 'SELECT a.*, p.name AS product_name,
+                       p.min_stock AS product_min_stock,
+                       p.expiry_alert_days AS product_expiry_alert_days,
+                       (SELECT COALESCE(SUM(bb.quantity),0) FROM batches bb WHERE bb.product_id = p.id) AS current_stock,
+                       b.batch_number, b.expiry_date
                 FROM alerts a
                 LEFT JOIN products p ON p.id = a.product_id
                 LEFT JOIN batches  b ON b.id = a.batch_id
@@ -64,8 +68,11 @@ class AlertModel {
         $status = $f['status'] ?? 'open';
         if ($status === 'open')      $sql .= ' AND a.resolved = 0';
         elseif ($status === 'resolved') $sql .= ' AND a.resolved = 1';
-        if (!empty($f['severity'])) { $sql .= ' AND a.severity = ?'; $p[] = $f['severity']; }
-        if (!empty($f['type']))     { $sql .= ' AND a.type = ?';     $p[] = $f['type']; }
+        if (!empty($f['severity']))   { $sql .= ' AND a.severity = ?';   $p[] = $f['severity']; }
+        if (!empty($f['type']))       { $sql .= ' AND a.type = ?';       $p[] = $f['type']; }
+        if (!empty($f['product_id'])) { $sql .= ' AND a.product_id = ?'; $p[] = $f['product_id']; }
+        if (!empty($f['from']))       { $sql .= ' AND a.created_at >= ?'; $p[] = $f['from'] . ' 00:00:00'; }
+        if (!empty($f['to']))         { $sql .= ' AND a.created_at <= ?'; $p[] = $f['to']   . ' 23:59:59'; }
         if (!empty($f['q'])) {
             $sql .= ' AND (p.name LIKE ? OR a.message LIKE ? OR b.batch_number LIKE ?)';
             $q = '%'.$f['q'].'%';
