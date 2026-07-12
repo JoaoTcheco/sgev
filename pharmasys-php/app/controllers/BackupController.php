@@ -3,8 +3,8 @@ class BackupController extends Controller {
     private array $tables = [
         'users','pharmacy_settings','categories','suppliers',
         'products','batches','supplier_invoices','financial_accounts','cash_sessions',
-        'sales','sale_items','stock_movements','account_movements',
-        'supplier_returns','supplier_return_items',
+        'sales','sale_items','receipt_seq','stock_movements','account_movements',
+        'supplier_returns','supplier_return_items','sr_seq',
         'payables','receivables','ar_ap_payments',
         'alerts','audit_logs',
     ];
