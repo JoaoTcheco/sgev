@@ -57,12 +57,10 @@ $typeLabels = [
           <a href="<?= url('accounts/movements') ?>&id=<?= e($a['id']) ?>" class="btn btn-sm">📊 Extracto</a>
           <?php if ($isAdmin): ?>
             <a href="<?= url('accounts/edit') ?>&id=<?= e($a['id']) ?>" class="btn btn-sm">Editar</a>
-            <?php if (!$a['is_system']): ?>
-              <form method="POST" action="<?= url('accounts/delete') ?>" onsubmit="return confirm('Eliminar esta conta? Só é possível se o saldo for zero.')" style="display:inline;">
-                <?= csrfField() ?><input type="hidden" name="id" value="<?= e($a['id']) ?>">
-                <button class="btn btn-sm btn-danger">×</button>
-              </form>
-            <?php endif; ?>
+            <form method="POST" action="<?= url('accounts/delete') ?>" onsubmit="return confirm('Eliminar esta conta? Só é possível se o saldo for zero. Esta acção não pode ser desfeita.')" style="display:inline;">
+              <?= csrfField() ?><input type="hidden" name="id" value="<?= e($a['id']) ?>">
+              <button class="btn btn-sm btn-danger">×</button>
+            </form>
           <?php endif; ?>
         </div>
       </div>
