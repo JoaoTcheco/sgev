@@ -1,158 +1,145 @@
 <?php
 /**
  * ============================================================
- *  PharmaSys — Ficheiro de Configuração Central
+ *  PharmaSys — Configuração Central
  * ============================================================
  *
- *  Para HOSPEDAR o sistema (InfinityFree, cPanel, VPS, etc.):
- *    1) Mude 'environment' para 'production'
- *    2) Preencha o bloco "BASE DE DADOS (PRODUÇÃO)"
- *    3) Actualize 'site_url' com o seu domínio
- *    4) (Opcional) Preencha SMTP e dados da empresa
+ *  Prioridade dos valores:
+ *    1º) Variáveis do ficheiro  .env  (na raiz do projecto)
+ *    2º) Valores por defeito abaixo
  *
- *  Para uso LOCAL (XAMPP / MariaDB local):
- *    Deixe 'environment' como 'local' — nada mais é preciso.
- *
- *  Todas as chaves são lidas via helper  config('chave', $default)
+ *  Para hospedar:
+ *    - Copie  .env.example  para  .env
+ *    - Preencha DB_HOST / DB_NAME / DB_USER / DB_PASS
+ *    - Ajuste APP_ENV=production e APP_URL=https://seu-dominio
  * ============================================================
  */
 
-// ------------------------------------------------------------
-//  AMBIENTE: 'local'  |  'production'
-//  Único interruptor que escolhe qual bloco de BD é usado.
-// ------------------------------------------------------------
-$environment = 'local';
+$appEnv = env('APP_ENV', 'local');
 
 // ------------------------------------------------------------
-//  BASE DE DADOS — LOCAL (XAMPP / MariaDB)
+//  BASE DE DADOS
+//  Se DB_SOCKET estiver definido, é usado o socket Unix;
+//  caso contrário, usa DB_HOST + DB_PORT (TCP).
 // ------------------------------------------------------------
-$db_local = [
-    'db_host'    => '127.0.0.1;unix_socket=/tmp/mariadb/run/mysql.sock',
-    'db_port'    => 3306,
-    'db_name'    => 'pharmasys',
-    'db_user'    => 'root',
-    'db_pass'    => '',
-    'db_charset' => 'utf8mb4',
-];
+$dbSocket = env('DB_SOCKET', '');
+$dbHost   = env('DB_HOST', '127.0.0.1');
+$dbPort   = (int) env('DB_PORT', 3306);
 
-// ------------------------------------------------------------
-//  BASE DE DADOS — PRODUÇÃO (InfinityFree / cPanel / VPS)
-//  Preencha aqui quando for hospedar. Ex.: InfinityFree
-//    db_host => sql309.infinityfree.com
-//    db_name => if0_XXXXXXXX_pharmasys
-//    db_user => if0_XXXXXXXX
-//    db_pass => a-sua-senha
-// ------------------------------------------------------------
-$db_production = [
-    'db_host'    => 'localhost',
-    'db_port'    => 3306,
-    'db_name'    => 'pharmasys',
-    'db_user'    => 'root',
-    'db_pass'    => '',
-    'db_charset' => 'utf8mb4',
-];
+if ($dbSocket !== '') {
+    // ex.: 127.0.0.1;unix_socket=/tmp/mariadb/run/mysql.sock
+    $dbHostFinal = $dbHost . ';unix_socket=' . $dbSocket;
+} else {
+    $dbHostFinal = $dbHost;
+}
 
-$db = ($environment === 'production') ? $db_production : $db_local;
-
-return array_merge($db, [
+return [
 
     // ============================================================
     //  AMBIENTE
     // ============================================================
-    'environment'      => $environment,          // 'local' | 'production'
-    'debug'            => $environment === 'local',
-    'maintenance_mode' => false,
-    'maintenance_message' => 'Sistema em manutenção. Voltaremos em breve!',
+    'environment'         => $appEnv,                             // local | production
+    'debug'               => (bool) env('APP_DEBUG', $appEnv === 'local'),
+    'maintenance_mode'    => (bool) env('MAINTENANCE_MODE', false),
+    'maintenance_message' => env('MAINTENANCE_MESSAGE', 'Sistema em manutenção. Voltaremos em breve!'),
+
+    // ============================================================
+    //  BASE DE DADOS
+    // ============================================================
+    'db_host'    => $dbHostFinal,
+    'db_port'    => $dbPort,
+    'db_name'    => env('DB_NAME', 'pharmasys'),
+    'db_user'    => env('DB_USER', 'root'),
+    'db_pass'    => env('DB_PASS', ''),
+    'db_charset' => env('DB_CHARSET', 'utf8mb4'),
+    'db_socket'  => $dbSocket,
 
     // ============================================================
     //  SITE
     // ============================================================
-    'site_title'       => 'PharmaSys — Gestão de Farmácia',
-    'site_description' => 'Sistema de gestão para farmácias em Moçambique — vendas, stock, validades, contas e relatórios.',
-    'site_url'         => $environment === 'production'
-                            ? 'http://pharmasys.page.gd'      // <-- troque pelo seu domínio
-                            : 'http://127.0.0.1:8090',
-    'site_email'       => 'geral@pharmasys.co.mz',
+    'site_title'       => env('APP_NAME', 'PharmaSys — Gestão de Farmácia'),
+    'site_description' => env('APP_DESCRIPTION', 'Sistema de gestão para farmácias em Moçambique.'),
+    'site_url'         => rtrim(env('APP_URL', 'http://127.0.0.1:8090'), '/'),
+    'site_email'       => env('APP_EMAIL', 'geral@pharmasys.co.mz'),
 
     // ============================================================
-    //  EMPRESA / FARMÁCIA (aparece em recibos, cabeçalhos, PDFs)
+    //  EMPRESA / FARMÁCIA (recibos, cabeçalhos, PDFs)
     // ============================================================
-    'pharmacy_name'    => 'PharmaSys',
-    'company_name'     => 'PharmaSys, Lda.',
-    'company_nuit'     => '400000000',
-    'company_address'  => 'Av. 25 de Setembro, Maputo, Moçambique',
-    'company_phone'    => '+258 84 000 0000',
-    'company_phone2'   => '+258 87 000 0000',
-    'company_email'    => 'geral@pharmasys.co.mz',
-    'company_website'  => 'www.pharmasys.co.mz',
+    'pharmacy_name'    => env('PHARMACY_NAME', 'PharmaSys'),
+    'company_name'     => env('COMPANY_NAME', 'PharmaSys, Lda.'),
+    'company_nuit'     => env('COMPANY_NUIT', '400000000'),
+    'company_address'  => env('COMPANY_ADDRESS', 'Av. 25 de Setembro, Maputo, Moçambique'),
+    'company_phone'    => env('COMPANY_PHONE', '+258 84 000 0000'),
+    'company_phone2'   => env('COMPANY_PHONE2', ''),
+    'company_email'    => env('COMPANY_EMAIL', 'geral@pharmasys.co.mz'),
+    'company_website'  => env('COMPANY_WEBSITE', 'www.pharmasys.co.mz'),
 
     // ============================================================
-    //  REDES SOCIAIS (opcional — usado em recibos/rodapé)
+    //  REDES SOCIAIS (opcional)
     // ============================================================
-    'social_facebook'  => '',
-    'social_instagram' => '',
-    'social_linkedin'  => '',
-    'social_whatsapp'  => '',
+    'social_facebook'  => env('SOCIAL_FACEBOOK', ''),
+    'social_instagram' => env('SOCIAL_INSTAGRAM', ''),
+    'social_linkedin'  => env('SOCIAL_LINKEDIN', ''),
+    'social_whatsapp'  => env('SOCIAL_WHATSAPP', ''),
 
     // ============================================================
     //  E-MAIL (SMTP) — opcional
     // ============================================================
-    'smtp_host'        => 'smtp.gmail.com',
-    'smtp_port'        => 587,
-    'smtp_user'        => '',
-    'smtp_pass'        => '',
-    'smtp_secure'      => 'tls',
-    'smtp_from_name'   => 'PharmaSys',
+    'smtp_host'      => env('SMTP_HOST', 'smtp.gmail.com'),
+    'smtp_port'      => (int) env('SMTP_PORT', 587),
+    'smtp_user'      => env('SMTP_USER', ''),
+    'smtp_pass'      => env('SMTP_PASS', ''),
+    'smtp_secure'    => env('SMTP_SECURE', 'tls'),
+    'smtp_from_name' => env('SMTP_FROM_NAME', 'PharmaSys'),
 
     // ============================================================
     //  LOCALIZAÇÃO
     // ============================================================
-    'timezone'         => 'Africa/Maputo',
-    'locale'           => 'pt_MZ',
-    'default_lang'     => 'pt',
+    'timezone'         => env('APP_TIMEZONE', 'Africa/Maputo'),
+    'locale'           => env('APP_LOCALE', 'pt_MZ'),
+    'default_lang'     => env('APP_LANG', 'pt'),
     'available_langs'  => ['pt', 'en'],
-    'currency'         => 'MZN',
-    'currency_symbol'  => 'MT',
+    'currency'         => env('APP_CURRENCY', 'MZN'),
+    'currency_symbol'  => env('APP_CURRENCY_SYMBOL', 'MT'),
     'date_format'      => 'd/m/Y',
     'datetime_format'  => 'd/m/Y H:i:s',
 
     // ============================================================
     //  TEMA
     // ============================================================
-    'default_theme'    => 'light',
+    'default_theme'    => env('APP_THEME', 'light'),
     'available_themes' => ['light', 'dark'],
 
     // ============================================================
     //  SEGURANÇA
     // ============================================================
-    // 12h — o caixa pode ficar aberto o turno inteiro sem ser deslogado
-    'session_lifetime'    => 12 * 3600,
+    'session_lifetime'    => (int) env('SESSION_LIFETIME', 12 * 3600),
     'csrf_token_name'     => 'csrf_token',
-    'password_min_length' => 8,
-    'login_attempts'      => 5,
-    'login_lockout_time'  => 900,   // 15 min
+    'password_min_length' => (int) env('PASSWORD_MIN_LENGTH', 8),
+    'login_attempts'      => (int) env('LOGIN_ATTEMPTS', 5),
+    'login_lockout_time'  => (int) env('LOGIN_LOCKOUT_TIME', 900),
 
     // ============================================================
     //  UPLOAD
     // ============================================================
-    'upload_max_size'      => 5 * 1024 * 1024,   // 5 MB
+    'upload_max_size'      => (int) env('UPLOAD_MAX_SIZE', 5 * 1024 * 1024),
     'upload_allowed_types' => ['jpg','jpeg','png','gif','webp','pdf','xml'],
     'upload_path'          => ROOT_PATH . '/assets/images/uploads/',
 
     // ============================================================
     //  CACHE
     // ============================================================
-    'cache_enabled'   => false,
-    'cache_lifetime'  => 3600,
+    'cache_enabled'  => (bool) env('CACHE_ENABLED', false),
+    'cache_lifetime' => (int)  env('CACHE_LIFETIME', 3600),
 
     // ============================================================
     //  PAGINAÇÃO / LISTAS
     // ============================================================
-    'items_per_page'  => 20,
+    'items_per_page' => (int) env('ITEMS_PER_PAGE', 20),
 
     // ============================================================
-    //  ALERTAS DE STOCK / VALIDADE (dias e limites por defeito)
+    //  ALERTAS DE STOCK / VALIDADE
     // ============================================================
-    'alert_expiry_days'       => 60,    // avisar produtos a expirar em <= 60 dias
-    'alert_low_stock_default' => 10,    // usado se o produto não tiver limite próprio
-]);
+    'alert_expiry_days'       => (int) env('ALERT_EXPIRY_DAYS', 60),
+    'alert_low_stock_default' => (int) env('ALERT_LOW_STOCK_DEFAULT', 10),
+];
