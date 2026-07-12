@@ -1950,3 +1950,98 @@ Novo ficheiro na raiz para impedir commits acidentais de:
 compatíveis com o `database.sql` existente. Contas de sistema legadas
 (`is_system = 1`) continuam a funcionar; apenas deixam de estar
 protegidas contra eliminação a pedido do administrador.
+
+---
+
+## 40. Ronda 2026.07 (rev. c) — Filtros de relatórios, ajustes de contas inline, PDV configurável
+
+Esta ronda expande o sistema em quatro frentes sem remover funcionalidades:
+
+### 40.1 Relatórios — filtros extra + exportação PDF
+- `ReportController` recebe agora, para além de `from`/`to`, os filtros
+  `payment` (método de pagamento) e `user_id` (operador). Todos os KPIs
+  e séries são recalculados com os filtros aplicados.
+- `ReportModel` refactorizado: método privado `whereSales()` constrói
+  o fragmento SQL partilhado por todas as queries (KPIs, séries por
+  dia, top produtos, margens, por método, por operador).
+- Nova acção **`reports/pdf`** produz uma versão imprimível de qualquer
+  vista (sales, top, margins, payments, users). O layout usa
+  `layouts/print.php` com o novo template `views/reports/print.php` que:
+    - Mostra cabeçalho com nome da farmácia + período + filtros activos.
+    - Formata valores em MT automaticamente (Receita, Custo, Lucro, Total).
+    - Dispara `window.print()` automaticamente ao carregar (o utilizador
+      pode escolher "Guardar como PDF" no diálogo do navegador).
+- `views/reports/index.php` reformulado: campos `payment` e `user_id`
+  no formulário de filtros, botões **⬇ CSV** e **🖨️ PDF** lado-a-lado
+  em cada painel (Vendas por dia, Por método, Por operador, Top, Margens).
+- Nova rota `GET reports/pdf` registada em `index.php`.
+
+### 40.2 Contas Financeiras — ajuste rápido inline
+- Em `views/accounts/index.php`, cada cartão de conta ganha um botão
+  **💰 Ajustar** (visível apenas para admin) que expande um mini-formulário
+  com três acções: **+ Adicionar**, **− Remover**, **⟲ Zerar**.
+- Reutiliza o endpoint existente `POST accounts/adjust`. Foi adicionado
+  o parâmetro `back=list` — quando presente, o utilizador é redirigido
+  de volta à lista de contas em vez do extracto.
+- Cada ajuste continua a ser registado como `account_movement` (auditoria
+  completa acessível em Extracto).
+- `FinancialAccountModel::adjust()` já suportava os três tipos e é
+  totalmente transaccional — nada muda no modelo.
+
+### 40.3 Configurações — controlo do PDV e impressão de amostra
+- Três novas colunas em `pharmacy_settings` (migração automática em
+  `bootstrap.php`, sem alterar o `database.sql`):
+    - `pdv_hide_expired` (default 1) — esconde produtos com validade
+      expirada tanto no catálogo por categoria como na pesquisa do PDV.
+    - `pdv_hide_out_of_stock` (default 0) — esconde produtos sem stock
+      do catálogo do PDV.
+    - `pdv_warn_near_expiry` (default 1) — usado pelos alertas para
+      destacar visualmente lotes perto do vencimento.
+- `SettingModel::get()` devolve defaults sensatos para as novas colunas.
+  `SettingModel::update()` grava-as a partir dos checkboxes do formulário.
+- Nova secção **"PDV — Ponto de Venda"** em `views/settings/index.php`
+  com os três toggles + link directo para a página de Alertas.
+- `SaleController::browse()` e `SaleController::search()` consultam
+  `SettingModel::get()` e aplicam os filtros de expiração / sem stock
+  antes de devolver JSON ao PDV.
+- Botão **🖨️ Imprimir** adicionado ao cabeçalho da pré-visualização do
+  recibo. Abre uma nova janela com o HTML actual do recibo, aplica o
+  CSS `receipt.css` e chama `window.print()` — útil para calibrar a
+  impressora térmica ou fazer amostras de teste.
+
+### 40.4 Alertas — refresh automático
+- `AlertController::index()` chama agora `AlertModel::refresh()` uma vez
+  por hora (throttle via `$_SESSION['__alerts_refresh_ts']`). Assim, o
+  utilizador que abre a página de Alertas vê sempre o estado actual
+  sem ter de clicar "↻ Recalcular" manualmente.
+- Cada produto define individualmente:
+    - `min_stock` — limiar para alertas `low_stock`.
+    - `expiry_alert_days` — janela em dias para alertas `expiring`.
+  Estes campos já existiam e são respeitados pelo `AlertModel::refresh()`
+  (queries incluem `DATE_ADD(CURDATE(), INTERVAL p.expiry_alert_days DAY)`).
+
+### 40.5 Compatibilidade e migração
+- Todas as alterações à base de dados são feitas via micro-migrações
+  em `bootstrap.php` (`ALTER TABLE ... ADD COLUMN`) — quem já tinha
+  a BD instalada não precisa reimportar `database.sql`.
+- Novas colunas em `pharmacy_settings`: `pdv_hide_expired`,
+  `pdv_hide_out_of_stock`, `pdv_warn_near_expiry`.
+- Nenhum comportamento antigo foi removido; toda a integração PDV,
+  Recibo, Alertas e Relatórios continua compatível.
+
+### 40.6 Ficheiros criados / alterados
+**Novos:**
+- `app/views/reports/print.php`
+
+**Alterados:**
+- `app/bootstrap.php` — 3 novas micro-migrações
+- `app/models/SettingModel.php` — 3 novos campos em get/update
+- `app/controllers/ReportController.php` — filtros extra + acção `pdf()`
+- `app/models/ReportModel.php` — refactor `whereSales()` + assinaturas com `$f`
+- `app/controllers/SaleController.php` — respeitar `pdv_hide_expired` e `pdv_hide_out_of_stock`
+- `app/controllers/AlertController.php` — auto-refresh throttled
+- `app/controllers/AccountController.php` — redirect `back=list`
+- `app/views/accounts/index.php` — botão 💰 Ajustar por cartão
+- `app/views/settings/index.php` — secção PDV + botão 🖨️ Imprimir recibo
+- `app/views/reports/index.php` — filtros método/operador + botões CSV/PDF
+- `index.php` — rota `GET reports/pdf`
