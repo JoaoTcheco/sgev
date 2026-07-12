@@ -147,6 +147,8 @@ $router->add('receivables/export', 'ReceivableController@export',  'GET', true, 
 // Análise
 $router->add('reports',         'ReportController@index',   'GET', true, $MGR);
 $router->add('reports/export',  'ReportController@export',  'GET', true, $MGR);
+$router->add('reports/pdf',     'ReportController@pdf',     'GET', true, $MGR);
+
 $router->add('margins',         'MarginController@index',   'GET', true, $MGR);
 $router->add('margins/export',  'MarginController@export',  'GET', true, $MGR);
 
