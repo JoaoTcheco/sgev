@@ -84,3 +84,37 @@
   </form>
 </section>
 <link rel="stylesheet" href="<?= asset('css/crud.css') ?>">
+<script>
+// Verificação em tempo real: avisa se o código de barras já existe noutro produto.
+(function(){
+  const editingId = <?= json_encode($editing['id'] ?? '') ?>;
+  const lookupUrl = <?= json_encode(url('products/lookup')) ?>;
+  function bind(input, statusEl){
+    if (!input) return;
+    let t; input.addEventListener('input', ()=>{
+      clearTimeout(t);
+      const v = input.value.trim();
+      statusEl.textContent = ''; statusEl.style.color = '';
+      if (v.length < 4) return;
+      t = setTimeout(async ()=>{
+        try {
+          const r = await fetch(lookupUrl + '&barcode=' + encodeURIComponent(v));
+          const d = await r.json();
+          if (d.found && d.id !== editingId) {
+            statusEl.textContent = '⚠ Já usado por: ' + d.name;
+            statusEl.style.color = '#dc2626';
+          } else if (d.found) {
+            statusEl.textContent = '✓ Código actual deste produto.';
+            statusEl.style.color = '#0f766e';
+          } else {
+            statusEl.textContent = '✓ Código disponível.';
+            statusEl.style.color = '#0f766e';
+          }
+        } catch(e) {}
+      }, 300);
+    });
+  }
+  bind(document.getElementById('pf-barcode'),    document.getElementById('pf-barcode-status'));
+})();
+</script>
+
