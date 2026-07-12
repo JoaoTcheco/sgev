@@ -1,6 +1,6 @@
 # PharmaSys — Sistema de Gestão de Farmácia (PHP)
 
-> **Versão:** 2026.07  
+> **Versão:** 2026.07 (rev. b — `.env` + diagnóstico BD + contas eliminaveis)  
 > **Estilo:** MVC procedural, PHP 8.1+, MySQL 8 / MariaDB 10.4+  
 > **Funciona 100% offline** — todas as dependências (fontes Inter WOFF2 e JsBarcode) são servidas a partir de `assets/`. Não há chamadas a CDNs externos.  
 > **Domínio:** Farmácia em Moçambique (MZN, M-Pesa, E-Mola, NUIT).
