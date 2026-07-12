@@ -198,8 +198,46 @@ a { color: inherit; }
 }
 .btn-outline-danger:hover:not(:disabled) { background: var(--danger-bg); border-color: #fca5a5; }
 
+/* Outline neutro — usado em acções secundárias (Exportar, Editar, +Adicionar item) */
+.btn-outline {
+  background: #fff;
+  border-color: var(--border);
+  color: var(--foreground);
+  box-shadow: var(--shadow-sm);
+}
+.btn-outline:hover:not(:disabled) {
+  background: #f1f7f5;
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+/* Warning — acções de cuidado (cancelar conta, avisos reversíveis) */
+.btn-warning {
+  background: var(--warning);
+  border-color: var(--warning);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(217, 119, 6, .22);
+}
+.btn-warning:hover:not(:disabled) { background: #b45309; border-color: #b45309; color: #fff; }
+
+/* Botão apenas com ícone (quadrado) — mantém alinhamento em tabelas */
+.btn-icon {
+  padding: 8px;
+  width: 34px; height: 34px;
+  line-height: 1;
+}
+.btn-icon.btn-sm { width: 28px; height: 28px; padding: 4px; }
+
 .btn-sm { padding: 6px 11px; font-size: 12px; border-radius: var(--radius-sm); }
 .btn-lg { padding: 13px 20px; font-size: 14px; border-radius: var(--radius-lg); }
+
+/* Grupo de botões coeso (barra de acções) */
+.btn-group {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
 
 /* ================================================================
    Campos de formulário globais (input, select, textarea)
