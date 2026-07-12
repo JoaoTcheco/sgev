@@ -59,9 +59,10 @@ class AccountController extends Controller {
 
     public function adjust(): void {
         requireRole('admin'); csrfVerify();
+        $accountId = $_POST['account_id'] ?? '';
         try {
             FinancialAccountModel::adjust(
-                $_POST['account_id'] ?? '',
+                $accountId,
                 $_POST['adj_type'] ?? '',
                 (float)($_POST['amount'] ?? 0),
                 trim($_POST['reason'] ?? '')
@@ -70,8 +71,12 @@ class AccountController extends Controller {
         } catch (Throwable $e) {
             flash('error', $e->getMessage());
         }
-        redirect('accounts/movements&id=' . urlencode($_POST['account_id'] ?? ''));
+        if (($_POST['back'] ?? '') === 'list') {
+            redirect('accounts');
+        }
+        redirect('accounts/movements&id=' . urlencode($accountId));
     }
+
 
     public function transferForm(): void {
         requireRole('admin');
