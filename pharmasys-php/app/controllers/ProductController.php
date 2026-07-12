@@ -7,12 +7,31 @@ class ProductController extends Controller {
         foreach ($items as &$p) $p['stock'] = ProductModel::currentStock($p['id']);
         $this->render('products/index', ['items' => $items]);
     }
+    /** Lookup rápido por código de barras (fornecedor EAN/GTIN ou interno). */
+    public function lookup(): void {
+        requireAuth();
+        $bc = trim($_GET['barcode'] ?? '');
+        if ($bc === '') $this->json(['found' => false]);
+        $p = ProductModel::findByBarcode($bc);
+        if (!$p) $this->json(['found' => false, 'barcode' => $bc]);
+        $this->json([
+            'found'       => true,
+            'id'          => $p['id'],
+            'name'        => $p['name'],
+            'barcode'     => $p['barcode'],
+            'sub_barcode' => $p['sub_barcode'],
+            'sale_price'  => (float)$p['sale_price'],
+            'unit'        => $p['unit'],
+            'match'       => ($p['sub_barcode'] === $bc && $p['sub_barcode']) ? 'sub' : 'pack',
+        ]);
+    }
     public function form(): void {
         requireAuth();
         $editing = !empty($_GET['id']) ? ProductModel::find($_GET['id']) : null;
         $this->render('products/form', [
             'editing'    => $editing,
             'categories' => CategoryModel::all(),
+            'prefillBarcode' => trim($_GET['barcode'] ?? ''),
         ]);
     }
     public function save(): void {

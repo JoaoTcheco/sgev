@@ -15,13 +15,33 @@
             <option value="<?= e($c['id']) ?>" <?= ($editing['category_id'] ?? '') === $c['id'] ? 'selected' : '' ?>><?= e($c['name']) ?></option>
           <?php endforeach; ?>
         </select></div>
-      <div><label>Código de barras (pack)</label>
-        <input type="text" name="barcode" value="<?= e($editing['barcode'] ?? '') ?>"></div>
-      <div><label>Código de barras (sub-unidade)</label>
-        <input type="text" name="sub_barcode" value="<?= e($editing['sub_barcode'] ?? '') ?>"></div>
     </div>
     <label>Descrição</label>
     <textarea name="description" rows="2"><?= e($editing['description'] ?? '') ?></textarea>
+
+    <h3 class="form-section">Código de barras</h3>
+    <p class="help-text" style="margin:-4px 0 12px;color:#64748b;font-size:13px;line-height:1.5;">
+      Aceita o <strong>código do fornecedor</strong> (EAN-13, EAN-8, UPC-A, GTIN da embalagem) <em>ou</em> um
+      código interno que gere aqui. Basta escanear a embalagem — o preço de venda é sempre o que definir abaixo,
+      independentemente do código usado.
+    </p>
+    <div class="grid-2">
+      <div>
+        <label>Código de barras (embalagem/pack)</label>
+        <input type="text" id="pf-barcode" name="barcode" autocomplete="off"
+               placeholder="Escaneie ou digite (ex: 5601234567890)"
+               value="<?= e($editing['barcode'] ?? ($prefillBarcode ?? '')) ?>">
+        <small id="pf-barcode-status" class="pf-status"></small>
+      </div>
+      <div>
+        <label>Código de barras (sub-unidade / blister)</label>
+        <input type="text" id="pf-subbarcode" name="sub_barcode" autocomplete="off"
+               placeholder="Opcional — se vender à unidade"
+               value="<?= e($editing['sub_barcode'] ?? '') ?>">
+        <small class="pf-status" style="color:#64748b;">Deixe vazio se vender só em embalagem fechada.</small>
+      </div>
+    </div>
+
 
     <h3 class="form-section">Preços e unidades</h3>
     <div class="grid-4">
@@ -64,3 +84,37 @@
   </form>
 </section>
 <link rel="stylesheet" href="<?= asset('css/crud.css') ?>">
+<script>
+// Verificação em tempo real: avisa se o código de barras já existe noutro produto.
+(function(){
+  const editingId = <?= json_encode($editing['id'] ?? '') ?>;
+  const lookupUrl = <?= json_encode(url('products/lookup')) ?>;
+  function bind(input, statusEl){
+    if (!input) return;
+    let t; input.addEventListener('input', ()=>{
+      clearTimeout(t);
+      const v = input.value.trim();
+      statusEl.textContent = ''; statusEl.style.color = '';
+      if (v.length < 4) return;
+      t = setTimeout(async ()=>{
+        try {
+          const r = await fetch(lookupUrl + '&barcode=' + encodeURIComponent(v));
+          const d = await r.json();
+          if (d.found && d.id !== editingId) {
+            statusEl.textContent = '⚠ Já usado por: ' + d.name;
+            statusEl.style.color = '#dc2626';
+          } else if (d.found) {
+            statusEl.textContent = '✓ Código actual deste produto.';
+            statusEl.style.color = '#0f766e';
+          } else {
+            statusEl.textContent = '✓ Código disponível.';
+            statusEl.style.color = '#0f766e';
+          }
+        } catch(e) {}
+      }, 300);
+    });
+  }
+  bind(document.getElementById('pf-barcode'),    document.getElementById('pf-barcode-status'));
+})();
+</script>
+
