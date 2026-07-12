@@ -87,7 +87,8 @@ $payLabels = ['cash'=>'Numerário','mpesa'=>'M-Pesa','emola'=>'E-Mola','card'=>'
   <div class="card">
     <div class="card-head">
       <h2>Vendas por Dia</h2>
-      <a class="btn btn-ghost btn-sm" href="<?= $exp('sales') ?>">Exportar CSV</a>
+      <a class="btn btn-ghost btn-sm" href="<?= $exp('sales') ?>">⬇ CSV</a>
+      <a class="btn btn-ghost btn-sm" href="<?= $pdf('sales') ?>" target="_blank">🖨️ PDF</a>
     </div>
     <?php
       $maxRev = 0;
@@ -127,6 +128,7 @@ $payLabels = ['cash'=>'Numerário','mpesa'=>'M-Pesa','emola'=>'E-Mola','card'=>'
       <div class="card-head">
         <h2>Por Método de Pagamento</h2>
         <a class="btn btn-ghost btn-sm" href="<?= $exp('payments') ?>">CSV</a>
+        <a class="btn btn-ghost btn-sm" href="<?= $pdf('payments') ?>" target="_blank">PDF</a>
       </div>
       <?php if (empty($byPayment)): ?><p class="muted">Sem dados.</p><?php else: ?>
         <table class="table">
@@ -148,6 +150,7 @@ $payLabels = ['cash'=>'Numerário','mpesa'=>'M-Pesa','emola'=>'E-Mola','card'=>'
       <div class="card-head">
         <h2>Por Operador</h2>
         <a class="btn btn-ghost btn-sm" href="<?= $exp('users') ?>">CSV</a>
+        <a class="btn btn-ghost btn-sm" href="<?= $pdf('users') ?>" target="_blank">PDF</a>
       </div>
       <?php if (empty($byUser)): ?><p class="muted">Sem dados.</p><?php else: ?>
         <table class="table">
@@ -171,7 +174,8 @@ $payLabels = ['cash'=>'Numerário','mpesa'=>'M-Pesa','emola'=>'E-Mola','card'=>'
   <div class="card">
     <div class="card-head">
       <h2>Top Produtos</h2>
-      <a class="btn btn-ghost btn-sm" href="<?= $exp('top') ?>">Exportar CSV</a>
+      <a class="btn btn-ghost btn-sm" href="<?= $exp('top') ?>">⬇ CSV</a>
+      <a class="btn btn-ghost btn-sm" href="<?= $pdf('top') ?>" target="_blank">🖨️ PDF</a>
     </div>
     <?php if (empty($top)): ?><p class="muted">Sem vendas no período.</p><?php else: ?>
       <table class="table">
@@ -207,7 +211,8 @@ $payLabels = ['cash'=>'Numerário','mpesa'=>'M-Pesa','emola'=>'E-Mola','card'=>'
   <div class="card">
     <div class="card-head">
       <h2>Margens por Categoria</h2>
-      <a class="btn btn-ghost btn-sm" href="<?= $exp('margins') ?>">Exportar CSV</a>
+      <a class="btn btn-ghost btn-sm" href="<?= $exp('margins') ?>">⬇ CSV</a>
+      <a class="btn btn-ghost btn-sm" href="<?= $pdf('margins') ?>" target="_blank">🖨️ PDF</a>
     </div>
     <?php if (empty($categories)): ?><p class="muted">Sem dados.</p><?php else: ?>
       <table class="table">
