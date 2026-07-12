@@ -94,7 +94,7 @@ foreach ($ranges as $k=>$rg) {
           <td><?= e($s['user_name']) ?></td>
           <td><?= (int)$s['total_qty'] ?><?= $s['refunded_qty']>0 ? ' <small class="orange">(-'.(int)$s['refunded_qty'].')</small>' : '' ?></td>
           <td><strong><?= e(formatMZN($s['total'])) ?></strong></td>
-          <td><small><?= e(strtoupper($s['payment_method'])) ?></small></td>
+          <td><small><?= e(paymentMethodLabel($s['payment_method'])) ?></small></td>
           <td><span class="badge <?= $badge ?>"><?= e($label) ?></span></td>
           <td>
             <a href="<?= url('history/view') ?>&id=<?= e($s['id']) ?>" class="btn btn-sm">Ver</a>
