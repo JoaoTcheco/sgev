@@ -43,6 +43,7 @@
 32. [Como estender](#32-como-estender)
 33. [Licença e créditos](#33-licença-e-créditos)
 34. [Suporte a `.env` e diagnóstico da BD (rev. b)](#39-suporte-env-e-diagnóstico-da-bd-rev-b)
+35. [Ronda 2026.07 rev. d — Alertas por produto, CSV completo, auditoria de configurações](#41-ronda-202607-rev-d--alertas-por-produto-csv-completo-auditoria-de-configurações)
 
 ---
 
