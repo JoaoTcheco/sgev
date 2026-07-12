@@ -1381,7 +1381,140 @@ Após anos de uso, exportar sem o `audit_logs` (opcional na UI) reduz drasticame
 
 ---
 
-## 33. Licença e créditos
+## 33. Código de barras do fabricante (EAN/GTIN) — fluxo sem etiquetas internas
+
+Desde a última actualização, o PharmaSys aceita nativamente o código de barras impresso pelo fabricante (EAN-13 / GTIN) como identificador único do produto, **eliminando a necessidade de gerar etiquetas internas**. O sistema continua a suportar códigos internos (campo `sub_barcode`) para casos em que o fornecedor não tem código legível ou para embalagens fraccionadas — os dois modos coexistem sem conflito.
+
+### 33.1 Princípios de desenho
+
+1. **Preço mandatário da farmácia**: o preço de venda cobrado no PDV é *sempre* `products.sale_price`, definido no cadastro. O código de barras (do fabricante ou interno) serve apenas para **identificar** o produto — nunca para transportar preço.
+2. **Um produto, múltiplos códigos**: cada produto tem até dois códigos únicos — `barcode` (tipicamente o EAN do fornecedor) e `sub_barcode` (código interno opcional para unidade fraccionada ou etiqueta impressa localmente). Ambos são pesquisados pelo endpoint de lookup.
+3. **Zero papel por defeito**: no formulário de entrada de mercadoria, o checkbox "Imprimir etiquetas" está **desmarcado por padrão**. Só é activado se o operador optar explicitamente por gerar etiquetas internas.
+4. **Idempotência**: escanear o mesmo EAN duas vezes no lookup retorna sempre o mesmo produto — não há criação implícita.
+
+### 33.2 Endpoint de lookup (`GET /products/lookup?barcode=XXX`)
+
+- **Controller**: `ProductController@lookup`
+- **Autenticação**: requer sessão activa (qualquer papel).
+- **Resposta 200** (JSON): `{ "ok": true, "id": "...", "name": "...", "barcode": "...", "sale_price": 12.50, "stock": 42 }`
+- **Resposta 404**: `{ "ok": false, "reason": "not_found" }` — usado pelo front-end para propor cadastro com o código já preenchido.
+- **Uso interno**: PDV (auto-add ao carrinho), formulário de produtos (validação de duplicação) e formulário de lote (auto-selecção).
+
+### 33.3 Fluxo de recebimento com EAN do fornecedor
+
+```text
+    Chega caixa do fornecedor
+              │  operador abre /batches/new
+              ▼
+    Caixa "Scan rápido" (escaneia EAN do pack)
+              │ fetch /products/lookup?barcode=EAN
+        ┌─────┴─────┐
+     encontrado    404
+        │           │
+        ▼           ▼
+  auto-select   link "Cadastrar produto novo"
+  no lote       (?barcode=EAN)
+        │
+        ▼
+  operador preenche nº lote, validade, qty, custo → SAVE
+```
+
+### 33.4 Cadastro de produto — validação em tempo real
+
+O `products/form.php` inclui uma secção **"Identificação por código de barras"** com ajuda contextual. Ao introduzir um valor em `barcode` ou `sub_barcode`, o front-end chama `/products/lookup` em `blur`:
+
+- Se retornar outro produto → aviso vermelho ("Este código já está atribuído a: X") e submit bloqueado.
+- Se retornar 404 → indicador verde ("Código disponível").
+- Se a página abrir com `?barcode=XXX` (vindo do recebimento), o campo já vem preenchido.
+
+A restrição definitiva é o `UNIQUE(barcode)` / `UNIQUE(sub_barcode)` no MySQL — a integridade nunca depende só do cliente.
+
+### 33.5 PDV — venda por scan
+
+1. Operador foca o input de scan (hotkey `F2`).
+2. Leitor USB emula teclado → introduz o EAN + `Enter`.
+3. `pdv.js` chama `/products/lookup?barcode=…` e adiciona o item ao carrinho com `sale_price`.
+4. Se `sub_barcode` for escaneado e o produto tiver `sub_unit_price` (venda avulsa), o item é adicionado com preço fraccionado (`unit_kind = sub`).
+5. Consumo FEFO permanece transparente ao operador.
+
+### 33.6 Matriz de compatibilidade
+
+| Cenário | `barcode` | `sub_barcode` | Preço no PDV |
+|--|--|--|--|
+| Produto só com EAN do fornecedor | EAN | *(vazio)* | `sale_price` |
+| Produto só com código interno | *(vazio)* | INT-001 | `sale_price` |
+| Produto vendido inteiro e fraccionado | EAN | INT-001 | inteiro → `sale_price`; fraccionado → `sub_unit_price` |
+| Produto sem código (busca manual) | *(vazio)* | *(vazio)* | `sale_price` |
+
+### 33.7 Impacto no schema
+
+Zero alterações estruturais — `products.barcode` e `products.sub_barcode` já existiam com `UNIQUE`. A funcionalidade é 100% aplicacional. `database.sql` mantém-se como fonte única e canónica.
+
+---
+
+## 34. Sincronização global do sistema (contrato de integridade)
+
+Documenta o efeito em cadeia de cada evento — tudo dentro de uma transacção PDO única.
+
+| Evento | Efeitos transaccionais |
+|--|--|
+| **Venda concluída** (`SaleModel::createFull`) | `sales` + `sale_items` (um por lote FEFO) + `batches.quantity -=` + `stock_movements` (out) + `financial_accounts.balance +=` + `account_movements` + `audit_logs` + `AlertModel::checkProduct` pós-commit |
+| **Estorno** (`SaleModel::refund`) | `sale_items.refunded_qty +=` + `batches.quantity +=` + `stock_movements` (refund) + `financial_accounts.balance -=` + `account_movements` + `sales.status` + `audit_logs` + recálculo de alertas |
+| **Entrada de lote** (`BatchController@save`) | `batches` INSERT + `stock_movements` (in) + `audit_logs` + `AlertModel::checkProduct` |
+| **Devolução ao fornecedor** | `supplier_returns` + `supplier_return_items` + `batches.quantity -=` + `stock_movements` (return) + `payables` (crédito) + `audit_logs` |
+| **Sangria/reforço** | `cash_movements` + `financial_accounts.balance +/-` + `account_movements` + `audit_logs` |
+| **Fecho de caixa** | `cash_sessions.closed_at/closing_balance/difference` + snapshot de totais por método + `audit_logs` |
+| **Pagamento a fornecedor** | `payables.paid_amount` + `financial_accounts.balance -=` + `account_movements` + `audit_logs` |
+| **Recebimento de cliente** | `receivables.received_amount` + `financial_accounts.balance +=` + `account_movements` + `audit_logs` |
+
+**Invariantes garantidas**:
+
+- Uma venda ou não existe ou existe com stock debitado e conta creditada — nunca estados parciais.
+- `SUM(sale_items.quantity - refunded_qty) * unit_price` = valor efectivo cobrado.
+- `SUM(stock_movements.quantity)` por produto = `SUM(batches.quantity)` actual.
+- `financial_accounts.balance` = `SUM(account_movements.amount)` da conta.
+
+**Queries de auditoria** (esperadas: 0 linhas):
+
+```sql
+SELECT p.id, p.name,
+       (SELECT COALESCE(SUM(quantity),0) FROM batches WHERE product_id = p.id) AS stock_lotes,
+       (SELECT COALESCE(SUM(quantity),0) FROM stock_movements WHERE product_id = p.id) AS stock_mov
+FROM products p
+HAVING stock_lotes <> stock_mov;
+
+SELECT a.id, a.name, a.balance,
+       (SELECT COALESCE(SUM(amount),0) FROM account_movements WHERE account_id = a.id) AS calc
+FROM financial_accounts a
+HAVING ROUND(a.balance,2) <> ROUND(calc,2);
+```
+
+---
+
+## 35. Base de dados única (`database.sql`) — fonte da verdade
+
+O ficheiro `database.sql` é o **único** artefacto de schema — sem migrações incrementais. Qualquer alteração estrutural é editada directamente aqui, mantendo:
+
+- Ordem de criação respeitando FKs (`users` → `categories`/`suppliers` → `products` → `batches` → `sales` → `sale_items` …).
+- `ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci` em todas as tabelas.
+- Índices únicos em `products.barcode`, `products.sub_barcode`, `sales.receipt_number`, `users.username`, `receipt_seq.year`.
+- Tabela `receipt_seq` como gerador atómico de numeração de recibos (ver secção 4.5).
+
+Instalação: importar `database.sql` em MySQL 5.7+/MariaDB 10.3+, ajustar `app/config.php` e abrir o site — o `bootstrap.php` cria automaticamente o utilizador `admin` (password `admin123`, mudança forçada no 1º login).
+
+---
+
+## 36. Rotas adicionadas nesta actualização
+
+| Método | Rota | Controller | Papéis | Descrição |
+|--|--|--|--|--|
+| GET | `/products/lookup?barcode=X` | `ProductController@lookup` | todos | JSON com produto por EAN/código interno |
+| GET | `/products/new?barcode=X` | `ProductController@form` | admin, pharmacist | Cadastro com código pré-preenchido |
+| GET | `/batches/new?barcode=X` | `BatchController@form` | admin, pharmacist | Entrada de lote com produto pré-seleccionado por scan |
+
+---
+
+## 37. Licença e créditos
 
 - **Código**: MIT (livre para uso comercial em farmácias).
 - **Tipografia**: Inter, Rasmus Andersson — SIL Open Font License 1.1 (embutida em `assets/fonts/`).
