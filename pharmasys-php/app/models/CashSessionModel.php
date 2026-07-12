@@ -15,13 +15,22 @@ class CashSessionModel {
     }
 
     public static function open(float $openingAmount, string $notes = ''): string {
-        if (self::current()) {
+        $uid = currentUser()['id'] ?? null;
+        if (!$uid) {
+            throw new Exception('Sessão inválida. Inicie sessão novamente.');
+        }
+        // Garante que o utilizador ainda existe na BD (evita erro de FK opaco)
+        $exists = Database::one('SELECT id FROM users WHERE id = ? AND active = 1', [$uid]);
+        if (!$exists) {
+            throw new Exception('O seu utilizador já não existe ou foi desactivado. Inicie sessão novamente.');
+        }
+        if (self::current($uid)) {
             throw new Exception('Já existe uma sessão de caixa aberta para este utilizador.');
         }
         $id = uuidv4();
         Database::query(
             'INSERT INTO cash_sessions (id, user_id, opening_amount, notes) VALUES (?,?,?,?)',
-            [$id, currentUser()['id'], $openingAmount, $notes]
+            [$id, $uid, $openingAmount, $notes]
         );
         return $id;
     }
