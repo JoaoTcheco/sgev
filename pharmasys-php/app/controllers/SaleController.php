@@ -80,8 +80,18 @@ class SaleController extends Controller {
             $r['expired']     = ($r['next_expiry'] && strtotime($r['next_expiry']) <  $today) ? 1 : 0;
             $r['match']       = 'pack';
         }
+        unset($r);
+        // Aplica configurações do PDV (esconder expirados / sem stock)
+        $s = SettingModel::get();
+        if (!empty($s['pdv_hide_expired'])) {
+            $rows = array_values(array_filter($rows, fn($r) => (int)$r['expired'] === 0));
+        }
+        if (!empty($s['pdv_hide_out_of_stock'])) {
+            $rows = array_values(array_filter($rows, fn($r) => (int)$r['stock'] > 0));
+        }
         $this->json($rows);
     }
+
 
     /** Pesquisa de produtos por nome ou código (AJAX). */
     public function search(): void {
