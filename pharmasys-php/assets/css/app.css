@@ -198,8 +198,65 @@ a { color: inherit; }
 }
 .btn-outline-danger:hover:not(:disabled) { background: var(--danger-bg); border-color: #fca5a5; }
 
+/* Outline neutro — usado em acções secundárias (Exportar, Editar, +Adicionar item) */
+.btn-outline {
+  background: #fff;
+  border-color: var(--border);
+  color: var(--foreground);
+  box-shadow: var(--shadow-sm);
+}
+.btn-outline:hover:not(:disabled) {
+  background: #f1f7f5;
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+/* Warning — acções de cuidado (cancelar conta, avisos reversíveis) */
+.btn-warning {
+  background: var(--warning);
+  border-color: var(--warning);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(217, 119, 6, .22);
+}
+.btn-warning:hover:not(:disabled) { background: #b45309; border-color: #b45309; color: #fff; }
+
+/* Botão apenas com ícone (quadrado) — mantém alinhamento em tabelas */
+.btn-icon {
+  padding: 8px;
+  width: 34px; height: 34px;
+  line-height: 1;
+}
+.btn-icon.btn-sm { width: 28px; height: 28px; padding: 4px; }
+
 .btn-sm { padding: 6px 11px; font-size: 12px; border-radius: var(--radius-sm); }
 .btn-lg { padding: 13px 20px; font-size: 14px; border-radius: var(--radius-lg); }
+
+/* Grupo de botões coeso (barra de acções) */
+.btn-group {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* Botão "remover linha" (usado em tabelas dinâmicas) — visual coeso com btn-outline-danger */
+.btn-remove {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 30px; height: 30px;
+  padding: 0;
+  border: 1px solid #fecaca;
+  background: #fff;
+  color: var(--danger);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 14px; line-height: 1;
+  transition: background .15s ease, border-color .15s ease, transform .05s ease;
+}
+.btn-remove:hover { background: var(--danger-bg); border-color: #fca5a5; }
+.btn-remove:active { transform: translateY(1px); }
+.btn-remove:focus-visible { outline: 0; box-shadow: 0 0 0 3px rgba(220, 38, 38, .2); }
+
+
 
 /* ================================================================
    Campos de formulário globais (input, select, textarea)
