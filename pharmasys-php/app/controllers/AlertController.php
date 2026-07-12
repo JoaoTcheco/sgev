@@ -3,10 +3,13 @@ class AlertController extends Controller {
 
     private function filters(): array {
         return [
-            'severity' => trim($_GET['severity'] ?? ''),
-            'type'     => trim($_GET['type']     ?? ''),
-            'q'        => trim($_GET['q']        ?? ''),
-            'status'   => trim($_GET['status']   ?? 'open'), // open | all | resolved
+            'severity'   => trim($_GET['severity']   ?? ''),
+            'type'       => trim($_GET['type']       ?? ''),
+            'q'          => trim($_GET['q']          ?? ''),
+            'status'     => trim($_GET['status']     ?? 'open'), // open | all | resolved
+            'product_id' => trim($_GET['product_id'] ?? ''),
+            'from'       => trim($_GET['from']       ?? ''),
+            'to'         => trim($_GET['to']         ?? ''),
         ];
     }
 
