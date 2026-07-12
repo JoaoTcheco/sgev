@@ -68,10 +68,14 @@
 
     <?php if (!$editing): ?>
       <label class="checkbox" style="margin-top:8px;">
-        <input type="checkbox" name="print_labels" value="1" checked>
-        Imprimir etiquetas para este lote logo após guardar
+        <input type="checkbox" name="print_labels" value="1">
+        Imprimir etiquetas próprias após guardar
+        <small style="display:block;color:#64748b;font-weight:400;margin-top:2px;">
+          Desmarque se vai usar o código de barras do fornecedor directamente da embalagem (sem imprimir etiquetas).
+        </small>
       </label>
     <?php endif; ?>
+
 
     <div class="form-actions">
       <a class="btn btn-ghost" href="<?= url('batches') ?>">Cancelar</a>
