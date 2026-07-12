@@ -174,7 +174,7 @@ class DashboardController extends Controller {
         $r7 = Database::one("SELECT COALESCE(SUM(total),0) t FROM sales WHERE status <> 'refunded' AND DATE(created_at) >= ?", [$d7]) ?: ['t'=>0];
         $r30= Database::one("SELECT COUNT(*) c, COALESCE(SUM(total),0) t FROM sales WHERE status <> 'refunded' AND DATE(created_at) >= ?", [$d30]) ?: ['c'=>0,'t'=>0];
         $ra = Database::one("SELECT COUNT(*) total,
-                    SUM(CASE WHEN severity='critical' THEN 1 ELSE 0 END) critical,
+                    SUM(CASE WHEN severity='high' THEN 1 ELSE 0 END) critical,
                     SUM(CASE WHEN type='low_stock' THEN 1 ELSE 0 END) low_stock
                 FROM alerts WHERE resolved = 0") ?: ['total'=>0,'critical'=>0,'low_stock'=>0];
 
