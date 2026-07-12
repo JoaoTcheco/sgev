@@ -12,6 +12,13 @@ class AlertController extends Controller {
 
     public function index(): void {
         requireAuth();
+        // Auto-refresh (throttle: 1x por hora por sessão) para garantir que
+        // alertas de stock baixo e validade reflectem sempre o estado actual.
+        $last = (int)($_SESSION['__alerts_refresh_ts'] ?? 0);
+        if (time() - $last > 3600) {
+            try { AlertModel::refresh(); } catch (Throwable $e) { /* silencioso */ }
+            $_SESSION['__alerts_refresh_ts'] = time();
+        }
         $f = $this->filters();
         $items = AlertModel::search($f);
         $this->render('alerts/index', [
@@ -20,6 +27,7 @@ class AlertController extends Controller {
             'stats'   => AlertModel::stats(),
         ]);
     }
+
 
     public function refresh(): void {
         requireAuth(); csrfVerify();

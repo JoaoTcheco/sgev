@@ -80,8 +80,18 @@ class SaleController extends Controller {
             $r['expired']     = ($r['next_expiry'] && strtotime($r['next_expiry']) <  $today) ? 1 : 0;
             $r['match']       = 'pack';
         }
+        unset($r);
+        // Aplica configurações do PDV (esconder expirados / sem stock)
+        $s = SettingModel::get();
+        if (!empty($s['pdv_hide_expired'])) {
+            $rows = array_values(array_filter($rows, fn($r) => (int)$r['expired'] === 0));
+        }
+        if (!empty($s['pdv_hide_out_of_stock'])) {
+            $rows = array_values(array_filter($rows, fn($r) => (int)$r['stock'] > 0));
+        }
         $this->json($rows);
     }
+
 
     /** Pesquisa de produtos por nome ou código (AJAX). */
     public function search(): void {
@@ -107,12 +117,22 @@ class SaleController extends Controller {
         );
 
         // Marca a variante correspondente ao código exacto (pack vs sub)
+        $today = strtotime('today');
         foreach ($rows as &$r) {
             $r['match'] = ($r['sub_barcode'] === $q && $r['sub_barcode'])
                 ? 'sub' : (($r['barcode'] === $q) ? 'pack' : 'name');
+            $r['expired']     = ($r['next_expiry'] && strtotime($r['next_expiry']) <  $today) ? 1 : 0;
+            $r['near_expiry'] = ($r['next_expiry'] && strtotime($r['next_expiry']) <= $today + 30*86400) ? 1 : 0;
+        }
+        unset($r);
+        // Config PDV: opcionalmente esconde expirados também da pesquisa
+        $s = SettingModel::get();
+        if (!empty($s['pdv_hide_expired'])) {
+            $rows = array_values(array_filter($rows, fn($r) => (int)$r['expired'] === 0));
         }
         $this->json($rows);
     }
+
 
     /** Finaliza venda. */
     public function checkout(): void {

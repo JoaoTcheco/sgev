@@ -1,5 +1,7 @@
 <?php
 $tab = $tab ?? 'overview';
+$filters = $filters ?? ['payment' => '', 'user_id' => ''];
+$users = $users ?? [];
 $tabs = [
     'overview' => 'Visão Geral',
     'sales'    => 'Vendas por Dia',
@@ -7,8 +9,18 @@ $tabs = [
     'margins'  => 'Margens',
     'dre'      => 'DRE',
 ];
-$qs = fn($t) => '?r=reports&tab=' . $t . '&from=' . e($from) . '&to=' . e($to);
-$exp = fn($t) => '?r=reports/export&type=' . $t . '&from=' . e($from) . '&to=' . e($to);
+// Constrói querystring preservando filtros extra
+$qsBase = function($extra = []) use ($from, $to, $filters, $tab) {
+    $q = array_merge([
+        'r' => 'reports', 'tab' => $tab, 'from' => $from, 'to' => $to,
+        'payment' => $filters['payment'] ?? '', 'user_id' => $filters['user_id'] ?? '',
+    ], $extra);
+    return '?' . http_build_query(array_filter($q, fn($v) => $v !== ''));
+};
+$qs  = fn($t) => $qsBase(['tab' => $t]);
+$exp = fn($t) => str_replace('r=reports', 'r=reports/export', $qsBase(['type' => $t]));
+$pdf = fn($t) => str_replace('r=reports', 'r=reports/pdf',    $qsBase(['type' => $t]));
+$payLabels = ['cash'=>'Numerário','mpesa'=>'M-Pesa','emola'=>'E-Mola','card'=>'Cartão','transfer'=>'Transferência'];
 ?>
 <link rel="stylesheet" href="<?= asset('css/reports.css') ?>">
 
@@ -19,17 +31,37 @@ $exp = fn($t) => '?r=reports/export&type=' . $t . '&from=' . e($from) . '&to=' .
   </div>
 </div>
 
-<form method="GET" class="rep-filter">
+<form method="GET" class="rep-filter" style="flex-wrap:wrap;gap:10px;">
   <input type="hidden" name="r" value="reports">
   <input type="hidden" name="tab" value="<?= e($tab) ?>">
   <label>De <input type="date" name="from" value="<?= e($from) ?>"></label>
   <label>Até <input type="date" name="to" value="<?= e($to) ?>"></label>
+  <label>Método
+    <select name="payment">
+      <option value="">— Todos —</option>
+      <?php foreach ($payLabels as $k => $l): ?>
+        <option value="<?= $k ?>" <?= ($filters['payment'] ?? '') === $k ? 'selected' : '' ?>><?= e($l) ?></option>
+      <?php endforeach; ?>
+    </select>
+  </label>
+  <label>Operador
+    <select name="user_id">
+      <option value="">— Todos —</option>
+      <?php foreach ($users as $u): ?>
+        <option value="<?= e($u['id']) ?>" <?= ($filters['user_id'] ?? '') === $u['id'] ? 'selected' : '' ?>>
+          <?= e($u['full_name']) ?> (@<?= e($u['username']) ?>)
+        </option>
+      <?php endforeach; ?>
+    </select>
+  </label>
   <button class="btn btn-primary">Aplicar</button>
+  <a class="btn btn-ghost btn-sm" href="?r=reports&tab=<?= e($tab) ?>">Limpar</a>
   <div class="rep-quick">
-    <a class="btn btn-ghost btn-sm" href="?r=reports&tab=<?= e($tab) ?>&from=<?= date('Y-m-d') ?>&to=<?= date('Y-m-d') ?>">Hoje</a>
-    <a class="btn btn-ghost btn-sm" href="?r=reports&tab=<?= e($tab) ?>&from=<?= date('Y-m-d', strtotime('-6 days')) ?>&to=<?= date('Y-m-d') ?>">7 dias</a>
-    <a class="btn btn-ghost btn-sm" href="?r=reports&tab=<?= e($tab) ?>&from=<?= date('Y-m-01') ?>&to=<?= date('Y-m-d') ?>">Este mês</a>
-    <a class="btn btn-ghost btn-sm" href="?r=reports&tab=<?= e($tab) ?>&from=<?= date('Y-01-01') ?>&to=<?= date('Y-m-d') ?>">Este ano</a>
+    <a class="btn btn-ghost btn-sm" href="<?= $qsBase(['from'=>date('Y-m-d'),'to'=>date('Y-m-d')]) ?>">Hoje</a>
+    <a class="btn btn-ghost btn-sm" href="<?= $qsBase(['from'=>date('Y-m-d',strtotime('-6 days')),'to'=>date('Y-m-d')]) ?>">7 dias</a>
+    <a class="btn btn-ghost btn-sm" href="<?= $qsBase(['from'=>date('Y-m-d',strtotime('-29 days')),'to'=>date('Y-m-d')]) ?>">30 dias</a>
+    <a class="btn btn-ghost btn-sm" href="<?= $qsBase(['from'=>date('Y-m-01'),'to'=>date('Y-m-d')]) ?>">Este mês</a>
+    <a class="btn btn-ghost btn-sm" href="<?= $qsBase(['from'=>date('Y-01-01'),'to'=>date('Y-m-d')]) ?>">Este ano</a>
   </div>
 </form>
 
@@ -38,6 +70,7 @@ $exp = fn($t) => '?r=reports/export&type=' . $t . '&from=' . e($from) . '&to=' .
     <a href="<?= $qs($k) ?>" class="rep-tab <?= $tab === $k ? 'active' : '' ?>"><?= e($label) ?></a>
   <?php endforeach; ?>
 </nav>
+
 
 <section class="rep-kpis">
   <div class="kpi"><div class="kpi-label">Nº Vendas</div><div class="kpi-value"><?= (int)$kpis['n_sales'] ?></div></div>
@@ -54,7 +87,8 @@ $exp = fn($t) => '?r=reports/export&type=' . $t . '&from=' . e($from) . '&to=' .
   <div class="card">
     <div class="card-head">
       <h2>Vendas por Dia</h2>
-      <a class="btn btn-ghost btn-sm" href="<?= $exp('sales') ?>">Exportar CSV</a>
+      <a class="btn btn-ghost btn-sm" href="<?= $exp('sales') ?>">⬇ CSV</a>
+      <a class="btn btn-ghost btn-sm" href="<?= $pdf('sales') ?>" target="_blank">🖨️ PDF</a>
     </div>
     <?php
       $maxRev = 0;
@@ -94,6 +128,7 @@ $exp = fn($t) => '?r=reports/export&type=' . $t . '&from=' . e($from) . '&to=' .
       <div class="card-head">
         <h2>Por Método de Pagamento</h2>
         <a class="btn btn-ghost btn-sm" href="<?= $exp('payments') ?>">CSV</a>
+        <a class="btn btn-ghost btn-sm" href="<?= $pdf('payments') ?>" target="_blank">PDF</a>
       </div>
       <?php if (empty($byPayment)): ?><p class="muted">Sem dados.</p><?php else: ?>
         <table class="table">
@@ -115,6 +150,7 @@ $exp = fn($t) => '?r=reports/export&type=' . $t . '&from=' . e($from) . '&to=' .
       <div class="card-head">
         <h2>Por Operador</h2>
         <a class="btn btn-ghost btn-sm" href="<?= $exp('users') ?>">CSV</a>
+        <a class="btn btn-ghost btn-sm" href="<?= $pdf('users') ?>" target="_blank">PDF</a>
       </div>
       <?php if (empty($byUser)): ?><p class="muted">Sem dados.</p><?php else: ?>
         <table class="table">
@@ -138,7 +174,8 @@ $exp = fn($t) => '?r=reports/export&type=' . $t . '&from=' . e($from) . '&to=' .
   <div class="card">
     <div class="card-head">
       <h2>Top Produtos</h2>
-      <a class="btn btn-ghost btn-sm" href="<?= $exp('top') ?>">Exportar CSV</a>
+      <a class="btn btn-ghost btn-sm" href="<?= $exp('top') ?>">⬇ CSV</a>
+      <a class="btn btn-ghost btn-sm" href="<?= $pdf('top') ?>" target="_blank">🖨️ PDF</a>
     </div>
     <?php if (empty($top)): ?><p class="muted">Sem vendas no período.</p><?php else: ?>
       <table class="table">
@@ -174,7 +211,8 @@ $exp = fn($t) => '?r=reports/export&type=' . $t . '&from=' . e($from) . '&to=' .
   <div class="card">
     <div class="card-head">
       <h2>Margens por Categoria</h2>
-      <a class="btn btn-ghost btn-sm" href="<?= $exp('margins') ?>">Exportar CSV</a>
+      <a class="btn btn-ghost btn-sm" href="<?= $exp('margins') ?>">⬇ CSV</a>
+      <a class="btn btn-ghost btn-sm" href="<?= $pdf('margins') ?>" target="_blank">🖨️ PDF</a>
     </div>
     <?php if (empty($categories)): ?><p class="muted">Sem dados.</p><?php else: ?>
       <table class="table">

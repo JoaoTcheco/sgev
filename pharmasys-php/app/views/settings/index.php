@@ -86,18 +86,39 @@
     </div>
     <p class="hint">Dica: as etiquetas ajustam o tamanho do código de barras automaticamente à largura configurada; imprima uma folha de teste para calibrar as margens antes de colar as etiquetas nos produtos.</p>
 
+    <h3 class="form-section">PDV — Ponto de Venda</h3>
+    <div class="grid-2">
+      <label class="checkbox">
+        <input type="checkbox" name="pdv_hide_expired" <?= !empty($s['pdv_hide_expired']) ? 'checked' : '' ?>>
+        Esconder produtos com validade expirada no PDV
+      </label>
+      <label class="checkbox">
+        <input type="checkbox" name="pdv_hide_out_of_stock" <?= !empty($s['pdv_hide_out_of_stock']) ? 'checked' : '' ?>>
+        Esconder produtos sem stock no catálogo do PDV
+      </label>
+      <label class="checkbox">
+        <input type="checkbox" name="pdv_warn_near_expiry" <?= !empty($s['pdv_warn_near_expiry']) ? 'checked' : '' ?>>
+        Avisar visualmente quando lote está perto de expirar (usa alerta por produto)
+      </label>
+    </div>
+    <p class="hint">Cada produto define individualmente <em>Stock mínimo</em> e <em>Dias antes do vencimento para alertar</em> na sua ficha. Os alertas na página <a href="<?= url('alerts') ?>">Alertas</a> são recalculados automaticamente com base nesses limites.</p>
 
     <div class="form-actions">
       <button class="btn btn-primary" type="submit">Guardar alterações</button>
     </div>
   </form>
 
+
   <!-- Pré-visualização do recibo (dinâmica) -->
   <aside class="receipt-preview-pane">
     <div class="rpp-header">
-      <h3>Pré-visualização do recibo</h3>
-      <p>Actualiza em tempo real conforme as configurações acima.</p>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+        <h3 style="margin:0;">Pré-visualização do recibo</h3>
+        <button type="button" id="btnPrintReceiptPreview" class="btn btn-sm btn-primary" title="Imprimir uma amostra deste recibo">🖨️ Imprimir</button>
+      </div>
+      <p>Actualiza em tempo real conforme as configurações acima. O botão imprime uma amostra usando a impressora do sistema.</p>
     </div>
+
     <div class="rpp-scroll">
       <div id="receiptPreview" class="receipt receipt-80">
         <h1 data-bind="name"><?= e($s['name'] ?: 'PharmaSys') ?></h1>
@@ -236,6 +257,25 @@
   form.addEventListener('input', render);
   form.addEventListener('change', render);
   render();
+
+  // Botão imprimir amostra do recibo
+  const btnPrint = document.getElementById('btnPrintReceiptPreview');
+  if(btnPrint){
+    btnPrint.addEventListener('click', () => {
+      const w = window.open('', '_blank', 'width=520,height=800');
+      if(!w){ alert('Permita janelas emergentes para imprimir.'); return; }
+      // Carrega os CSS do recibo dentro da nova janela
+      const cssReceipt = document.querySelector('link[href*="receipt.css"]').href;
+      w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Amostra do recibo</title>
+        <link rel="stylesheet" href="${cssReceipt}">
+        <style>body{margin:12px;background:#fff;font-family:'Courier New',monospace;} @media print{body{margin:0}}</style>
+        </head><body>${preview.outerHTML}</body></html>`);
+      w.document.close();
+      // Aguarda o CSS carregar antes de imprimir
+      setTimeout(() => { try { w.focus(); w.print(); } catch(e){} }, 400);
+    });
+  }
 })();
+
 </script>
 
