@@ -61,8 +61,15 @@ $router->add('categories/delete','CategoryController@delete', 'POST',true, $MGR)
 $router->add('suppliers',        'SupplierController@index',  'GET', true, $MGR);
 $router->add('suppliers/new',    'SupplierController@form',   'GET', true, $MGR);
 $router->add('suppliers/edit',   'SupplierController@form',   'GET', true, $MGR);
+$router->add('suppliers/view',   'SupplierController@view',   'GET', true, $MGR);
+$router->add('suppliers/export', 'SupplierController@export', 'GET', true, $MGR);
 $router->add('suppliers/save',   'SupplierController@save',   'POST',true, $MGR);
 $router->add('suppliers/delete', 'SupplierController@delete', 'POST',true, $MGR);
+
+// Importação de NF-e (XML de fornecedor)
+$router->add('nfe',          'NfeController@upload',  'GET', true, $MGR);
+$router->add('nfe/parse',    'NfeController@parse',   'POST',true, $MGR);
+$router->add('nfe/confirm',  'NfeController@confirm', 'POST',true, $MGR);
 
 
 
