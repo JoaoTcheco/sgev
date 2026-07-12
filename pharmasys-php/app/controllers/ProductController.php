@@ -31,6 +31,7 @@ class ProductController extends Controller {
         $this->render('products/form', [
             'editing'    => $editing,
             'categories' => CategoryModel::all(),
+            'prefillBarcode' => trim($_GET['barcode'] ?? ''),
         ]);
     }
     public function save(): void {
