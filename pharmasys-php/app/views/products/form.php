@@ -15,13 +15,33 @@
             <option value="<?= e($c['id']) ?>" <?= ($editing['category_id'] ?? '') === $c['id'] ? 'selected' : '' ?>><?= e($c['name']) ?></option>
           <?php endforeach; ?>
         </select></div>
-      <div><label>Código de barras (pack)</label>
-        <input type="text" name="barcode" value="<?= e($editing['barcode'] ?? '') ?>"></div>
-      <div><label>Código de barras (sub-unidade)</label>
-        <input type="text" name="sub_barcode" value="<?= e($editing['sub_barcode'] ?? '') ?>"></div>
     </div>
     <label>Descrição</label>
     <textarea name="description" rows="2"><?= e($editing['description'] ?? '') ?></textarea>
+
+    <h3 class="form-section">Código de barras</h3>
+    <p class="help-text" style="margin:-4px 0 12px;color:#64748b;font-size:13px;line-height:1.5;">
+      Aceita o <strong>código do fornecedor</strong> (EAN-13, EAN-8, UPC-A, GTIN da embalagem) <em>ou</em> um
+      código interno que gere aqui. Basta escanear a embalagem — o preço de venda é sempre o que definir abaixo,
+      independentemente do código usado.
+    </p>
+    <div class="grid-2">
+      <div>
+        <label>Código de barras (embalagem/pack)</label>
+        <input type="text" id="pf-barcode" name="barcode" autocomplete="off"
+               placeholder="Escaneie ou digite (ex: 5601234567890)"
+               value="<?= e($editing['barcode'] ?? ($prefillBarcode ?? '')) ?>">
+        <small id="pf-barcode-status" class="pf-status"></small>
+      </div>
+      <div>
+        <label>Código de barras (sub-unidade / blister)</label>
+        <input type="text" id="pf-subbarcode" name="sub_barcode" autocomplete="off"
+               placeholder="Opcional — se vender à unidade"
+               value="<?= e($editing['sub_barcode'] ?? '') ?>">
+        <small class="pf-status" style="color:#64748b;">Deixe vazio se vender só em embalagem fechada.</small>
+      </div>
+    </div>
+
 
     <h3 class="form-section">Preços e unidades</h3>
     <div class="grid-4">
