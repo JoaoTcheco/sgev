@@ -2,6 +2,12 @@
 /**
  * Bootstrap — inicialização única do sistema.
  */
+
+// 1) Carrega .env (se existir) ANTES de qualquer config.
+require_once APP_PATH . '/core/Env.php';
+Env::load(ROOT_PATH . '/.env');
+
+// 2) Configuração (já pode usar env('CHAVE', 'default'))
 $CONFIG = require APP_PATH . '/config.php';
 
 // Fuso horário
