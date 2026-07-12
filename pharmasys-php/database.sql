@@ -114,6 +114,8 @@ CREATE TABLE IF NOT EXISTS `products` (
   `notes` TEXT,
   `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX `idx_products_active_name` (`active`, `name`),
+  INDEX `idx_products_category` (`category_id`),
   FOREIGN KEY (`category_id`) REFERENCES `categories`(`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -213,6 +215,8 @@ CREATE TABLE IF NOT EXISTS `sales` (
   `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   INDEX `idx_sales_created` (`created_at`),
   INDEX `idx_sales_user` (`user_id`),
+  INDEX `idx_sales_status_created` (`status`, `created_at`),
+  INDEX `idx_sales_payment` (`payment_method`, `created_at`),
   FOREIGN KEY (`user_id`) REFERENCES `users`(`id`),
   FOREIGN KEY (`cash_session_id`) REFERENCES `cash_sessions`(`id`),
   FOREIGN KEY (`account_id`) REFERENCES `financial_accounts`(`id`) ON DELETE SET NULL
@@ -382,6 +386,9 @@ CREATE TABLE IF NOT EXISTS `alerts` (
   `resolved` TINYINT(1) NOT NULL DEFAULT 0,
   `resolved_at` DATETIME,
   `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX `idx_alerts_resolved` (`resolved`, `severity`, `created_at`),
+  INDEX `idx_alerts_product_open` (`product_id`, `type`, `resolved`),
+  INDEX `idx_alerts_type` (`type`, `resolved`),
   FOREIGN KEY (`product_id`) REFERENCES `products`(`id`) ON DELETE CASCADE,
   FOREIGN KEY (`batch_id`) REFERENCES `batches`(`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
