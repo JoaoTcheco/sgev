@@ -1,0 +1,13 @@
+# Ambiente / secretos — NUNCA commitar
+.env
+.env.local
+.env.*.local
+
+# Uploads e temporários
+assets/images/uploads/*
+!assets/images/uploads/.gitkeep
+
+# Sistema
+.DS_Store
+Thumbs.db
+*.log
