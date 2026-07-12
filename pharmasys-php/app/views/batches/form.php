@@ -81,3 +81,53 @@
   </form>
 </section>
 <link rel="stylesheet" href="<?= asset('css/crud.css') ?>">
+<script>
+(function(){
+  const input = document.getElementById('scan-barcode');
+  const status = document.getElementById('scan-status');
+  const select = document.querySelector('select[name="product_id"]');
+  if (!input || !select) return;
+  const lookupUrl = <?= json_encode(url('products/lookup')) ?>;
+  const newProdUrl = <?= json_encode(url('products/new')) ?>;
+  async function lookup(v){
+    status.textContent = 'A procurar…'; status.style.color = '#64748b';
+    try {
+      const r = await fetch(lookupUrl + '&barcode=' + encodeURIComponent(v));
+      const d = await r.json();
+      if (d.found) {
+        const opt = select.querySelector('option[value="'+d.id+'"]');
+        if (opt) {
+          select.value = d.id;
+          status.innerHTML = '✓ <span style="color:#0f766e">' + d.name + '</span>';
+          // foca o próximo campo útil
+          const bn = document.querySelector('input[name="batch_number"]');
+          if (bn) bn.focus();
+        } else {
+          status.innerHTML = '⚠ Produto inactivo ou removido';
+          status.style.color = '#dc2626';
+        }
+      } else {
+        status.innerHTML = '✗ Não cadastrado. <a href="' + newProdUrl + '&barcode=' + encodeURIComponent(v) + '" style="color:#0f766e;font-weight:600;">Cadastrar agora →</a>';
+        status.style.color = '#dc2626';
+      }
+    } catch(e) { status.textContent = 'Erro ao consultar'; }
+  }
+  let t;
+  input.addEventListener('input', ()=>{
+    clearTimeout(t);
+    const v = input.value.trim();
+    if (v.length < 4) { status.textContent=''; return; }
+    // leitores de código emitem Enter no fim — reage imediato, senão debounce
+    t = setTimeout(()=>lookup(v), 250);
+  });
+  input.addEventListener('keydown', e=>{
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      clearTimeout(t);
+      const v = input.value.trim();
+      if (v.length >= 4) lookup(v);
+    }
+  });
+})();
+</script>
+
