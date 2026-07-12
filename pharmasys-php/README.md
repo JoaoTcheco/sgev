@@ -1514,7 +1514,166 @@ Instalação: importar `database.sql` em MySQL 5.7+/MariaDB 10.3+, ajustar `app/
 
 ---
 
-## 37. Licença e créditos
+## 37. Importação de NF-e (XML de fornecedor) — módulo novo
+
+### 37.1 Objectivo
+Eliminar a digitação manual quando o fornecedor entrega mercadoria. O sistema
+lê o **XML da Nota Fiscal Eletrónica** (Brasil, mod=55) — ou qualquer XML
+genérico com `<item><ean><lote><validade>` — e cria automaticamente:
+
+- **Produtos** que ainda não existam (matching por código de barras EAN/GTIN);
+- **Lotes** ligados à fatura (`batches.invoice_id`);
+- **Movimentos de stock `in`** no mesmo `txn_id`;
+- Um registo em `supplier_invoices` com o XML original arquivado.
+
+O preço de venda **nunca é sobrescrito automaticamente** — o custo do
+fornecedor entra, mas o preço praticado ao público continua sob controlo da
+farmácia (ver §33). O utilizador pode marcar "atualizar preço venda" item a
+item se assim quiser.
+
+### 37.2 Fluxo (2 passos)
+
+```text
+[Fornecedor entrega + XML] ──► /nfe (upload)
+                                   │
+                                   ▼
+                         NfeController@parse
+                    (SimpleXML + xpath sem namespace)
+                                   │
+                                   ▼
+                   /nfe/preview  (tabela editável)
+                   ┌────────────────────────────┐
+                   │ ☑  Produto  EAN  Lote      │
+                   │    Validade  Qtd  Custo    │
+                   │    Preço venda (auto/edit) │
+                   └────────────────────────────┘
+                                   │  confirmar
+                                   ▼
+                        NfeController@confirm
+              ┌─────────────────────────────────────┐
+              │ BEGIN TX                            │
+              │  InvoiceModel::create               │
+              │  ProductModel::create/update (custo)│
+              │  BatchModel::create + invoice_id    │
+              │  StockMovementModel::record 'in'    │
+              │  AuditLogModel::log                 │
+              │ COMMIT + AlertModel::checkProduct   │
+              └─────────────────────────────────────┘
+                                   │
+                                   ▼
+                     /suppliers/view&id=…  (histórico)
+```
+
+### 37.3 Detecção de campos no XML
+
+| Campo lógico   | NF-e (Brasil)                | Fallback genérico              |
+|----------------|------------------------------|--------------------------------|
+| Nº nota        | `ide/nNF`                    | `nota/numero`, `numero`         |
+| Série          | `ide/serie`                  | `nota/serie`                    |
+| Chave 44 dig.  | `infNFe[@Id]` (remove `NFe`) | `chNFe`, `chave`                |
+| Data emissão   | `ide/dhEmi` ou `dEmi`        | `nota/data`                     |
+| Total          | `total/ICMSTot/vNF`          | `total/vNF`, `nota/total`       |
+| Emitente nome  | `emit/xNome`                 | `emitente/nome`, `fornecedor/nome` |
+| Emitente NUIT  | `emit/CNPJ` ou `emit/CPF`    | `emitente/nuit`, `fornecedor/nuit` |
+| Produto EAN    | `det/prod/cEAN` (`SEM GTIN` é limpo) | `item/ean`, `item/codigo_barras` |
+| Produto nome   | `det/prod/xProd`             | `item/nome`, `item/descricao`   |
+| Qtd            | `det/prod/qCom`              | `item/quantidade`, `item/qty`   |
+| Custo unit.    | `det/prod/vUnCom`            | `item/custo_unitario`, `item/preco` |
+| Lote           | `det/prod/rastro/nLote`      | `item/lote`, `item/batch`       |
+| Validade       | `det/prod/rastro/dVal`       | `item/validade`, `item/expiry`  |
+
+Datas são normalizadas para `YYYY-MM-DD` a partir de `2026-07-12`,
+`2026-07-12T10:00:00-03:00` ou `12/07/2026`. Itens sem lote/validade **não
+são bloqueados** — o utilizador preenche na tela de pré-visualização.
+
+### 37.4 Anti-duplicação
+
+`supplier_invoices.invoice_key` tem UNIQUE. Se o XML tiver a mesma chave de
+44 dígitos que uma nota já importada, o sistema recusa e redirecciona para o
+detalhe do fornecedor.
+
+### 37.5 Detecção de fornecedor
+
+Ao carregar o XML, o sistema tenta `SELECT id FROM suppliers WHERE tax_id = ?`
+com o CNPJ/NUIT extraído. Se acertar, deixa o `<select>` já preenchido. O
+utilizador pode escolher outro ou criar um fornecedor novo antes de confirmar.
+
+### 37.6 Página de detalhe do fornecedor (`/suppliers/view`)
+
+Mostra tudo o que este fornecedor já entregou:
+
+- **6 KPIs**: nº de faturas, valor total, unidades entregues (histórico),
+  unidades em stock actual, produtos distintos, primeira/última entrega.
+- **Faturas importadas**: nº NF, série, chave, itens, valor, quem importou.
+- **Top produtos**: por unidades em stock, com valor e última entrega.
+- **Todas as entregas**: linha por lote com data, produto, lote, validade,
+  qtd, custo unitário, valor total, nº NF. Total agregado no rodapé.
+- **Filtros**: por período (`from`/`to`) e por produto.
+- **Exportação**:
+  - `CSV` → `/suppliers/export&id=…` (com BOM UTF-8 para Excel);
+  - `PDF` → `/suppliers/view&id=…&print=1` (usa `layouts/app.php` em modo
+    print, o utilizador escolhe "Guardar como PDF" no diálogo do browser —
+    zero dependências externas, funciona offline).
+
+### 37.7 Alterações na base de dados
+
+Duas mudanças, aplicadas automaticamente na 1ª execução via micro-migração
+em `bootstrap.php` (também estão em `database.sql` para instalações novas):
+
+```sql
+-- 1) Nova coluna em batches
+ALTER TABLE batches ADD COLUMN invoice_id CHAR(36) NULL AFTER supplier_id;
+ALTER TABLE batches ADD INDEX idx_batches_invoice (invoice_id);
+ALTER TABLE batches ADD INDEX idx_batches_supplier (supplier_id, created_at);
+
+-- 2) Nova tabela
+CREATE TABLE supplier_invoices (
+  id CHAR(36) PRIMARY KEY,
+  supplier_id CHAR(36),
+  invoice_number VARCHAR(64),
+  invoice_series VARCHAR(16),
+  invoice_key VARCHAR(64) UNIQUE,   -- chave 44 dig, anti-duplicação
+  issue_date DATE,
+  total DECIMAL(12,2) DEFAULT 0,
+  items_count INT DEFAULT 0,
+  xml_content LONGTEXT,             -- XML original arquivado
+  imported_by CHAR(36),
+  imported_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  notes TEXT
+);
+```
+
+`supplier_invoices` foi acrescentado à lista de tabelas do backup completo
+(`BackupController::$tables`), portanto exporta/restaura automaticamente.
+
+### 37.8 Rotas adicionadas
+
+| Método | Rota                    | Papel     | Descrição                       |
+|--------|-------------------------|-----------|---------------------------------|
+| GET    | `nfe`                   | admin/pharm | Formulário de upload + lista de últimas importações |
+| POST   | `nfe/parse`             | admin/pharm | Recebe XML, faz preview editável |
+| POST   | `nfe/confirm`           | admin/pharm | Confirma e grava produtos + lotes + movimentos |
+| GET    | `suppliers/view&id=`    | admin/pharm | Detalhe do fornecedor + histórico |
+| GET    | `suppliers/export&id=`  | admin/pharm | Exporta entregas em CSV         |
+| GET    | `suppliers/view&id=…&print=1` | admin/pharm | Modo PDF (usar Ctrl+P do browser) |
+
+### 37.9 Integração com o resto do sistema
+
+- **Alertas**: `AlertModel::checkProduct` corre após cada lote criado — se
+  a nova entrada resolver um "stock baixo", o alerta desaparece; se a
+  validade for curta, um "expiring" é criado.
+- **Auditoria**: `nfe.import` + `product.create.nfe` gravados com o mesmo
+  `txn_id` da fatura, permitindo rastrear tudo no /audit.
+- **Estoque**: como qualquer lote, entra no FEFO usado pelo PDV.
+- **Financeiro**: o total da nota **não cria automaticamente uma "Conta a
+  Pagar"** — mantivemos essa decisão manual (o operador financeiro pode
+  não querer criar AP para todas as notas, ex.: pagamento à vista). A
+  criação de payable a partir da fatura será um botão na página do detalhe
+  do fornecedor numa iteração futura.
+
+---
+
+## 38. Licença e créditos
 
 - **Código**: MIT (livre para uso comercial em farmácias).
 - **Tipografia**: Inter, Rasmus Andersson — SIL Open Font License 1.1 (embutida em `assets/fonts/`).
@@ -1525,3 +1684,4 @@ Instalação: importar `database.sql` em MySQL 5.7+/MariaDB 10.3+, ajustar `app/
 ---
 
 _Se detectar divergência entre o que este README descreve e o código, considere o código como fonte da verdade e abra uma issue para atualizar a documentação._
+
