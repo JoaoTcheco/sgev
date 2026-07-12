@@ -55,9 +55,9 @@ class DashboardController extends Controller {
         $rowAlerts = Database::one(
             "SELECT
                 COUNT(*) total,
-                SUM(CASE WHEN severity = 'critical' THEN 1 ELSE 0 END) critical,
+                SUM(CASE WHEN severity = 'high' THEN 1 ELSE 0 END) critical,
                 SUM(CASE WHEN type = 'low_stock' THEN 1 ELSE 0 END) low_stock,
-                SUM(CASE WHEN type IN ('near_expiry','expired') THEN 1 ELSE 0 END) expiry
+                SUM(CASE WHEN type IN ('expiring','expired') THEN 1 ELSE 0 END) expiry
              FROM alerts WHERE resolved = 0"
         ) ?: ['total'=>0,'critical'=>0,'low_stock'=>0,'expiry'=>0];
 
