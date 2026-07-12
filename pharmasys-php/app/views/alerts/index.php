@@ -13,7 +13,7 @@
     <div style="display:flex;gap:8px;">
       <form method="POST" action="<?= url('alerts/refresh') ?>" style="display:inline;">
         <?= csrfField() ?>
-        <button class="btn btn-primary">↻ Recalcular</button>
+        <button class="btn btn-primary" title="Recalcula manualmente todos os alertas com base no estado actual de stocks e validades.">↻ Actualizar agora</button>
       </form>
       <a class="btn btn-ghost" href="<?= url('alerts/export') ?>&<?= http_build_query($filters) ?>">⬇ CSV</a>
       <a class="btn btn-ghost" href="<?= url('alerts') ?>&print=1&<?= http_build_query($filters) ?>" target="_blank">🖨️ PDF</a>
