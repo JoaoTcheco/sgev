@@ -239,6 +239,25 @@ a { color: inherit; }
   flex-wrap: wrap;
 }
 
+/* Botão "remover linha" (usado em tabelas dinâmicas) — visual coeso com btn-outline-danger */
+.btn-remove {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 30px; height: 30px;
+  padding: 0;
+  border: 1px solid #fecaca;
+  background: #fff;
+  color: var(--danger);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 14px; line-height: 1;
+  transition: background .15s ease, border-color .15s ease, transform .05s ease;
+}
+.btn-remove:hover { background: var(--danger-bg); border-color: #fca5a5; }
+.btn-remove:active { transform: translateY(1px); }
+.btn-remove:focus-visible { outline: 0; box-shadow: 0 0 0 3px rgba(220, 38, 38, .2); }
+
+
+
 /* ================================================================
    Campos de formulário globais (input, select, textarea)
    ================================================================ */
