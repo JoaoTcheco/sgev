@@ -68,6 +68,19 @@ class SaleHistoryController extends Controller {
         ]);
     }
 
+    /** Localiza uma venda por número de recibo e abre os detalhes. */
+    public function lookup(): void {
+        requireAuth();
+        $ref = trim($_GET['receipt'] ?? $_POST['receipt'] ?? '');
+        if ($ref === '') { flash('error', 'Indique o número do recibo.'); redirect('history'); }
+        $sale = SaleModel::findByReceipt($ref);
+        if (!$sale) {
+            flash('error', 'Recibo "' . $ref . '" não encontrado.');
+            redirect('history&receipt=' . urlencode($ref));
+        }
+        redirect('history/view&id=' . $sale['id']);
+    }
+
     public function refund(): void {
         requireRole('admin', 'pharmacist'); csrfVerify();
         $saleId = $_POST['sale_id'] ?? '';
