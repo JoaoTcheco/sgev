@@ -42,6 +42,7 @@
 31. [Convenções de código](#31-convenções-de-código)
 32. [Como estender](#32-como-estender)
 33. [Licença e créditos](#33-licença-e-créditos)
+34. [Suporte a `.env` e diagnóstico da BD (rev. b)](#39-suporte-env-e-diagnóstico-da-bd-rev-b)
 
 ---
 
