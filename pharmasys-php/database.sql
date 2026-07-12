@@ -382,6 +382,9 @@ CREATE TABLE IF NOT EXISTS `alerts` (
   `resolved` TINYINT(1) NOT NULL DEFAULT 0,
   `resolved_at` DATETIME,
   `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX `idx_alerts_resolved` (`resolved`, `severity`, `created_at`),
+  INDEX `idx_alerts_product_open` (`product_id`, `type`, `resolved`),
+  INDEX `idx_alerts_type` (`type`, `resolved`),
   FOREIGN KEY (`product_id`) REFERENCES `products`(`id`) ON DELETE CASCADE,
   FOREIGN KEY (`batch_id`) REFERENCES `batches`(`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
