@@ -88,6 +88,16 @@ $typeLabels = [
             <p style="margin:6px 0 0;font-size:11px;color:#64748b;">Cada ajuste fica registado no extracto da conta (auditoria).</p>
           </div>
         <?php endif; ?>
-
+      </div>
+    <?php endforeach; ?>
+  </div>
 </section>
 <link rel="stylesheet" href="<?= asset('css/accounts.css') ?>">
+<script>
+function pharmaToggleAdjust(id){
+  const el = document.getElementById('adj-' + id);
+  if(!el) return;
+  el.style.display = el.style.display === 'none' ? '' : 'none';
+}
+</script>
+
