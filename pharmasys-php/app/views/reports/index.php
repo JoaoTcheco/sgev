@@ -101,7 +101,7 @@ $exp = fn($t) => '?r=reports/export&type=' . $t . '&from=' . e($from) . '&to=' .
           <tbody>
             <?php foreach ($byPayment as $p): ?>
               <tr>
-                <td><?= e(ucfirst($p['payment_method'])) ?></td>
+                <td><?= e(paymentMethodLabel($p['payment_method'])) ?></td>
                 <td class="num"><?= (int)$p['n'] ?></td>
                 <td class="num"><?= formatMZN($p['total']) ?></td>
               </tr>

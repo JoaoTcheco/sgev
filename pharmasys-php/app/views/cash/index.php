@@ -88,7 +88,7 @@
       <?php foreach ($accounts as $a): ?>
         <tr>
           <td><strong><?= e($a['name']) ?></strong></td>
-          <td><?= e(strtoupper($a['type'])) ?></td>
+          <td><?= e(accountTypeLabel($a['type'])) ?></td>
           <td><strong><?= e(formatMZN($a['balance'])) ?></strong></td>
         </tr>
       <?php endforeach; ?>

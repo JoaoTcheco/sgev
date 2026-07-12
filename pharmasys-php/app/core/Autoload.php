@@ -62,6 +62,34 @@ function formatDateTime($v): string {
     return $ts ? date('d/m/Y H:i', $ts) : '—';
 }
 
+// ---------- Labels dinâmicos (uso consistente em toda a UI) ----------
+function paymentMethodLabel(?string $m): string {
+    $map = [
+        'cash'       => 'Numerário',
+        'mpesa'      => 'M-Pesa',
+        'emola'      => 'E-Mola',
+        'card'       => 'Cartão',
+        'transfer'   => 'Transferência',
+        'credit'     => 'Crédito',
+        'mixed'      => 'Misto',
+        'electronic' => 'Digital',
+    ];
+    return $map[$m] ?? ($m ? ucfirst($m) : '—');
+}
+
+function accountTypeLabel(?string $t): string {
+    $map = [
+        'cash'     => 'Numerário',
+        'mpesa'    => 'M-Pesa',
+        'emola'    => 'E-Mola',
+        'card'     => 'Cartão',
+        'transfer' => 'Transferência',
+        'bank'     => 'Banco',
+        'other'    => 'Outro',
+    ];
+    return $map[$t] ?? ($t ? ucfirst($t) : '—');
+}
+
 // ---------- CSRF ----------
 function csrfToken(): string {
     if (empty($_SESSION['csrf_token'])) {
