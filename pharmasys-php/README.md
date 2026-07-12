@@ -2045,3 +2045,120 @@ Esta ronda expande o sistema em quatro frentes sem remover funcionalidades:
 - `app/views/settings/index.php` — secção PDV + botão 🖨️ Imprimir recibo
 - `app/views/reports/index.php` — filtros método/operador + botões CSV/PDF
 - `index.php` — rota `GET reports/pdf`
+
+---
+
+## 41. Ronda 2026.07 (rev. d) — Alertas por produto, CSV completo, auditoria de configurações
+
+Esta ronda foca-se em **controlo fino dos alertas** e **rastreabilidade das configurações**. Todas as alterações são compatíveis com a base de dados existente — nenhuma migração é necessária.
+
+### 41.1 Editar limites de alerta por produto (a partir da própria página de Alertas)
+
+Antes só era possível ajustar `min_stock` e `expiry_alert_days` na ficha completa do produto (`products/edit`). Agora, em cada linha da tabela de alertas que esteja associada a um produto, existe um bloco recolhido **“⚙ Editar limites”** com:
+
+- **Stock mínimo** (`min_stock`) — limiar para gerar alertas `low_stock`.
+- **Dias aviso validade** (`expiry_alert_days`) — janela em dias para gerar alertas `expiring`.
+
+Ao gravar:
+
+1. `AlertController::updateProductAlerts()` valida o produto, aplica `UPDATE products SET min_stock = ?, expiry_alert_days = ? WHERE id = ?`.
+2. Regista **automaticamente** em `audit_logs` com acção `product.alert_settings`, incluindo o valor **antes** e **depois** de cada campo e o nome do produto.
+3. Chama `AlertModel::checkProduct($pid)` para recalcular imediatamente os alertas desse produto (sem esperar pelo refresh horário).
+4. Redirecciona para `alerts` com mensagem de sucesso.
+
+Permissões: `admin` e `pharmacist` (o bloco só aparece para estes papéis).
+
+Rota nova:
+
+```
+POST alerts/product-settings → AlertController@updateProductAlerts
+```
+
+### 41.2 Cada linha da tabela mostra o contexto do produto
+
+Sob o nome do produto/lote, é agora renderizada uma linha de metadados:
+
+```
+Stock: 12 · Mín: 20 · Aviso val.: 60 dias
+```
+
+Isto vem de novos campos calculados em `AlertModel::search()`:
+
+- `current_stock` — `SELECT SUM(quantity) FROM batches WHERE product_id = p.id`.
+- `product_min_stock` — cópia de `products.min_stock`.
+- `product_expiry_alert_days` — cópia de `products.expiry_alert_days`.
+
+### 41.3 Filtros completos + CSV expandido
+
+**Novos filtros na página de Alertas** (aceites por `AlertController::filters()`):
+
+- `product_id` — se presente (via link `alerts?product_id=…`), fixa o produto filtrado.
+- `from`, `to` — intervalo de datas de criação do alerta (campos `<input type="date">`).
+
+Todos os filtros existentes continuam válidos: `severity`, `type`, `q`, `status`.
+
+**CSV enriquecido** (`AlertController::export()`) — respeita todos os filtros acima e exporta **14 colunas** (antes eram 8):
+
+| # | Coluna | Origem |
+|---|---|---|
+| 1 | ID | `alerts.id` |
+| 2 | Data | `alerts.created_at` |
+| 3 | Severidade | `alerts.severity` (UPPER) |
+| 4 | Tipo | Rótulo PT (`Stock baixo`, `A expirar`, `Expirado`) |
+| 5 | Produto ID | `alerts.product_id` |
+| 6 | Produto | `products.name` |
+| 7 | Lote | `batches.batch_number` |
+| 8 | Validade | `batches.expiry_date` |
+| 9 | Stock actual | soma de `batches.quantity` |
+| 10 | Stock mínimo | `products.min_stock` |
+| 11 | Dias alerta expiração | `products.expiry_alert_days` |
+| 12 | Mensagem | `alerts.message` |
+| 13 | Estado | `Aberto` ou `Resolvido` |
+| 14 | Resolvido em | `alerts.resolved_at` |
+
+Codificação: UTF-8 com BOM (`\xEF\xBB\xBF`), separador `;` — abre correctamente em Excel PT.
+
+### 41.4 Actualização manual dos alertas (renomeação semântica do botão)
+
+O botão superior direito passou de **“↻ Recalcular”** para **“↻ Actualizar agora”**, com `title` explicativo. Continua a apontar para `POST alerts/refresh`, que executa `AlertModel::refresh()`:
+
+1. Apaga todos os alertas `resolved = 0`.
+2. Reinsere alertas `low_stock` para todos os produtos onde `stock <= min_stock`.
+3. Reinsere alertas `expired` para todos os lotes com `expiry_date < CURDATE()`.
+4. Reinsere alertas `expiring` para lotes dentro de `p.expiry_alert_days` a partir de hoje.
+
+Continua também activo o **auto-refresh throttled** (1x/hora por sessão) da rev. c.
+
+### 41.5 Auditoria de mudanças de configurações
+
+`SettingController::save()` foi reescrito para:
+
+1. Ler o estado actual das configurações (`SettingModel::get()`) **antes** do update.
+2. Aplicar o update normalmente.
+3. Ler o estado **após** o update.
+4. Calcular o *diff* campo a campo (ignorando `id`, `created_at`, `updated_at`).
+5. Se existir pelo menos uma alteração, gravar em `audit_logs`:
+   - `action`  = `settings.update`
+   - `entity`  = `pharmacy_settings`
+   - `entity_id` = `1`
+   - `details` = JSON `{ changed_fields: [...], diff: { campo: { before, after } } }`
+6. Mostrar mensagem contextual:
+   - “Configurações actualizadas (N campo(s) alterado(s)).” — quando há mudanças
+   - “Configurações gravadas (sem alterações).” — quando o formulário é submetido sem alterar nada
+
+Isto significa que **cada toggle do PDV, cada mudança de layout de etiqueta, cada renomeação de farmácia** fica registada e é consultável no módulo **Auditoria** (`/audit`) — filtrando por acção `settings.update` ou entidade `pharmacy_settings`.
+
+### 41.6 Compatibilidade e sincronização
+
+- Nenhuma alteração ao esquema da base de dados; funciona sobre a mesma `database.sql`.
+- O código continua a usar exclusivamente as tabelas `products`, `alerts`, `batches`, `audit_logs`, `pharmacy_settings` — a base é única e coerente com o resto do sistema.
+- Papéis: edição de limites por produto exige `admin`/`pharmacist`; auditoria e configurações continuam restritas a `admin`.
+
+### 41.7 Ficheiros alterados nesta ronda
+
+- `app/controllers/AlertController.php` — filtros `product_id`/`from`/`to`, `export()` com 14 colunas, nova acção `updateProductAlerts()`.
+- `app/models/AlertModel.php` — `search()` devolve `current_stock`, `product_min_stock`, `product_expiry_alert_days` e aceita os novos filtros.
+- `app/views/alerts/index.php` — inputs de data, bloco “⚙ Editar limites”, metadados de stock por linha, botão renomeado.
+- `app/controllers/SettingController.php` — cálculo de diff + `AuditLogModel::log('settings.update', …)`.
+- `index.php` — nova rota `POST alerts/product-settings`.
+- `README.md` — esta secção 41.
