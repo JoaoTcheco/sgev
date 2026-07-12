@@ -55,6 +55,15 @@
         <?php endforeach; ?>
       </select>
     </div>
+    <div><label>De</label>
+      <input type="date" name="from" value="<?= e($filters['from'] ?? '') ?>">
+    </div>
+    <div><label>Até</label>
+      <input type="date" name="to" value="<?= e($filters['to'] ?? '') ?>">
+    </div>
+    <?php if (!empty($filters['product_id'])): ?>
+      <input type="hidden" name="product_id" value="<?= e($filters['product_id']) ?>">
+    <?php endif; ?>
     <div style="flex:1;min-width:180px;"><label>Pesquisa</label>
       <input type="text" name="q" value="<?= e($filters['q']) ?>" placeholder="Produto, lote ou mensagem…">
     </div>
