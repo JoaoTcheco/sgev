@@ -1,4 +1,4 @@
-<section class="crud">
+<section class="crud settings-layout">
   <h1 class="page-title">Configurações da farmácia</h1>
   <p class="page-subtitle">Estes dados aparecem no recibo, etiquetas e cabeçalhos.</p>
 
@@ -91,6 +91,151 @@
       <button class="btn btn-primary" type="submit">Guardar alterações</button>
     </div>
   </form>
+
+  <!-- Pré-visualização do recibo (dinâmica) -->
+  <aside class="receipt-preview-pane">
+    <div class="rpp-header">
+      <h3>Pré-visualização do recibo</h3>
+      <p>Actualiza em tempo real conforme as configurações acima.</p>
+    </div>
+    <div class="rpp-scroll">
+      <div id="receiptPreview" class="receipt receipt-80">
+        <h1 data-bind="name"><?= e($s['name'] ?: 'PharmaSys') ?></h1>
+        <p class="slogan" data-bind="slogan" data-hide-empty><em><?= e($s['slogan'] ?? '') ?></em></p>
+        <p data-bind="address" data-hide-empty><?= e($s['address'] ?? '') ?></p>
+        <p data-bind="contact" data-hide-empty>
+          <?php $c = trim(($s['phone'] ?? '') . ($s['phone'] && $s['email'] ? ' · ' : '') . ($s['email'] ?? '')); echo e($c); ?>
+        </p>
+        <p data-bind="nuit" data-hide-empty data-prefix="NUIT: "><?= $s['nuit'] ? 'NUIT: '.e($s['nuit']) : '' ?></p>
+        <p class="hdr-note" data-bind="header" data-hide-empty><em><?= e($s['receipt_header'] ?? '') ?></em></p>
+
+        <div class="sep double"></div>
+        <p class="meta">
+          <strong>RECIBO Nº 20260712-0001</strong><br>
+          Data: <?= date('d/m/Y H:i') ?><br>
+          Atendente: Demo<br>
+          <span data-bind="pharmacist-line" data-hide-empty>Farmacêutico: <span data-bind="pharmacist"><?= e($s['pharmacist_name'] ?? '') ?></span></span>
+        </p>
+
+        <div class="sep"></div>
+        <table class="items">
+          <thead><tr><th class="l">Descrição</th><th class="r">Qtd</th><th class="r">P.Un</th><th class="r">Total</th></tr></thead>
+          <tbody>
+            <tr><td colspan="4" class="p-name">Paracetamol 500mg</td></tr>
+            <tr class="p-row"><td class="l"></td><td class="r">2</td><td class="r">25,00 MT</td><td class="r"><strong>50,00 MT</strong></td></tr>
+            <tr><td colspan="4" class="p-name">Amoxicilina 500mg</td></tr>
+            <tr class="p-row"><td class="l"></td><td class="r">1</td><td class="r">180,00 MT</td><td class="r"><strong>180,00 MT</strong></td></tr>
+          </tbody>
+        </table>
+
+        <div class="sep"></div>
+        <table class="totals">
+          <tr><td>Subtotal</td><td class="r">230,00 MT</td></tr>
+          <tr class="grand"><td><strong>TOTAL</strong></td><td class="r"><strong>230,00 MT</strong></td></tr>
+          <tr><td>Pagamento</td><td class="r">💵 Numerário</td></tr>
+          <tr><td>Valor recebido</td><td class="r">250,00 MT</td></tr>
+          <tr class="change"><td><strong>TROCO</strong></td><td class="r"><strong>20,00 MT</strong></td></tr>
+        </table>
+
+        <div class="sep" data-bind="barcode-sep" data-hide-empty></div>
+        <div class="bc-wrap" data-bind="barcode-wrap" data-hide-empty>
+          <svg id="prevBarcode"></svg>
+          <div class="bc-code">20260712-0001</div>
+        </div>
+
+        <div class="sep" data-bind="footer-sep" data-hide-empty></div>
+        <p class="footer-note" data-bind="footer" data-hide-empty><?= e($s['receipt_footer'] ?? '') ?></p>
+        <p class="footer">— OBRIGADO PELA PREFERÊNCIA —</p>
+      </div>
+    </div>
+  </aside>
 </section>
+
 <link rel="stylesheet" href="<?= asset('css/crud.css') ?>">
-<style>.hint{background:#f0fdfa;border-left:3px solid #0f766e;padding:8px 12px;margin-top:10px;font-size:12px;color:#334155;border-radius:4px;}</style>
+<link rel="stylesheet" href="<?= asset('css/receipt.css') ?>">
+<style>
+  .hint{background:#f0fdfa;border-left:3px solid #0f766e;padding:8px 12px;margin-top:10px;font-size:12px;color:#334155;border-radius:4px;}
+  .settings-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(300px,420px);gap:24px;align-items:start;}
+  .settings-layout > .page-title, .settings-layout > .page-subtitle{grid-column:1 / -1;}
+  .settings-layout > form{grid-column:1;}
+  .receipt-preview-pane{grid-column:2;position:sticky;top:16px;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:12px;padding:14px;max-height:calc(100vh - 40px);display:flex;flex-direction:column;}
+  .rpp-header h3{margin:0 0 4px;color:#0f766e;font-size:15px;}
+  .rpp-header p{margin:0 0 12px;font-size:12px;color:#64748b;}
+  .rpp-scroll{overflow:auto;flex:1;background:#e5e7eb;border-radius:8px;padding:8px;}
+  .rpp-scroll .receipt{margin:0 auto;box-shadow:0 4px 12px rgba(0,0,0,.08);}
+  .rpp-scroll .receipt.receipt-a4{transform:scale(.45);transform-origin:top center;}
+  @media (max-width: 1100px){ .settings-layout{grid-template-columns:1fr;} .receipt-preview-pane{position:static;grid-column:1;} }
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+<script>
+(function(){
+  const form = document.querySelector('form[action*="settings/save"]');
+  const preview = document.getElementById('receiptPreview');
+  if(!form || !preview) return;
+
+  const q = (sel, root=preview) => root.querySelector(sel);
+  const bind = name => preview.querySelector('[data-bind="'+name+'"]');
+
+  function val(n){ const el = form.elements[n]; return el ? (el.type==='checkbox'?el.checked:el.value.trim()) : ''; }
+  function setText(name, text){
+    const el = bind(name); if(!el) return;
+    el.textContent = text || '';
+    if(el.hasAttribute('data-hide-empty')) el.style.display = text ? '' : 'none';
+  }
+  function setHTML(name, html, visible){
+    const el = bind(name); if(!el) return;
+    el.innerHTML = html || '';
+    if(el.hasAttribute('data-hide-empty')) el.style.display = visible ? '' : 'none';
+  }
+
+  function render(){
+    // Largura
+    const width = val('receipt_width') || '80mm';
+    preview.className = 'receipt receipt-' + width.replace('mm','');
+
+    setText('name', val('name') || 'PharmaSys');
+    setText('slogan', val('slogan'));
+    // slogan wrapper is <p><em>, keep <em>
+    const sloganEl = bind('slogan');
+    if(sloganEl && val('slogan')){ sloganEl.innerHTML = '<em>'+escapeHtml(val('slogan'))+'</em>'; sloganEl.style.display=''; }
+
+    const addr = val('address') + (val('city') ? ' — '+val('city') : '');
+    setText('address', addr);
+
+    const phone = val('phone'), email = val('email');
+    const contact = [phone && 'Tel: '+phone, email].filter(Boolean).join(' · ');
+    setText('contact', contact);
+
+    const nuit = val('nuit');
+    setText('nuit', nuit ? 'NUIT: '+nuit : '');
+
+    const hdr = val('receipt_header');
+    setHTML('header', hdr ? '<em>'+escapeHtml(hdr)+'</em>' : '', !!hdr);
+
+    const showPh = val('show_pharmacist') && val('pharmacist_name');
+    const phLine = bind('pharmacist-line');
+    if(phLine){ phLine.style.display = showPh ? '' : 'none'; setText('pharmacist', val('pharmacist_name')); }
+
+    const ftr = val('receipt_footer');
+    setText('footer', ftr);
+    const fsep = bind('footer-sep'); if(fsep) fsep.style.display = ftr ? '' : 'none';
+
+    const showBc = val('receipt_show_barcode');
+    const bsep = bind('barcode-sep'); if(bsep) bsep.style.display = showBc ? '' : 'none';
+    const bwrap = bind('barcode-wrap'); if(bwrap) bwrap.style.display = showBc ? '' : 'none';
+    if(showBc && window.JsBarcode){
+      const bcW = width === '58mm' ? 1.1 : (width === 'a4' ? 1.8 : 1.4);
+      const bcH = width === '58mm' ? 26  : (width === 'a4' ? 50  : 36);
+      try { JsBarcode('#prevBarcode', '20260712-0001', {format:'CODE128', width:bcW, height:bcH, displayValue:false, margin:0}); } catch(e){}
+    }
+  }
+
+  function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+  form.addEventListener('input', render);
+  form.addEventListener('change', render);
+  render();
+})();
+</script>
+
