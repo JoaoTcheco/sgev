@@ -1,4 +1,4 @@
-<section class="crud">
+<section class="crud settings-layout">
   <h1 class="page-title">Configurações da farmácia</h1>
   <p class="page-subtitle">Estes dados aparecem no recibo, etiquetas e cabeçalhos.</p>
 
