@@ -257,6 +257,25 @@
   form.addEventListener('input', render);
   form.addEventListener('change', render);
   render();
+
+  // Botão imprimir amostra do recibo
+  const btnPrint = document.getElementById('btnPrintReceiptPreview');
+  if(btnPrint){
+    btnPrint.addEventListener('click', () => {
+      const w = window.open('', '_blank', 'width=520,height=800');
+      if(!w){ alert('Permita janelas emergentes para imprimir.'); return; }
+      // Carrega os CSS do recibo dentro da nova janela
+      const cssReceipt = document.querySelector('link[href*="receipt.css"]').href;
+      w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Amostra do recibo</title>
+        <link rel="stylesheet" href="${cssReceipt}">
+        <style>body{margin:12px;background:#fff;font-family:'Courier New',monospace;} @media print{body{margin:0}}</style>
+        </head><body>${preview.outerHTML}</body></html>`);
+      w.document.close();
+      // Aguarda o CSS carregar antes de imprimir
+      setTimeout(() => { try { w.focus(); w.print(); } catch(e){} }, 400);
+    });
+  }
 })();
+
 </script>
 
