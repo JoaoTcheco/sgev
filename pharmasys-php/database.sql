@@ -114,6 +114,8 @@ CREATE TABLE IF NOT EXISTS `products` (
   `notes` TEXT,
   `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX `idx_products_active_name` (`active`, `name`),
+  INDEX `idx_products_category` (`category_id`),
   FOREIGN KEY (`category_id`) REFERENCES `categories`(`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
