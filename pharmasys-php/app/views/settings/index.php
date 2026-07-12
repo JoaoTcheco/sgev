@@ -167,7 +167,7 @@
   @media (max-width: 1100px){ .settings-layout{grid-template-columns:1fr;} .receipt-preview-pane{position:static;grid-column:1;} }
 </style>
 
-<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+<script src="<?= asset("js/vendor/JsBarcode.all.min.js") ?>"></script>
 <script>
 (function(){
   const form = document.querySelector('form[action*="settings/save"]');

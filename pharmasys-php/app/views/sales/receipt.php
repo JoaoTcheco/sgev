@@ -108,7 +108,7 @@ $bcHeight = $width === '58mm' ? 26  : ($width === 'a4' ? 50  : 36);
 </div>
 
 <?php if ($showBarcode): ?>
-<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+<script src="<?= asset("js/vendor/JsBarcode.all.min.js") ?>"></script>
 <script>
 document.querySelectorAll('svg.barcode').forEach(el => {
   try {
