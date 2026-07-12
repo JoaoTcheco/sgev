@@ -1,6 +1,6 @@
 # PharmaSys — Sistema de Gestão de Farmácia (PHP)
 
-> **Versão:** 2026.07  
+> **Versão:** 2026.07 (rev. b — `.env` + diagnóstico BD + contas eliminaveis)  
 > **Estilo:** MVC procedural, PHP 8.1+, MySQL 8 / MariaDB 10.4+  
 > **Funciona 100% offline** — todas as dependências (fontes Inter WOFF2 e JsBarcode) são servidas a partir de `assets/`. Não há chamadas a CDNs externos.  
 > **Domínio:** Farmácia em Moçambique (MZN, M-Pesa, E-Mola, NUIT).
@@ -42,6 +42,7 @@
 31. [Convenções de código](#31-convenções-de-código)
 32. [Como estender](#32-como-estender)
 33. [Licença e créditos](#33-licença-e-créditos)
+34. [Suporte a `.env` e diagnóstico da BD (rev. b)](#39-suporte-env-e-diagnóstico-da-bd-rev-b)
 
 ---
 
@@ -1718,3 +1719,234 @@ CREATE TABLE supplier_invoices (
 
 _Se detectar divergência entre o que este README descreve e o código, considere o código como fonte da verdade e abra uma issue para atualizar a documentação._
 
+
+---
+
+## 39. Suporte `.env` e diagnóstico da BD (rev. b)
+
+Esta revisão acrescenta três melhorias operacionais que não alteram nenhuma
+funcionalidade existente — todas foram desenhadas para tornar a **hospedagem
+mais simples** e o **diagnóstico de problemas mais rápido**.
+
+### 39.1 Ficheiro `.env` (opcional, recomendado)
+
+O sistema passa a suportar um ficheiro `.env` na raiz do projecto, no
+formato clássico `CHAVE=valor`. Se o ficheiro existir, os seus valores
+sobrepõem-se aos defaults de `app/config.php`. Se **não** existir, o
+sistema continua a arrancar normalmente com os valores por defeito — nada
+quebra em instalações antigas.
+
+**Novo ficheiro `.env.example`** (raiz do projecto) — copie para `.env` e edite:
+
+```env
+APP_ENV=production
+APP_URL=https://minhafarmacia.co.mz
+
+DB_HOST=sql309.infinityfree.com
+DB_PORT=3306
+DB_NAME=if0_XXXXXX_pharmasys
+DB_USER=if0_XXXXXX
+DB_PASS=a-minha-senha
+DB_CHARSET=utf8mb4
+# DB_SOCKET=/var/run/mysqld/mysqld.sock   # (opcional, para socket Unix)
+
+PHARMACY_NAME=Farmácia Central
+COMPANY_NAME="Farmácia Central, Lda."
+COMPANY_NUIT=400123456
+COMPANY_ADDRESS="Av. 25 de Setembro, Maputo"
+COMPANY_PHONE=+258840000000
+COMPANY_EMAIL=geral@farmaciacentral.co.mz
+
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=meuemail@gmail.com
+SMTP_PASS=palavra-passe-de-app
+SMTP_SECURE=tls
+```
+
+**Chaves reconhecidas** (todas com fallback em `app/config.php`):
+
+| Categoria | Chaves |
+|-----------|--------|
+| Ambiente  | `APP_ENV`, `APP_DEBUG`, `APP_URL`, `APP_NAME`, `APP_DESCRIPTION`, `APP_EMAIL`, `MAINTENANCE_MODE`, `MAINTENANCE_MESSAGE` |
+| BD        | `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASS`, `DB_CHARSET`, `DB_SOCKET` |
+| Empresa   | `PHARMACY_NAME`, `COMPANY_NAME`, `COMPANY_NUIT`, `COMPANY_ADDRESS`, `COMPANY_PHONE`, `COMPANY_PHONE2`, `COMPANY_EMAIL`, `COMPANY_WEBSITE` |
+| Redes soc.| `SOCIAL_FACEBOOK`, `SOCIAL_INSTAGRAM`, `SOCIAL_LINKEDIN`, `SOCIAL_WHATSAPP` |
+| E-mail    | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_SECURE`, `SMTP_FROM_NAME` |
+| Local.    | `APP_TIMEZONE`, `APP_LOCALE`, `APP_LANG`, `APP_CURRENCY`, `APP_CURRENCY_SYMBOL` |
+| Tema      | `APP_THEME` |
+| Segurança | `SESSION_LIFETIME`, `PASSWORD_MIN_LENGTH`, `LOGIN_ATTEMPTS`, `LOGIN_LOCKOUT_TIME` |
+| Uploads   | `UPLOAD_MAX_SIZE` |
+| Cache     | `CACHE_ENABLED`, `CACHE_LIFETIME` |
+| Listas    | `ITEMS_PER_PAGE` |
+| Alertas   | `ALERT_EXPIRY_DAYS`, `ALERT_LOW_STOCK_DEFAULT` |
+
+Uso em código continua igual ao habitual: `config('chave', $default)`.
+
+### 39.2 Nova classe `Env` (`app/core/Env.php`)
+
+Carregador `.env` próprio, **sem Composer nem dependências externas** —
+essencial para manter a promessa "funciona 100% offline". Suporta:
+
+- Linhas `CHAVE=valor`
+- Comentários iniciados por `#`
+- Aspas simples e duplas (removidas)
+- Cast automático de `true`/`false`/`null`/`empty`
+- Nunca sobrescreve variáveis já definidas no ambiente do servidor
+- Se o ficheiro não existir, é ignorado silenciosamente
+
+API pública:
+
+```php
+Env::load(ROOT_PATH . '/.env');    // carregar
+Env::get('DB_HOST', 'localhost');  // ler com default
+Env::all();                        // dump de tudo carregado
+env('DB_HOST', 'localhost');       // helper global (atalho)
+```
+
+Contagem de classes core actualizada: **4** (`Autoload`, `Controller`,
+`Database`, `Env`).
+
+### 39.3 `app/config.php` — reescrito para `.env`
+
+O ficheiro `config.php` foi reescrito para ler tudo via `env()` com
+fallbacks sensatos. **Nenhuma funcionalidade é removida** — todas as
+chaves anteriores continuam disponíveis, mais um conjunto novo:
+`db_port`, `db_socket`, `environment`, `debug`, `site_description`,
+`pharmacy_name`, `company_*`, `social_*`, `smtp_*`, `default_theme`,
+`alert_expiry_days`, `alert_low_stock_default`.
+
+O ficheiro está organizado por secções comentadas (BD, Site, Empresa,
+Redes sociais, SMTP, Localização, Tema, Segurança, Upload, Cache,
+Paginação, Alertas), no mesmo estilo dos ficheiros de configuração
+usados noutros sistemas PHP profissionais.
+
+### 39.4 `Database.php` — DSN robusto + `ping()`
+
+`Database::init()` agora aceita:
+
+- **`db_port`** independente (default 3306);
+- **`db_socket`** (Unix socket) — quando definido, é usado em vez do TCP;
+- **`db_host`** legado com `;unix_socket=…` continua a funcionar
+  (retrocompatibilidade com instalações antigas).
+
+Novos métodos:
+
+```php
+Database::ping();  // ['ok'=>true,'server'=>'10.5.15','db'=>'pharmasys','time'=>'2026-07-12 08:14:22','latency'=>1.7]
+```
+
+As mensagens de erro de ligação foram traduzidas para PT e enriquecidas:
+"Utilizador ou senha da BD incorrectos", "Base de dados inexistente",
+"Servidor MySQL/MariaDB inacessível", "Socket Unix inexistente", "Host
+da BD não resolve". O *stack trace* completo só é mostrado quando
+`APP_DEBUG=true`.
+
+### 39.5 Página de diagnóstico `/db-check.php`
+
+Novo ficheiro na raiz do projecto que gera uma página HTML de
+diagnóstico com quatro secções:
+
+1. **`.env`** — se foi encontrado e carregado (ou se está a usar defaults);
+2. **Configuração activa** — ambiente, URL, host, porta, socket, nome,
+   user, charset (a senha nunca é mostrada);
+3. **Ligação à BD** — resultado do `Database::ping()` com servidor,
+   BD activa, hora e latência em ms;
+4. **Tabelas encontradas** — lista de todas as tabelas com contagem
+   de registos (útil para confirmar que `database.sql` foi importado).
+
+Abra `http://seu-site/db-check.php` a qualquer momento. Recomenda-se
+**apagar este ficheiro em produção** depois de confirmar que tudo
+funciona (ou proteger via `.htaccess`).
+
+### 39.6 Validação de sessão obsoleta em `bootstrap.php`
+
+Após a inicialização da BD, cada request verifica se o utilizador em
+sessão ainda existe e está activo na tabela `users`. Se não (ex.: BD
+recriada, admin apagado, importação limpa de `database.sql`), a sessão
+é destruída e o utilizador é redireccionado para o login com a mensagem
+"A sua sessão expirou (utilizador inválido). Inicie sessão novamente."
+
+Isto elimina uma classe inteira de erros crípticos, incluindo o
+`SQLSTATE[23000] Cannot add or update a child row: a foreign key
+constraint fails (cash_sessions_ibfk_1)` que aparecia ao abrir o caixa
+com um `session_id` órfão.
+
+### 39.7 Contas do sistema podem ser eliminadas
+
+Anteriormente, as contas financeiras marcadas como `is_system = 1`
+(Caixa, M-Pesa, E-Mola, Cartão, Transferência) **não podiam ser
+eliminadas** — o admin ficava preso a elas. Agora:
+
+- Qualquer conta (sistema ou não) pode ser eliminada, desde que o saldo
+  seja zero (regra mantida por segurança contabilística).
+- Os movimentos históricos associados são também removidos (`account_movements`).
+- `ensureSystemAccounts()` **só cria** as contas padrão quando a tabela
+  está completamente vazia (primeira instalação) — assim, contas
+  eliminadas não são recriadas no request seguinte.
+- Nas páginas **Caixa** e **PDV**, a lista de contas é sempre lida em
+  tempo real de `financial_accounts`, portanto qualquer eliminação
+  propaga-se imediatamente para toda a UI.
+
+Alteração em código:
+
+- `FinancialAccountModel::delete()` — removida a verificação `is_system`;
+- `AccountController::index()` — chama `ensureSystemAccounts()` apenas
+  quando `all(false)` está vazio;
+- `views/accounts/index.php` — o botão eliminar (`×`) passa a aparecer em
+  todas as contas.
+
+### 39.8 Guard adicional em `CashSessionModel::open()`
+
+Antes de fazer o INSERT em `cash_sessions`, o método valida:
+
+1. Que existe um utilizador em sessão (`currentUser()['id']`);
+2. Que esse utilizador ainda existe e está activo em `users`.
+
+Se qualquer verificação falhar, é lançada uma `Exception` com mensagem
+em PT (em vez do erro cru de FK do MySQL). Combinado com a validação
+de sessão da §39.6, o problema fica completamente coberto.
+
+### 39.9 Ficheiro `.gitignore`
+
+Novo ficheiro na raiz para impedir commits acidentais de:
+
+- `.env`, `.env.local`, `.env.*.local` (secretos!)
+- Uploads em `assets/images/uploads/` (excepto `.gitkeep`)
+- `.DS_Store`, `Thumbs.db`, `*.log`
+
+### 39.10 Ordem de arranque actualizada (`bootstrap.php`)
+
+```
+1. require Env.php
+2. Env::load('.env')          ← NOVO
+3. require config.php         ← agora lê env()
+4. session_start + GC
+5. require Autoload.php
+6. Database::init($CONFIG)
+7. Micro-migrações + ensureAdmin (1×/sessão)
+8. Validação de sessão obsoleta   ← NOVO
+9. $GLOBALS['CONFIG'] + helper config()
+```
+
+### 39.11 Ficheiros novos / alterados nesta rev.
+
+**Novos (4):**
+- `app/core/Env.php`
+- `.env.example`
+- `.gitignore`
+- `db-check.php`
+
+**Alterados (5):**
+- `app/config.php` — reescrito para `env()` com fallbacks
+- `app/bootstrap.php` — carrega `.env` + valida sessão obsoleta
+- `app/core/Database.php` — `db_port`/`db_socket` + `ping()` + mensagens PT
+- `app/models/FinancialAccountModel.php` — `delete()` sem barreira `is_system`
+- `app/controllers/AccountController.php` — `ensureSystemAccounts()` só na 1ª instalação
+- `app/models/CashSessionModel.php` — validação de utilizador em `open()`
+- `app/views/accounts/index.php` — botão eliminar visível em todas as contas
+
+**Base de dados:** nenhuma migração nova — todas as alterações são
+compatíveis com o `database.sql` existente. Contas de sistema legadas
+(`is_system = 1`) continuam a funcionar; apenas deixam de estar
+protegidas contra eliminação a pedido do administrador.
