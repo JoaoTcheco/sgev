@@ -8,7 +8,24 @@
     <?= csrfField() ?>
     <input type="hidden" name="id" value="<?= e($editing['id'] ?? '') ?>">
 
+    <?php if (!$editing): ?>
+    <div class="scan-box" style="background:#f0fdfa;border:1px dashed #0f766e;padding:14px 16px;border-radius:10px;margin-bottom:16px;">
+      <label style="font-weight:600;color:#0f766e;">📷 Escaneie o código de barras da embalagem</label>
+      <p style="margin:4px 0 10px;font-size:13px;color:#475569;">
+        Use o código do <strong>fornecedor</strong> (EAN/GTIN da embalagem) ou o seu código interno.
+        O produto é seleccionado automaticamente. Se não existir, poderá cadastrá-lo com o código já preenchido.
+      </p>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <input type="text" id="scan-barcode" autofocus autocomplete="off"
+               placeholder="Aponte o leitor aqui e escaneie…"
+               style="flex:1;font-size:16px;padding:10px 12px;">
+        <span id="scan-status" style="font-size:13px;font-weight:600;min-width:180px;"></span>
+      </div>
+    </div>
+    <?php endif; ?>
+
     <div class="grid-2">
+
       <div><label>Produto *</label>
         <?php $sel = $editing['product_id'] ?? ($_GET['product_id'] ?? ''); ?>
         <?php if ($editing): ?>
