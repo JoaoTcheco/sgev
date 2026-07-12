@@ -72,6 +72,7 @@ $router->add('products/new',     'ProductController@form',    'GET', true, $MGR)
 $router->add('products/edit',    'ProductController@form',    'GET', true, $MGR);
 $router->add('products/save',    'ProductController@save',    'POST',true, $MGR);
 $router->add('products/delete',  'ProductController@delete',  'POST',true, $MGR);
+$router->add('products/lookup',  'ProductController@lookup',  'GET', true, $ALL);
 
 // Stock
 $router->add('stock',            'StockController@index',     'GET', true, $MGR);
