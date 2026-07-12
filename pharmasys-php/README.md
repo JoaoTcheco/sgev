@@ -442,9 +442,12 @@ Existem **~90 rotas** organizadas por área. A tabela completa está na secção
 
 ---
 
-## 11. Models — 16 classes
+## 11. Models — 17 classes
 
 Cada Model é uma classe estática que encapsula **uma tabela principal** (mais tabelas auxiliares quando faz sentido).
+
+> **Nota v2**: adicionado `InvoiceModel` (secção 11.15) para o módulo de
+> importação de NF-e por XML — ver secção 37.
 
 ### 11.1 `UserModel`
 
@@ -562,9 +565,22 @@ Log central. `log($action, $entity, $entityId, $details, $txnId)` grava JSON pre
 
 Consultas agregadas prontas: `kpis($from,$to)`, `salesByDay`, `topProducts`, `byPaymentMethod`, `byUser`, `marginsByCategory`, `summary($days)` (usada pelo Dashboard).
 
+### 11.15 `InvoiceModel` (novo — módulo NF-e)
+
+| Método | O que faz |
+|---|---|
+| `create($d)` | Grava cabeçalho da nota (chave 44 dig, número, série, data, total, XML). |
+| `find($id)` / `findByKey($k)` | Lookup por id ou chave (anti-duplicação). |
+| `all($f)` | Lista global de faturas com filtros (fornecedor, período). |
+| `bySupplier($sid, $f)` | Todas as NF-e de um fornecedor com filtros. |
+| `items($invoiceId)` | Lotes ligados à fatura via `batches.invoice_id`. |
+| `supplierStats($sid)` | KPIs agregados: faturas, valor, unidades entregues, distintos, primeira/última data. |
+| `topProducts($sid, $n)` | Top produtos entregues por este fornecedor. |
+| `deliveries($sid, $f)` | Linha por lote (histórico completo com filtros por data e produto). |
+
 ---
 
-## 12. Controllers — 23 classes
+## 12. Controllers — 24 classes
 
 Cada Controller mapeia 1:1 num módulo. Padrão típico:
 
@@ -606,7 +622,9 @@ Controllers com lógica especial:
 - **SaleController** — `pdv`, `search` (autocomplete), `browse` (grelha de produtos por categoria), `categories` (lista de categorias no PDV), `checkout` (finaliza venda), `receipt` (imprime).
 - **CashController** — abrir/fechar/sangria/reforço com forms confirmatórios.
 - **SaleHistoryController** — inclui `refund` que despoleta `SaleModel::refund(...)`.
-- **BackupController** — exporta `.sql` via `mysqldump` embutido em PHP, importa CSV de produtos, restaura backup validado.
+- **BackupController** — exporta `.sql` via `mysqldump` embutido em PHP, importa CSV de produtos, restaura backup validado. Lista de tabelas inclui `supplier_invoices` (para as NF-e importadas irem no backup completo).
+- **NfeController** (novo) — importação de NF-e por XML em 2 passos: `upload()` (form + últimas importações), `parse()` (SimpleXML sem namespace, deteção de fornecedor por NUIT, preview editável), `confirm()` (transação atómica: cria produtos ausentes, lotes ligados à fatura, movimentos `in`, audit log; anti-duplicação por chave 44 dig).
+- **SupplierController** — CRUD + `view()` (detalhe com 6 KPIs, faturas, top produtos, entregas com filtros) + `export()` (CSV com BOM UTF-8; PDF via `?print=1` do layout).
 
 ---
 
@@ -696,6 +714,16 @@ Tudo é servido pelo próprio Apache — nenhum pedido a `fonts.googleapis.com` 
 
 CRUD equivalente em: `categories`, `suppliers`, `products`, `batches`, `stock`, `labels`, `supplier-returns`, `accounts`, `payables`, `receivables`, `reports`, `margins`. Ver `index.php` para a lista exata — cerca de 50 rotas seguem o padrão `modulo`, `modulo/new`, `modulo/edit`, `modulo/save`, `modulo/delete`, `modulo/view`, `modulo/export`.
 
+**Rotas novas do módulo NF-e / Fornecedor**:
+
+| Método | Rota | Controller@action |
+|---|---|---|
+| GET | `nfe` | `NfeController@upload` |
+| POST | `nfe/parse` | `NfeController@parse` |
+| POST | `nfe/confirm` | `NfeController@confirm` |
+| GET | `suppliers/view` | `SupplierController@view` |
+| GET | `suppliers/export` | `SupplierController@export` |
+
 ### 15.4 Administração (só admin)
 
 `history`, `history/refund`, `users` (+ `/activate`), `settings`, `audit`, `backup` (+ `/export`, `/restore`, `/products/import`, `/products/export`).
@@ -766,8 +794,11 @@ sale_items  financial_accounts ─── account_movements
                  │                 │
       suppliers ─┘                 │
         │                          │
-   1..N │                          │
-        ▼                          │
+   1..N │  1..N                    │
+        │   ▼                      │
+        │  supplier_invoices ──► batches (invoice_id, novo)
+        │   │
+        ▼   ▼
 supplier_returns ── supplier_return_items
         │                          │
    1..N │                          │
@@ -779,8 +810,10 @@ supplier_returns ── supplier_return_items
 
         alerts ───► products/batches (referência)
         audit_logs ───► qualquer entidade (referência lógica)
-        stock_movements ───► products + batches + sale/return/refund
+        stock_movements ───► products + batches + sale/return/refund/nfe
 ```
+
+**Total de tabelas na v2: 22** (adicionada `supplier_invoices`; `batches` ganhou coluna `invoice_id` + índices `idx_batches_invoice` e `idx_batches_supplier(supplier_id, created_at)`).
 
 ---
 
@@ -802,19 +835,19 @@ supplier_returns ── supplier_return_items
 │                    APLICAÇÃO (PHP MVC)                         │
 │  ┌─────────┐  ┌──────────────┐  ┌──────────────────────────┐   │
 │  │ Router  │─▶│ Controllers  │─▶│  Views (php)             │   │
-│  │+ RBAC   │  │ (23 classes) │  │  (templates com $data)   │   │
+│  │+ RBAC   │  │ (24 classes) │  │  (templates com $data)   │   │
 │  └─────────┘  └──────┬───────┘  └──────────────────────────┘   │
 │                      │                                         │
 │                      ▼                                         │
 │              ┌───────────────┐                                 │
 │              │   Models      │                                 │
-│              │  (16 classes) │                                 │
+│              │  (17 classes) │                                 │
 │              └──────┬────────┘                                 │
 └─────────────────────┼──────────────────────────────────────────┘
                       │
 ┌─────────────────────▼──────────────────────────────────────────┐
 │                    PERSISTÊNCIA (MySQL)                        │
-│  21 tabelas InnoDB, chaves UUID, transações explícitas         │
+│  22 tabelas InnoDB, chaves UUID, transações explícitas         │
 └────────────────────────────────────────────────────────────────┘
 ```
 
