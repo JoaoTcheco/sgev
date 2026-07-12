@@ -51,6 +51,7 @@ $router->add('alerts/refresh',     'AlertController@refresh',    'POST',true, $A
 $router->add('alerts/resolve',     'AlertController@resolve',    'POST',true, $ALL);
 $router->add('alerts/resolve-all', 'AlertController@resolveAll', 'POST',true, $ALL);
 $router->add('alerts/export',      'AlertController@export',     'GET', true, $ALL);
+$router->add('alerts/product-settings', 'AlertController@updateProductAlerts', 'POST', true, $MGR);
 
 // ---------- Gestão (admin + pharmacist) ----------
 // Cadastros

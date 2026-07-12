@@ -13,7 +13,7 @@
     <div style="display:flex;gap:8px;">
       <form method="POST" action="<?= url('alerts/refresh') ?>" style="display:inline;">
         <?= csrfField() ?>
-        <button class="btn btn-primary">↻ Recalcular</button>
+        <button class="btn btn-primary" title="Recalcula manualmente todos os alertas com base no estado actual de stocks e validades.">↻ Actualizar agora</button>
       </form>
       <a class="btn btn-ghost" href="<?= url('alerts/export') ?>&<?= http_build_query($filters) ?>">⬇ CSV</a>
       <a class="btn btn-ghost" href="<?= url('alerts') ?>&print=1&<?= http_build_query($filters) ?>" target="_blank">🖨️ PDF</a>
@@ -55,6 +55,15 @@
         <?php endforeach; ?>
       </select>
     </div>
+    <div><label>De</label>
+      <input type="date" name="from" value="<?= e($filters['from'] ?? '') ?>">
+    </div>
+    <div><label>Até</label>
+      <input type="date" name="to" value="<?= e($filters['to'] ?? '') ?>">
+    </div>
+    <?php if (!empty($filters['product_id'])): ?>
+      <input type="hidden" name="product_id" value="<?= e($filters['product_id']) ?>">
+    <?php endif; ?>
     <div style="flex:1;min-width:180px;"><label>Pesquisa</label>
       <input type="text" name="q" value="<?= e($filters['q']) ?>" placeholder="Produto, lote ou mensagem…">
     </div>
@@ -88,6 +97,13 @@
           <td>
             <?php if ($a['product_name']): ?><strong><?= e($a['product_name']) ?></strong><?php endif; ?>
             <?php if ($a['batch_number']): ?><br><small>Lote <?= e($a['batch_number']) ?> · val. <?= e(formatDate($a['expiry_date'])) ?></small><?php endif; ?>
+            <?php if (!empty($a['product_id'])): ?>
+              <br><small class="muted">
+                Stock: <strong><?= (int)($a['current_stock'] ?? 0) ?></strong> ·
+                Mín: <?= (int)($a['product_min_stock'] ?? 0) ?> ·
+                Aviso val.: <?= (int)($a['product_expiry_alert_days'] ?? 0) ?> dias
+              </small>
+            <?php endif; ?>
           </td>
           <td><?= e($a['message']) ?></td>
           <td><small><?= e(formatDateTime($a['created_at'])) ?></small></td>
@@ -106,6 +122,23 @@
               </form>
             <?php else: ?>
               <small class="muted"><?= e(formatDateTime($a['resolved_at'])) ?></small>
+            <?php endif; ?>
+            <?php if (!empty($a['product_id']) && in_array($_SESSION['user']['role'] ?? '', ['admin','pharmacist'], true)): ?>
+              <details style="margin-top:6px;">
+                <summary style="cursor:pointer;font-size:12px;color:#0f766e;">⚙ Editar limites</summary>
+                <form method="POST" action="<?= url('alerts/product-settings') ?>"
+                      style="display:flex;flex-direction:column;gap:6px;margin-top:6px;padding:8px;border:1px solid #e5e7eb;border-radius:6px;background:#f8fafc;">
+                  <?= csrfField() ?>
+                  <input type="hidden" name="product_id" value="<?= e($a['product_id']) ?>">
+                  <label style="font-size:11px;">Stock mínimo
+                    <input type="number" min="0" name="min_stock" value="<?= (int)($a['product_min_stock'] ?? 0) ?>" style="width:80px;">
+                  </label>
+                  <label style="font-size:11px;">Dias aviso validade
+                    <input type="number" min="0" name="expiry_alert_days" value="<?= (int)($a['product_expiry_alert_days'] ?? 0) ?>" style="width:80px;">
+                  </label>
+                  <button class="btn btn-sm btn-primary">Guardar</button>
+                </form>
+              </details>
             <?php endif; ?>
           </td>
         </tr>
