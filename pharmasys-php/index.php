@@ -146,6 +146,7 @@ $router->add('margins/export',  'MarginController@export',  'GET', true, $MGR);
 $router->add('history',        'SaleHistoryController@index',  'GET', true, $ADMIN);
 $router->add('history/export', 'SaleHistoryController@export', 'GET', true, $ADMIN);
 $router->add('history/view',   'SaleHistoryController@view',   'GET', true, $ADMIN);
+$router->add('history/lookup', 'SaleHistoryController@lookup', 'GET', true, $ADMIN);
 $router->add('history/refund', 'SaleHistoryController@refund', 'POST',true, $ADMIN);
 
 $router->add('users',        'UserController@index',   'GET', true, $ADMIN);

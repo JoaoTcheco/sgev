@@ -22,45 +22,65 @@ foreach ($ranges as $k=>$rg) {
     </div>
   </div>
 
-  <form method="GET" class="hist-filters">
+  <!-- Localizador rápido por número de recibo -->
+  <form method="GET" action="./" class="hist-lookup" role="search">
+    <input type="hidden" name="r" value="history/lookup">
+    <label>🔎 Localizar recibo</label>
+    <input type="text" name="receipt" value="<?= e($filters['receipt']) ?>"
+           placeholder="Digite o nº do recibo (ex: 2026-000123) e pressione Enter" autofocus>
+    <button class="btn btn-primary" type="submit">Abrir venda</button>
+  </form>
+
+  <!-- Filtros avançados -->
+  <form method="GET" action="./" class="hist-filters-card">
     <input type="hidden" name="r" value="history">
-    <div><label>De</label>   <input type="date" name="from" value="<?= e($filters['from']) ?>"></div>
-    <div><label>Até</label>  <input type="date" name="to"   value="<?= e($filters['to'])   ?>"></div>
-    <div><label>Recibo</label><input type="text" name="receipt" value="<?= e($filters['receipt']) ?>" placeholder="ex: 2026-000123"></div>
-    <div><label>Pagamento</label>
-      <select name="payment_method">
-        <option value="">— Todos —</option>
-        <?php foreach (['cash'=>'Numerário','mpesa'=>'M-Pesa','emola'=>'E-Mola','card'=>'Cartão','transfer'=>'Transferência'] as $k=>$l): ?>
-          <option value="<?= $k ?>" <?= $filters['payment_method']===$k?'selected':'' ?>><?= $l ?></option>
+
+    <div class="hist-filters-grid">
+      <div><label>De</label>   <input type="date" name="from" value="<?= e($filters['from']) ?>"></div>
+      <div><label>Até</label>  <input type="date" name="to"   value="<?= e($filters['to'])   ?>"></div>
+      <div><label>Recibo (filtro)</label><input type="text" name="receipt" value="<?= e($filters['receipt']) ?>" placeholder="parcial"></div>
+      <div><label>Pagamento</label>
+        <select name="payment_method">
+          <option value="">— Todos —</option>
+          <?php foreach (['cash'=>'Numerário','mpesa'=>'M-Pesa','emola'=>'E-Mola','card'=>'Cartão','transfer'=>'Transferência'] as $k=>$l): ?>
+            <option value="<?= $k ?>" <?= $filters['payment_method']===$k?'selected':'' ?>><?= $l ?></option>
+          <?php endforeach; ?>
+        </select>
+      </div>
+      <div><label>Estado</label>
+        <select name="status">
+          <option value="">— Todos —</option>
+          <option value="completed"      <?= $filters['status']==='completed'?'selected':''      ?>>Concluída</option>
+          <option value="partial_refund" <?= $filters['status']==='partial_refund'?'selected':'' ?>>Estorno parcial</option>
+          <option value="refunded"       <?= $filters['status']==='refunded'?'selected':''       ?>>Estornada</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="hist-toolbar">
+      <div class="hist-toolbar-group" role="group" aria-label="Períodos rápidos">
+        <span class="hist-toolbar-label">Período:</span>
+        <?php foreach ($ranges as $k=>$rg):
+          $qs = $filters; $qs['from']=$rg['from']; $qs['to']=$rg['to'];
+          $cls = $activeRange===$k ? 'btn btn-sm btn-primary' : 'btn btn-sm btn-ghost';
+        ?>
+          <a class="<?= $cls ?>" href="<?= url('history') ?>&<?= http_build_query($qs) ?>"><?= e($rg['label']) ?></a>
         <?php endforeach; ?>
-      </select>
-    </div>
-    <div><label>Estado</label>
-      <select name="status">
-        <option value="">— Todos —</option>
-        <option value="completed"      <?= $filters['status']==='completed'?'selected':''      ?>>Concluída</option>
-        <option value="partial_refund" <?= $filters['status']==='partial_refund'?'selected':'' ?>>Estorno parcial</option>
-        <option value="refunded"       <?= $filters['status']==='refunded'?'selected':''       ?>>Estornada</option>
-      </select>
-    </div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
-      <button class="btn btn-primary">Filtrar</button>
-      <a class="btn btn-ghost" href="<?= url('history/export') ?>&<?= http_build_query($filters) ?>">⬇ CSV</a>
-      <a class="btn btn-ghost" href="<?= url('history') ?>&print=1&<?= http_build_query($filters) ?>" target="_blank">🖨️ PDF</a>
-      <a class="btn btn-ghost" href="<?= url('history') ?>">Limpar</a>
-      <span style="width:1px;height:24px;background:var(--border);margin:0 4px;"></span>
-      <?php foreach ($ranges as $k=>$rg):
-        $qs = $filters; $qs['from']=$rg['from']; $qs['to']=$rg['to'];
-        $cls = $activeRange===$k ? 'btn btn-sm btn-primary' : 'btn btn-sm btn-ghost';
-      ?>
-        <a class="<?= $cls ?>" href="<?= url('history') ?>&<?= http_build_query($qs) ?>"><?= e($rg['label']) ?></a>
-      <?php endforeach; ?>
+      </div>
+
+      <div class="hist-toolbar-group" role="group" aria-label="Ações">
+        <button class="btn btn-primary" type="submit">Aplicar filtros</button>
+        <a class="btn btn-ghost" href="<?= url('history') ?>">Limpar</a>
+        <span class="hist-toolbar-sep"></span>
+        <a class="btn btn-ghost" href="<?= url('history/export') ?>&<?= http_build_query($filters) ?>">⬇ CSV</a>
+        <a class="btn btn-ghost" href="<?= url('history') ?>&print=1&<?= http_build_query($filters) ?>" target="_blank">🖨️ PDF</a>
+      </div>
     </div>
   </form>
 
   <div class="crud-table-card">
     <table class="data-table">
-      <thead><tr><th>Recibo</th><th>Data</th><th>Atendente</th><th>Itens</th><th>Total</th><th>Pagamento</th><th>Estado</th><th style="width:120px;">Acções</th></tr></thead>
+      <thead><tr><th>Recibo</th><th>Data</th><th>Atendente</th><th>Itens</th><th>Total</th><th>Pagamento</th><th>Estado</th><th style="width:160px;">Acções</th></tr></thead>
       <tbody>
       <?php if (!$items): ?>
         <tr><td colspan="8" class="empty">Sem vendas para os filtros seleccionados.</td></tr>
@@ -78,7 +98,7 @@ foreach ($ranges as $k=>$rg) {
           <td><span class="badge <?= $badge ?>"><?= e($label) ?></span></td>
           <td>
             <a href="<?= url('history/view') ?>&id=<?= e($s['id']) ?>" class="btn btn-sm">Ver</a>
-            <a href="<?= url('sales/receipt') ?>&id=<?= e($s['id']) ?>" target="_blank" class="btn btn-sm btn-ghost">🖨️</a>
+            <a href="<?= url('sales/receipt') ?>&id=<?= e($s['id']) ?>&pdf=1" target="_blank" class="btn btn-sm btn-ghost" title="Exportar PDF">📄</a>
           </td>
         </tr>
       <?php endforeach; endif; ?>

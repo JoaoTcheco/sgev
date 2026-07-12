@@ -1,27 +1,66 @@
 /* PharmaSys — Histórico de Vendas (Lovable teal) */
-.hist-filters {
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 12px;
-  background: #fff; padding: 16px;
-  border-radius: var(--radius-lg, 14px);
-  border: 1px solid var(--border, #e2e8f0);
-  margin-bottom: 18px; align-items: end;
+.hist-lookup {
+  display: grid; grid-template-columns: auto 1fr auto; gap: 10px;
+  align-items: center; background: linear-gradient(135deg,#ecfeff,#f0fdfa);
+  border: 1px solid #a7f3d0; padding: 14px 16px;
+  border-radius: var(--radius-lg,14px); margin-bottom: 14px;
+  box-shadow: 0 1px 3px rgba(15,118,110,.08);
+}
+.hist-lookup label { font-weight: 700; color: #0f766e; font-size: 13px; white-space: nowrap; }
+.hist-lookup input[type="text"] {
+  padding: 11px 14px; border: 1px solid #99f6e4; border-radius: 8px;
+  font-size: 14px; background: #fff;
+}
+.hist-lookup input[type="text"]:focus {
+  outline: 0; border-color: #0f766e; box-shadow: 0 0 0 3px rgba(15,118,110,.15);
+}
+
+.hist-filters-card {
+  background: #fff; padding: 16px; margin-bottom: 18px;
+  border-radius: var(--radius-lg, 14px); border: 1px solid var(--border, #e2e8f0);
   box-shadow: 0 1px 2px rgba(15, 23, 42, .04);
 }
-.hist-filters label {
+.hist-filters-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px; align-items: end;
+}
+.hist-filters-card label {
   display: block; font-size: 11px; color: #64748b;
   margin-bottom: 4px; font-weight: 600;
   text-transform: uppercase; letter-spacing: .04em;
 }
-.hist-filters input, .hist-filters select {
+.hist-filters-card input, .hist-filters-card select {
   width: 100%; padding: 9px 10px;
   border: 1px solid #e2e8f0; border-radius: 8px; font-size: 13px;
   transition: border-color .12s, box-shadow .12s;
 }
-.hist-filters input:focus, .hist-filters select:focus {
+.hist-filters-card input:focus, .hist-filters-card select:focus {
   outline: 0; border-color: var(--primary, #0f766e);
   box-shadow: 0 0 0 3px rgba(15, 118, 110, .12);
 }
+.hist-toolbar {
+  display: flex; justify-content: space-between; align-items: center;
+  flex-wrap: wrap; gap: 12px; margin-top: 14px;
+  padding-top: 12px; border-top: 1px dashed #e2e8f0;
+}
+.hist-toolbar-group { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.hist-toolbar-label { font-size: 11px; color: #64748b; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .04em; margin-right: 4px; }
+.hist-toolbar-sep { width: 1px; height: 22px; background: var(--border, #e2e8f0); margin: 0 4px; }
+
+/* Painel de validação/integridade do recibo */
+.hist-validate {
+  margin-top: 14px; padding: 14px 16px;
+  border-radius: var(--radius-lg,14px); border: 1px solid #a7f3d0;
+  background: #f0fdfa;
+}
+.hist-validate.invalid { border-color: #fecaca; background: #fef2f2; }
+.hist-validate h3 { margin: 0 0 8px; font-size: 14px; color: #0f766e; display: flex; align-items: center; gap: 8px; }
+.hist-validate.invalid h3 { color: #b91c1c; }
+.hist-validate ul { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); gap: 6px; }
+.hist-validate li { font-size: 13px; padding: 4px 0; color: #334155; display: flex; align-items: center; gap: 6px; }
+.hist-validate li .ok  { color: #059669; font-weight: 700; }
+.hist-validate li .err { color: #dc2626; font-weight: 700; }
 
 .hist-totals { display: flex; gap: 24px; }
 .hist-totals div { text-align: right; }

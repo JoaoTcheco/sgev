@@ -148,6 +148,24 @@ class SaleModel {
         }
     }
 
+    /** Localiza uma venda pelo número de recibo (exacto ou parcial). */
+    public static function findByReceipt(string $receipt): ?array {
+        $r = trim($receipt);
+        if ($r === '') return null;
+        $row = Database::one(
+            'SELECT s.*, u.full_name AS user_name FROM sales s
+             LEFT JOIN users u ON u.id = s.user_id
+             WHERE s.receipt_number = ? LIMIT 1', [$r]
+        );
+        if ($row) return $row;
+        return Database::one(
+            'SELECT s.*, u.full_name AS user_name FROM sales s
+             LEFT JOIN users u ON u.id = s.user_id
+             WHERE s.receipt_number LIKE ? ORDER BY s.created_at DESC LIMIT 1',
+            ['%' . $r . '%']
+        );
+    }
+
     public static function find(string $id): ?array {
         return Database::one(
             'SELECT s.*, u.full_name AS user_name
