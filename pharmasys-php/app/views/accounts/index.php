@@ -57,14 +57,37 @@ $typeLabels = [
           <a href="<?= url('accounts/movements') ?>&id=<?= e($a['id']) ?>" class="btn btn-sm">📊 Extracto</a>
           <?php if ($isAdmin): ?>
             <a href="<?= url('accounts/edit') ?>&id=<?= e($a['id']) ?>" class="btn btn-sm">Editar</a>
+            <button type="button" class="btn btn-sm btn-primary" onclick="pharmaToggleAdjust('<?= e($a['id']) ?>')">💰 Ajustar</button>
             <form method="POST" action="<?= url('accounts/delete') ?>" onsubmit="return confirm('Eliminar esta conta? Só é possível se o saldo for zero. Esta acção não pode ser desfeita.')" style="display:inline;">
               <?= csrfField() ?><input type="hidden" name="id" value="<?= e($a['id']) ?>">
-              <button class="btn btn-sm btn-danger">×</button>
+              <button class="btn btn-sm btn-danger" title="Eliminar conta">×</button>
             </form>
           <?php endif; ?>
         </div>
-      </div>
-    <?php endforeach; ?>
-  </div>
+        <?php if ($isAdmin): ?>
+          <div class="acc-quick" id="adj-<?= e($a['id']) ?>" style="display:none;margin-top:10px;padding:10px;border-top:1px dashed #cbd5e1;background:#f8fafc;border-radius:8px;">
+            <form method="POST" action="<?= url('accounts/adjust') ?>" onsubmit="return confirm('Confirmar este ajuste ao saldo?')" style="display:flex;gap:6px;flex-wrap:wrap;align-items:end;">
+              <?= csrfField() ?>
+              <input type="hidden" name="account_id" value="<?= e($a['id']) ?>">
+              <input type="hidden" name="back" value="list">
+              <label style="flex:0 0 auto;font-size:11px;">Acção<br>
+                <select name="adj_type" required style="padding:6px;">
+                  <option value="credit">+ Adicionar</option>
+                  <option value="debit">− Remover</option>
+                  <option value="reset">⟲ Zerar</option>
+                </select>
+              </label>
+              <label style="flex:1 1 100px;font-size:11px;">Valor (MT)<br>
+                <input type="number" name="amount" min="0" step="0.01" placeholder="0,00" style="width:100%;padding:6px;">
+              </label>
+              <label style="flex:2 1 160px;font-size:11px;">Motivo<br>
+                <input name="reason" placeholder="Ex: entrega de troco" maxlength="200" style="width:100%;padding:6px;">
+              </label>
+              <button class="btn btn-sm btn-primary">Aplicar</button>
+            </form>
+            <p style="margin:6px 0 0;font-size:11px;color:#64748b;">Cada ajuste fica registado no extracto da conta (auditoria).</p>
+          </div>
+        <?php endif; ?>
+
 </section>
 <link rel="stylesheet" href="<?= asset('css/accounts.css') ?>">
