@@ -62,15 +62,19 @@ if (empty($_SESSION['__boot_migrated'])) {
         $cols  = Database::all("SHOW COLUMNS FROM pharmacy_settings");
         $names = array_column($cols, 'Field');
         $migrations = [
-            'label_gap_mm'      => "ALTER TABLE pharmacy_settings ADD COLUMN label_gap_mm INT NOT NULL DEFAULT 3",
-            'label_show_price'  => "ALTER TABLE pharmacy_settings ADD COLUMN label_show_price TINYINT(1) NOT NULL DEFAULT 1",
-            'label_show_cost'   => "ALTER TABLE pharmacy_settings ADD COLUMN label_show_cost TINYINT(1) NOT NULL DEFAULT 0",
-            'label_show_batch'  => "ALTER TABLE pharmacy_settings ADD COLUMN label_show_batch TINYINT(1) NOT NULL DEFAULT 1",
-            'label_show_expiry' => "ALTER TABLE pharmacy_settings ADD COLUMN label_show_expiry TINYINT(1) NOT NULL DEFAULT 1",
+            'label_gap_mm'         => "ALTER TABLE pharmacy_settings ADD COLUMN label_gap_mm INT NOT NULL DEFAULT 3",
+            'label_show_price'     => "ALTER TABLE pharmacy_settings ADD COLUMN label_show_price TINYINT(1) NOT NULL DEFAULT 1",
+            'label_show_cost'      => "ALTER TABLE pharmacy_settings ADD COLUMN label_show_cost TINYINT(1) NOT NULL DEFAULT 0",
+            'label_show_batch'     => "ALTER TABLE pharmacy_settings ADD COLUMN label_show_batch TINYINT(1) NOT NULL DEFAULT 1",
+            'label_show_expiry'    => "ALTER TABLE pharmacy_settings ADD COLUMN label_show_expiry TINYINT(1) NOT NULL DEFAULT 1",
+            'pdv_hide_expired'     => "ALTER TABLE pharmacy_settings ADD COLUMN pdv_hide_expired TINYINT(1) NOT NULL DEFAULT 1",
+            'pdv_hide_out_of_stock'=> "ALTER TABLE pharmacy_settings ADD COLUMN pdv_hide_out_of_stock TINYINT(1) NOT NULL DEFAULT 0",
+            'pdv_warn_near_expiry' => "ALTER TABLE pharmacy_settings ADD COLUMN pdv_warn_near_expiry TINYINT(1) NOT NULL DEFAULT 1",
         ];
         foreach ($migrations as $col => $sql) {
             if (!in_array($col, $names, true)) Database::query($sql);
         }
+
     } catch (Throwable $e) { /* tabela ainda não existe: instalador irá criar */ }
 
     // Micro-migração: importação NF-e (supplier_invoices + batches.invoice_id)
