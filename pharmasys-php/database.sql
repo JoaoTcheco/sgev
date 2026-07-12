@@ -215,6 +215,8 @@ CREATE TABLE IF NOT EXISTS `sales` (
   `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   INDEX `idx_sales_created` (`created_at`),
   INDEX `idx_sales_user` (`user_id`),
+  INDEX `idx_sales_status_created` (`status`, `created_at`),
+  INDEX `idx_sales_payment` (`payment_method`, `created_at`),
   FOREIGN KEY (`user_id`) REFERENCES `users`(`id`),
   FOREIGN KEY (`cash_session_id`) REFERENCES `cash_sessions`(`id`),
   FOREIGN KEY (`account_id`) REFERENCES `financial_accounts`(`id`) ON DELETE SET NULL
